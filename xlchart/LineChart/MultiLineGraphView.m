@@ -10,21 +10,7 @@
 #import "LineGraphMarker.h"
 #import "DRScrollView.h"
 #import "Constants.h"
-
-@interface LineChartDataRenderer : NSObject
-@property (nonatomic, strong) NSArray *yAxisArray;//点的y坐标
-@property (nonatomic, strong) NSArray *xAxisArray;//点的x坐标
-/**
- *  如果是LineParallelYAxis，则只有xAxisArray有数据，也即都是平行于y轴的竖线
- *  否则，只有yAxisArray有数据。LineParallelXAxis时平行于x轴的横线，LineDefault是点为(MultiLineGraphView.xAxisArray[i], self.yAxisArray[i])的折线
- */
-@property (nonatomic) LineDrawingType lineType;
-@property (nonatomic, strong) UIColor *lineColor;
-@property (nonatomic, strong) NSString *graphName;
-@property (nonatomic) CGFloat lineWidth;
-@property (nonatomic) BOOL drawPoints;
-@property (nonatomic) BOOL fillGraph;
-@end
+#import "LineChartDataRenderer.h"
 
 const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
 const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
@@ -142,7 +128,21 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     return self;
 }
 
-#pragma mark Setup Data with Data Source
+- (void)reloadGraph{
+    [self.yAxisView removeFromSuperview];
+    [self.graphScrollView removeFromSuperview];
+    [self.legendView removeFromSuperview];
+    
+    [self drawGraph];
+}
+
+- (NSString *)yStringByPresion:(CGFloat)y{
+    //返回y的精确度为presion的NSString
+    NSString *formatter = [NSString stringWithFormat:@"%%.%zif", presion];
+    return [NSString stringWithFormat:formatter, y];
+}
+
+#pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
     self.xAxisArray = [self.dataSource xDataForLineToBePlotted];
     xAxisLabels = [[NSMutableArray alloc] init];
@@ -153,19 +153,12 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     
     for (int i = 0 ; i < [self.dataSource numberOfLinesToBePlotted]; i++) {
         LineChartDataRenderer *lineData = [[LineChartDataRenderer alloc] init];
-        lineData.lineType = [self.dataSource typeOfLineToBeDrawnWithLineNumber:i];
         lineData.lineColor = [self.dataSource colorForTheLineWithLineNumber:i];
         lineData.lineWidth = [self.dataSource widthForTheLineWithLineNumber:i];
         lineData.graphName = [self.dataSource nameForTheLineWithLineNumber:i];
         lineData.fillGraph = [self.dataSource shouldFillGraphWithLineNumber:i];
         lineData.drawPoints = [self.dataSource shouldDrawPointsWithLineNumber:i];
-        
-        if (lineData.lineType == LineParallelYAxis) {
-            lineData.xAxisArray = [self.dataSource dataForLineWithLineNumber:i];
-        }
-        else{
-            lineData.yAxisArray = [self.dataSource dataForLineWithLineNumber:i];
-        }
+        lineData.yAxisArray = [self.dataSource dataForLineWithLineNumber:i];
         [self.lineDataArray addObject:lineData];
         
         LegendDataRenderer *data = [[LegendDataRenderer alloc] init];
@@ -175,7 +168,7 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     }
 }
 
-#pragma mark Draw Graph
+#pragma mark Draw Graph: createXAxisLine, createYAxisLine, createGraph
 - (void)drawGraph{
     [self setupDataWithDataSource];
     
@@ -238,12 +231,12 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     self.yAxisView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, k_graphHorizontalMargin, graphScrollHeight - k_xAxisLabelHeight)];
     self.yAxisView.backgroundColor = [UIColor whiteColor];
     [self addSubview:self.yAxisView];
-    
+
     [self createXAxisLine];//设置x坐标和grid竖线，同时设置graphView的宽度。在yAxisView上显示y轴
     self.graphScrollView.contentSize = self.graphView.frame.size;
     //注意，如果self是navigationcontroller的第一个view，graphScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
     [self createYAxisLine];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
-//    [self createGraph];
+    [self createGraph];
     
 //
 //    if (self.showMarker) {
@@ -252,12 +245,6 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
 //    if (self.showLegend) {
 //        [self createLegend];
 //    }
-}
-
-- (NSString *)yStringByPresion:(CGFloat)y{
-    //返回y的精确度为presion的NSString
-    NSString *formatter = [NSString stringWithFormat:@"%%.%zif", presion];
-    return [NSString stringWithFormat:formatter, y];
 }
 
 - (void)createXAxisLine{
@@ -568,186 +555,70 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
 
 - (void)createGraph{
     for (LineChartDataRenderer *lineData in self.lineDataArray) {
-        switch (lineData.lineType) {
-            case LineDefault:
-                {
-                    int x = 0;
-                    int y = 0;
-                    
-                    y = [[lineData.yAxisArray objectAtIndex:0] floatValue] * positionStepY;
-                    
-                    CGPoint startPoint = CGPointMake(OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
-                    CGPoint firstPoint = startPoint;
-                    if (lineData.drawPoints) {
-                        [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
-                    }
-                    
-                    UIBezierPath *path = [UIBezierPath bezierPath];
-                    UIBezierPath *fillPath = [UIBezierPath bezierPath];
-                    [fillPath moveToPoint:startPoint];
-                    
-                    CGPoint endPoint;
-                    for (int i = 1; i < lineData.yAxisArray.count; i++){
-                        x = i * positionStepX;
-                        y = [[lineData.yAxisArray objectAtIndex:i] floatValue] * positionStepY;
-                        
-                        endPoint = CGPointMake(x + OFFSET_X, HEIGHT(self.graphView) - ( y + OFFSET_Y));
-                        
-                        [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:endPoint]];
-
-                        [fillPath addLineToPoint:endPoint];
-                        
-                        startPoint = endPoint;
-                        if (lineData.drawPoints) {
-                            [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
-                        }
-                    }
-                    
-                    [path closePath];
-                    [path stroke];
-                    
-                    CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-                    [shapeLayer setPath:[path CGPath]];
-                    [shapeLayer setStrokeColor:lineData.lineColor.CGColor];
-                    [shapeLayer setLineWidth:lineData.lineWidth];
-                    [shapeLayer setShouldRasterize:YES];
-                    [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
-                    [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
-                    
-                    CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-                    [pathAnimation setDuration:ANIMATION_DURATION];
-                    [pathAnimation setFromValue:[NSNumber numberWithFloat:0.0f]];
-                    [pathAnimation setToValue:[NSNumber numberWithFloat:1.0f]];
-                    [shapeLayer addAnimation:pathAnimation forKey:@"strokeEnd"];
-                    
-                    [self.graphView.layer addSublayer:shapeLayer];
-                    
-                    if (lineData.fillGraph) {
-                        [fillPath addLineToPoint:CGPointMake(startPoint.x, HEIGHT(self.graphView) - OFFSET_Y)];
-                        [fillPath addLineToPoint:CGPointMake(firstPoint.x, HEIGHT(self.graphView) - OFFSET_Y)];
-                        [fillPath addLineToPoint:firstPoint];
-                        [fillPath closePath];
-                        [fillPath stroke];
-                        
-                        [self fillGraphBackgroundWithPath:fillPath color:lineData.lineColor];
-                    }
-                }
-                break;
-            case LineParallelXAxis:
-                {
-                    int y = 0;
-                    
-                    for (int i = 0; i < lineData.yAxisArray.count; i++){
-                        y = [[lineData.yAxisArray objectAtIndex:i] floatValue] * positionStepY;
-
-                        CGPoint startPoint = CGPointMake(OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
-                        CGPoint endPoint = CGPointMake(WIDTH(self.graphView) - OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
-                        
-                        CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-                        [shapeLayer setPath:[[self drawPathWithStartPoint:startPoint endPoint:endPoint] CGPath]];
-                        [shapeLayer setStrokeColor:lineData.lineColor.CGColor];
-                        [shapeLayer setLineWidth:lineData.lineWidth];
-                        [shapeLayer setShouldRasterize:YES];
-                        [shapeLayer setLineDashPattern:[NSArray arrayWithObjects:[NSNumber numberWithInteger:6], nil]];
-                        [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
-                        [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
-                        [self.graphView.layer addSublayer:shapeLayer];
-                    }
-                    
-                    if (lineData.fillGraph) {
-                        
-                        y = [[lineData.yAxisArray firstObject] floatValue] * positionStepY;
-                        CGPoint point1 = CGPointMake(OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
-                        
-                        y = [[lineData.yAxisArray lastObject] floatValue] * positionStepY;
-                        CGPoint point2 = CGPointMake(WIDTH(self.graphView) - OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
-                        
-                        UIBezierPath *fillPath = [UIBezierPath bezierPath];
-                        [fillPath moveToPoint:point1];
-                        [fillPath addLineToPoint:CGPointMake(point1.x, point2.y)];
-                        [fillPath addLineToPoint:point2];
-                        [fillPath addLineToPoint:CGPointMake(point2.x, point1.y)];
-                        
-                        [fillPath closePath];
-                        [fillPath stroke];
-                        
-                        [self fillGraphBackgroundWithPath:fillPath color:lineData.lineColor];
-                    }
-                }
-                break;
-            case LineParallelYAxis:
-                {
-                    int x = 0;
-                    
-                    for (int i = 0; i < lineData.xAxisArray.count; i++){
-                        NSInteger itemIndex = [self.xAxisArray indexOfObject:[lineData.xAxisArray objectAtIndex:i]];
-                        x = itemIndex * positionStepX;
-                        
-                        CGPoint startPoint = CGPointMake(OFFSET_X + x, OFFSET_Y);
-                        CGPoint endPoint = CGPointMake(OFFSET_X + x, HEIGHT(self.graphView) - OFFSET_Y);
-                        
-                        CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-                        [shapeLayer setPath:[[self drawPathWithStartPoint:startPoint endPoint:endPoint] CGPath]];
-                        [shapeLayer setStrokeColor:lineData.lineColor.CGColor];
-                        [shapeLayer setLineWidth:lineData.lineWidth];
-                        [shapeLayer setShouldRasterize:YES];
-                        [shapeLayer setLineDashPattern:[NSArray arrayWithObjects:[NSNumber numberWithInteger:6], nil]];
-                        [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
-                        [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
-                        [self.graphView.layer addSublayer:shapeLayer];
-                    }
-                    
-                    if (lineData.fillGraph) {
-                        
-                        NSInteger itemIndex = [self.xAxisArray indexOfObject:[lineData.xAxisArray firstObject]];
-                        x = itemIndex * positionStepX;
-                        CGPoint point1 = CGPointMake(OFFSET_X + x, OFFSET_Y);
-    
-                        itemIndex = [self.xAxisArray indexOfObject:[lineData.xAxisArray lastObject]];
-                        x = itemIndex * positionStepX;
-                        CGPoint point2 = CGPointMake(OFFSET_X + x, HEIGHT(self.graphView) - OFFSET_Y);
-                        
-                        UIBezierPath *fillPath = [UIBezierPath bezierPath];
-                        [fillPath moveToPoint:point1];
-                        [fillPath addLineToPoint:CGPointMake(point1.x, point2.y)];
-                        [fillPath addLineToPoint:point2];
-                        [fillPath addLineToPoint:CGPointMake(point2.x, point1.y)];
-                        
-                        [fillPath closePath];
-                        [fillPath stroke];
-                        
-                        [self fillGraphBackgroundWithPath:fillPath color:lineData.lineColor];                    }
-                }
-                break;
-            default:
-                break;
+        int x = 0;
+        int y = 0;
+        
+        y = [[lineData.yAxisArray objectAtIndex:0] floatValue] * positionStepY;
+        
+        CGPoint startPoint = CGPointMake(OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
+        CGPoint firstPoint = startPoint;
+        if (lineData.drawPoints) {
+            [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
+        }
+        
+        UIBezierPath *path = [UIBezierPath bezierPath];
+        UIBezierPath *fillPath = [UIBezierPath bezierPath];
+        [fillPath moveToPoint:startPoint];
+        
+        CGPoint endPoint;
+        for (int i = 1; i < lineData.yAxisArray.count; i++){
+            x = i * positionStepX;
+            y = [[lineData.yAxisArray objectAtIndex:i] floatValue] * positionStepY;
+            
+            endPoint = CGPointMake(x + OFFSET_X, HEIGHT(self.graphView) - ( y + OFFSET_Y));
+            
+            [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:endPoint]];
+            
+            [fillPath addLineToPoint:endPoint];
+            
+            startPoint = endPoint;
+            if (lineData.drawPoints) {
+                [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
+            }
+        }
+        
+        [path closePath];
+        [path stroke];
+        
+        CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
+        [shapeLayer setPath:[path CGPath]];
+        [shapeLayer setStrokeColor:lineData.lineColor.CGColor];
+        [shapeLayer setLineWidth:lineData.lineWidth];
+        [shapeLayer setShouldRasterize:YES];
+        [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
+        [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
+        
+        CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
+        [pathAnimation setDuration:ANIMATION_DURATION];
+        [pathAnimation setFromValue:[NSNumber numberWithFloat:0.0f]];
+        [pathAnimation setToValue:[NSNumber numberWithFloat:1.0f]];
+        [shapeLayer addAnimation:pathAnimation forKey:@"strokeEnd"];
+        
+        [self.graphView.layer addSublayer:shapeLayer];
+        
+        if (lineData.fillGraph) {
+            [fillPath addLineToPoint:CGPointMake(startPoint.x, HEIGHT(self.graphView) - OFFSET_Y)];
+            [fillPath addLineToPoint:CGPointMake(firstPoint.x, HEIGHT(self.graphView) - OFFSET_Y)];
+            [fillPath addLineToPoint:firstPoint];
+            [fillPath closePath];
+            [fillPath stroke];
+            
+            [self fillGraphBackgroundWithPath:fillPath color:lineData.lineColor];
         }
     }
 }
 
-#pragma mark UIScrollViewDelegate
--(void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    if (scrollView == graphScrollView) {
-        CGFloat comparedX = graphScrollView.contentOffset.x + k_graphHorizontalMargin;//坐标系原点距离左边缘 k_graphHorizontalMargin
-        for (UILabel *l in xAxisLabels) {
-            if (CGRectGetMaxX(l.frame) <= comparedX) {
-                l.alpha = 0;
-            }
-            else{
-                CGFloat halfWidth = l.frame.size.width / 2;
-                CGFloat labelCenterRightYAxis = CGRectGetMaxX(l.frame) - comparedX;//label中点在y轴右侧的长度
-                if (labelCenterRightYAxis >= halfWidth){//label中点在y轴右侧的长度>=半个长度
-                    l.alpha = 1;
-                }
-                else{
-                    //alpha = label中点在y轴右侧长度 / 半个长度
-                    l.alpha = labelCenterRightYAxis / halfWidth;
-                }
-            }
-        }
-    }
-}
-#pragma mark Create Marker
+#pragma mark Create marker, legend
 - (void)createMarker{
     self.marker = [[LineGraphMarker alloc] init];
     [self.marker setHidden:YES];
@@ -782,7 +653,39 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     [self addSubview:self.legendView];
 }
 
-#pragma mark Touch Event on Graph
+#pragma mark UIScrollViewDelegate
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    if (scrollView == graphScrollView) {
+        CGFloat comparedX = graphScrollView.contentOffset.x + k_graphHorizontalMargin;//坐标系原点距离左边缘 k_graphHorizontalMargin
+        for (UILabel *l in xAxisLabels) {
+            if (CGRectGetMaxX(l.frame) <= comparedX) {
+                l.alpha = 0;
+            }
+            else{
+                CGFloat halfWidth = l.frame.size.width / 2;
+                CGFloat labelCenterRightYAxis = CGRectGetMaxX(l.frame) - comparedX;//label中点在y轴右侧的长度
+                if (labelCenterRightYAxis >= halfWidth){//label中点在y轴右侧的长度>=半个长度
+                    l.alpha = 1;
+                }
+                else{
+                    //alpha = label中点在y轴右侧长度 / 半个长度
+                    l.alpha = labelCenterRightYAxis / halfWidth;
+                }
+            }
+        }
+    }
+}
+
+#pragma mark handle gestures
+-(void)handleTap:(UITapGestureRecognizer *)gesture{
+    if (self.showMarker || self.showCustomMarkerView) {
+        CGPoint pointTapped = [gesture locationInView:self.graphView];
+        if (CGRectContainsPoint(self.graphView.frame, pointTapped)) {
+            [self findValueForTouch:pointTapped];
+        }
+    }
+}
+
 - (void)handleGraphZoom:(UIPinchGestureRecognizer *)gesture{
     [self hideMarker];
     
@@ -804,15 +707,6 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
         
         if (pastScale != lastScale) {
             [self zoomGraph];
-        }
-    }
-}
-
--(void)handleTap:(UITapGestureRecognizer *)gesture{
-    if (self.showMarker || self.showCustomMarkerView) {
-        CGPoint pointTapped = [gesture locationInView:self.graphView];
-        if (CGRectContainsPoint(self.graphView.frame, pointTapped)) {
-            [self findValueForTouch:pointTapped];
         }
     }
 }
@@ -854,18 +748,16 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     NSUInteger closestPointIndex = MAXFLOAT;
     CGPoint closestPoint;
     for (LineChartDataRenderer *lineData in self.lineDataArray) {
-        if (lineData.lineType == LineDefault) {
-            for (int i = 0; i < lineData.yAxisArray.count; i++){
-                CGPoint point = [self pointForLine:lineData at:i];
-                CGFloat distance = fabs([self distanceBetweenPoint:pointTouched andPoint:point]);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestPointIndex = i;
-                    closestPoint = point;
-                    xString = [self.xAxisArray objectAtIndex:i];
-                    yNumber = [lineData.yAxisArray objectAtIndex:i];
-                    yString = [self yStringByPresion:((NSNumber *)yNumber).floatValue];
-                }
+        for (int i = 0; i < lineData.yAxisArray.count; i++){
+            CGPoint point = [self pointForLine:lineData at:i];
+            CGFloat distance = fabs([self distanceBetweenPoint:pointTouched andPoint:point]);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPointIndex = i;
+                closestPoint = point;
+                xString = [self.xAxisArray objectAtIndex:i];
+                yNumber = [lineData.yAxisArray objectAtIndex:i];
+                yString = [self yStringByPresion:((NSNumber *)yNumber).floatValue];
             }
         }
     }
@@ -954,7 +846,7 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     [self setNeedsDisplay];
 }
 
-#pragma mark Fill Graph
+#pragma mark Graph line drawing operation
 - (void)fillGraphBackgroundWithPath:(UIBezierPath *)path color:(UIColor *)color{
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     [shapeLayer setPath:path.CGPath];
@@ -974,7 +866,6 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     [self.graphView.layer addSublayer:shapeLayer];
 }
 
-#pragma mark Draw Grid Lines
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint{
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     [shapeLayer setPath:[[self drawPathWithStartPoint:startPoint endPoint:endPoint] CGPath]];
@@ -983,29 +874,6 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     return shapeLayer;
 }
 
-- (void)drawLineForGridWithStartPoint:(CGPoint)startPoint endPoint:(CGPoint)endPoint text:(NSString *)text textFrame:(CGRect)frame drawGrid:(BOOL)draw{
-    if (draw) {
-        CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-        [shapeLayer setPath:[[self drawPathWithStartPoint:startPoint endPoint:endPoint] CGPath]];
-        [shapeLayer setStrokeColor:self.gridLineColor.CGColor];
-        [shapeLayer setLineWidth:self.gridLineWidth];
-        [self.graphView.layer addSublayer:shapeLayer];
-    }
-    
-    CATextLayer *textLayer = [[CATextLayer alloc] init];
-    [textLayer setFont:(__bridge CFTypeRef _Nullable)self.textFont];
-    [textLayer setFontSize:self.textFont.pointSize];
-    [textLayer setFrame:frame];
-    [textLayer setString:text];
-    [textLayer setAlignmentMode:kCAAlignmentCenter];
-    [textLayer setForegroundColor:self.textColor.CGColor];
-    [textLayer setShouldRasterize:YES];
-    [textLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
-    [textLayer setContentsScale:[[UIScreen mainScreen] scale]];
-    [self.graphView.layer addSublayer:textLayer];
-}
-
-#pragma mark Create a Path Between 2 points
 - (UIBezierPath *)drawPathWithStartPoint:(CGPoint)startPoint endPoint:(CGPoint)endPoint{
     UIBezierPath *path = [UIBezierPath bezierPath];
     [path moveToPoint:startPoint];
@@ -1016,7 +884,6 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     return path;
 }
 
-#pragma mark Draw Point On the Line
 - (void)drawPointsOnLine:(CGPoint)point withColor:(UIColor *)color{
     UIBezierPath *pointPath = [UIBezierPath bezierPath];
     [pointPath addArcWithCenter:point radius:3 startAngle:0 endAngle:2 * M_PI clockwise:YES];
@@ -1031,30 +898,4 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
     [self.graphView.layer addSublayer:shapeLayer];
 }
-
-#pragma Reload Graph
-- (void)reloadGraph{
-    [self.yAxisView removeFromSuperview];
-    [self.graphScrollView removeFromSuperview];
-    [self.legendView removeFromSuperview];
-    
-    [self drawGraph];
-}
-
-@end
-
-@implementation LineChartDataRenderer
-- (instancetype)init{
-    self = [super init];
-    if (self) {
-        self.lineType = LineDefault;
-        self.lineWidth = 1.0f;
-        self.lineColor = [UIColor blackColor];
-        self.graphName = @"";
-        self.drawPoints = FALSE;
-        self.fillGraph = FALSE;
-    }
-    return self;
-}
-
 @end

@@ -22,6 +22,7 @@
 		50F371C71D5880BC005CB142 /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C01D5880BC005CB142 /* LegendView.m */; };
 		50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C31D5880BC005CB142 /* LineGraphMarker.m */; };
 		50F371C91D5880BC005CB142 /* MultiLineGraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C51D5880BC005CB142 /* MultiLineGraphView.m */; };
+		50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,8 @@
 		50F371C31D5880BC005CB142 /* LineGraphMarker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineGraphMarker.m; sourceTree = "<group>"; };
 		50F371C41D5880BC005CB142 /* MultiLineGraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiLineGraphView.h; sourceTree = "<group>"; };
 		50F371C51D5880BC005CB142 /* MultiLineGraphView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MultiLineGraphView.m; sourceTree = "<group>"; };
+		50F371CA1D5888BA005CB142 /* LineChartDataRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineChartDataRenderer.h; sourceTree = "<group>"; };
+		50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineChartDataRenderer.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -184,6 +187,8 @@
 				50F371C31D5880BC005CB142 /* LineGraphMarker.m */,
 				50F371C41D5880BC005CB142 /* MultiLineGraphView.h */,
 				50F371C51D5880BC005CB142 /* MultiLineGraphView.m */,
+				50F371CA1D5888BA005CB142 /* LineChartDataRenderer.h */,
+				50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */,
 			);
 			name = LineChart;
 			path = xlchart/LineChart;
@@ -325,6 +330,7 @@
 				50F371C71D5880BC005CB142 /* LegendView.m in Sources */,
 				50F371B51D541D1A005CB142 /* ViewController.m in Sources */,
 				50F371C61D5880BC005CB142 /* DRScrollView.m in Sources */,
+				50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */,
 				50F371B91D541D6B005CB142 /* XLChart.m in Sources */,
 				50F371B41D541D1A005CB142 /* main.m in Sources */,
 				50F371B61D541D1A005CB142 /* xlchart.xcdatamodeld in Sources */,

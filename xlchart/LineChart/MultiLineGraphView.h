@@ -9,12 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "LegendView.h"
 
-typedef enum {
-    LineParallelXAxis,
-    LineParallelYAxis,
-    LineDefault
-}LineDrawingType;
-
 @protocol MultiLineGraphViewDelegate  <NSObject>
 - (void)didTapWithValuesAtX:(NSString *)xValue valuesAtY:(NSString *)yValue;
 //Returns, the touched point values
@@ -30,10 +24,6 @@ typedef enum {
 
 - (NSInteger)numberOfLinesToBePlotted;
 //Set number of lines to be plotted on the Line Graph
-
-- (LineDrawingType)typeOfLineToBeDrawnWithLineNumber:(NSInteger)lineNumber;
-//Set Line Type for each for Line on the Line Graph
-//Default is LineDefault
 
 - (UIColor *)colorForTheLineWithLineNumber:(NSInteger)lineNumber;
 //Set Line Color for each for Line on the Line Graph
@@ -56,8 +46,7 @@ typedef enum {
 //Default is False
 
 - (NSArray *)dataForLineWithLineNumber:(NSInteger)lineNumber;
-//Set yData for Line on Line Graph When Line Type is LineDefault & LineParallelXAxis
-//If LineType is LineParallelYAxis, Set xData for the Line on Line Graph
+//Set yData for Line on Line Graph
 
 @optional
 - (UIView *)customViewForLineChartTouchWithXValue:(NSString *)xValue andYValue:(NSString *)yValue;

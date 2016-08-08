@@ -44,7 +44,7 @@
 }
 
 - (void)createLineGraph{
-    self.automaticallyAdjustsScrollViewInsets = NO;
+//    self.automaticallyAdjustsScrollViewInsets = NO;
     lineGraphView = [[MultiLineGraphView alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 400)];
     lineGraphView.delegate = self;
     lineGraphView.dataSource = self;
@@ -142,10 +142,6 @@
 
 - (NSInteger)numberOfLinesToBePlotted{
     return 1;
-}
-
-- (LineDrawingType)typeOfLineToBeDrawnWithLineNumber:(NSInteger)lineNumber{
-    return LineDefault;
 }
 
 - (UIColor *)colorForTheLineWithLineNumber:(NSInteger)lineNumber{
