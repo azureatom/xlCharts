@@ -17,7 +17,6 @@
 		50F371B41D541D1A005CB142 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371AA1D541D1A005CB142 /* main.m */; };
 		50F371B51D541D1A005CB142 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371AC1D541D1A005CB142 /* ViewController.m */; };
 		50F371B61D541D1A005CB142 /* xlchart.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 50F371AD1D541D1A005CB142 /* xlchart.xcdatamodeld */; };
-		50F371B91D541D6B005CB142 /* XLChart.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371B81D541D6B005CB142 /* XLChart.m */; };
 		50F371C61D5880BC005CB142 /* DRScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371BD1D5880BC005CB142 /* DRScrollView.m */; };
 		50F371C71D5880BC005CB142 /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C01D5880BC005CB142 /* LegendView.m */; };
 		50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C31D5880BC005CB142 /* LineGraphMarker.m */; };
@@ -60,8 +59,6 @@
 		50F371AB1D541D1A005CB142 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		50F371AC1D541D1A005CB142 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		50F371AE1D541D1A005CB142 /* xlchart.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = xlchart.xcdatamodel; sourceTree = "<group>"; };
-		50F371B71D541D6B005CB142 /* XLChart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = XLChart.h; path = xlchart/XLChart.h; sourceTree = "<group>"; };
-		50F371B81D541D6B005CB142 /* XLChart.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = XLChart.m; path = xlchart/XLChart.m; sourceTree = "<group>"; };
 		50F371BB1D5880BC005CB142 /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Constants.h; path = xlchart/Constants.h; sourceTree = "<group>"; };
 		50F371BC1D5880BC005CB142 /* DRScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DRScrollView.h; path = xlchart/DRScrollView.h; sourceTree = "<group>"; };
 		50F371BD1D5880BC005CB142 /* DRScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DRScrollView.m; path = xlchart/DRScrollView.m; sourceTree = "<group>"; };
@@ -164,8 +161,6 @@
 				50F371BD1D5880BC005CB142 /* DRScrollView.m */,
 				50F371BE1D5880BC005CB142 /* Legend */,
 				50F371C11D5880BC005CB142 /* LineChart */,
-				50F371B71D541D6B005CB142 /* XLChart.h */,
-				50F371B81D541D6B005CB142 /* XLChart.m */,
 			);
 			name = xlchart;
 			sourceTree = "<group>";
@@ -331,7 +326,6 @@
 				50F371B51D541D1A005CB142 /* ViewController.m in Sources */,
 				50F371C61D5880BC005CB142 /* DRScrollView.m in Sources */,
 				50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */,
-				50F371B91D541D6B005CB142 /* XLChart.m in Sources */,
 				50F371B41D541D1A005CB142 /* main.m in Sources */,
 				50F371B61D541D1A005CB142 /* xlchart.xcdatamodeld in Sources */,
 				50F371AF1D541D1A005CB142 /* AppDelegate.m in Sources */,
