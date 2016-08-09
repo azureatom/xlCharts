@@ -10,8 +10,13 @@
 #import "LegendView.h"
 
 @protocol MultiLineGraphViewDelegate  <NSObject>
-- (void)didTapWithValuesAtX:(NSString *)xValue valuesAtY:(NSString *)yValue;
-//Returns, the touched point values
+/**
+ *  点击点的index和y值
+ *
+ *  @param pointIndex 是第几个点，也即x轴的第几个刻度值
+ *  @param yValue 点击点对应的y值
+ */
+- (void)didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
 @end
 
 @protocol MultiLineGraphViewDataSource  <NSObject>
@@ -49,8 +54,7 @@
 //Set yData for Line on Line Graph
 
 @optional
-- (UIView *)customViewForLineChartTouchWithXValue:(NSString *)xValue andYValue:(NSString *)yValue;
-//Set Custom View for touch on each item in a Line Chart
+- (UIView *)customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
 @interface MultiLineGraphView : UIView
@@ -70,10 +74,10 @@
 @property (assign, nonatomic) BOOL enablePinch;//是否支持pinch手势放大缩小
 
 //show MARKER when interacting with graph
-@property (nonatomic) BOOL showMarker; //Default is TRUE
+@property (nonatomic) BOOL showMarker; //是否显示十字线和默认的提示框，提示框默认显示在坐标系的上方，Default is YES
 //show CUSTOM MARKER when interacting with graph.
 //If Both MARKER and CUSTOM MARKER view are True then CUSTOM MARKER View Priorties over MARKER View.
-@property (nonatomic) BOOL showCustomMarkerView; //Default is FALSE
+@property (nonatomic) BOOL showCustomMarkerView; //是否显示自定义提示框，Default is NO
 //to set marker property
 @property (nonatomic, strong) UIColor *markerColor; //Default is [UIColor orangeColor]
 @property (nonatomic, strong) UIColor *markerTextColor; //Default is [UIColor whiteColor]

@@ -14,13 +14,11 @@
 
 const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
 const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
-const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的宽度，图标右侧的空白
+const static CGFloat k_graphHorizontalMargin = 60;//y轴刻度值的宽度，图标右侧的空白
+const static CGFloat k_pointRadius = 3;//画的点的半径
 
-@interface MultiLineGraphView()<UIScrollViewDelegate>{
-    CGFloat width;
-    CGFloat height;
-}
-
+@interface MultiLineGraphView()<UIScrollViewDelegate>
+@property (assign, nonatomic) CGPoint originalPoint;//原点的位置
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离，默认采用用户设置minPositionStepX。如果值过小，会修改以保证填满横向宽度
 @property (assign, nonatomic) CGFloat positionStepY;
 @property (assign, nonatomic) CGFloat yCeil;//实际采用的y轴刻度值的最大值，可能有点的y坐标比其还大。对于y坐标更大的点，画在最高的两条横线之间。
@@ -72,6 +70,7 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
 @synthesize customMinValidY;
 @synthesize presion;
 
+@synthesize originalPoint;
 @synthesize positionStepX;
 @synthesize positionStepY;
 @synthesize yCeil;
@@ -170,6 +169,12 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
 
 #pragma mark Draw Graph: createXAxisLine, createYAxisLine, createGraph
 - (void)drawGraph{
+    /*
+     ****** TODO ******
+     enablePinch实际没有实现，缩放代码handleGraphZoom, zoomGraph未完成。
+     目前只支持一条曲线，self.lineDataArray中多曲线(LineChartDataRenderer *)的支持未完善。
+     */
+    
     [self setupDataWithDataSource];
     
     const CGFloat selfWidth = self.frame.size.width;
@@ -236,15 +241,15 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     self.graphScrollView.contentSize = self.graphView.frame.size;
     //注意，如果self是navigationcontroller的第一个view，graphScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
     [self createYAxisLine];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
-    [self createGraph];
-    
-//
-//    if (self.showMarker) {
-//        [self createMarker];
-//    }
-//    if (self.showLegend) {
-//        [self createLegend];
-//    }
+    originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
+    [self createGraph];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
+
+    if (self.showMarker) {
+        [self createMarker];
+    }
+    if (self.showLegend) {
+        [self createLegend];
+    }
 }
 
 - (void)createXAxisLine{
@@ -553,42 +558,64 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     }
 }
 
+-(CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
+    //第pointIndex个点在x轴的位置
+    return k_graphHorizontalMargin + positionStepX * pointIndex;
+}
+
+-(CGPoint)pointForLine:(LineChartDataRenderer *)lineData at:(NSUInteger)pointIndex{
+    CGFloat yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] floatValue];
+    for (int i = 0; i < yAxisValues.count; ++i){
+        if (yValue <= ((NSNumber *)yAxisValues[i]).floatValue) {
+            //刻度值是上面的大，view里点的y坐标是下面的大
+            CGFloat yValueAbove = ((NSNumber *)yAxisValues[i]).floatValue;//点上方的y轴刻度值
+            CGFloat positionYAbove = ((NSNumber *)positionYOfYAxisValues[i]).floatValue;//点上方的y轴刻度值的位置
+            if (i == 0) {
+                return CGPointMake([self xPositionOfAxis:pointIndex], positionYAbove);
+            }
+            else{
+                CGFloat yValueBellow = ((NSNumber *)yAxisValues[i - 1]).floatValue;//点下方的y轴刻度值
+                CGFloat positionYBellow = ((NSNumber *)positionYOfYAxisValues[i - 1]).floatValue;//点下方的y轴刻度值的位置
+                return CGPointMake([self xPositionOfAxis:pointIndex], positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove));
+            }
+        }
+    }
+    NSAssert2(NO, @"Invalid point at index %zi of lineData.yAxisArray %@", pointIndex, lineData.yAxisArray);
+    return CGPointZero;
+}
+
 - (void)createGraph{
     for (LineChartDataRenderer *lineData in self.lineDataArray) {
-        int x = 0;
-        int y = 0;
+        if (lineData.yAxisArray.count == 0) {//没有点
+            continue;
+        }
         
-        y = [[lineData.yAxisArray objectAtIndex:0] floatValue] * positionStepY;
-        
-        CGPoint startPoint = CGPointMake(OFFSET_X, HEIGHT(self.graphView) - (OFFSET_Y + y));
-        CGPoint firstPoint = startPoint;
+        CGPoint startPoint = [self pointForLine:lineData at:0];
         if (lineData.drawPoints) {
             [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
+        }
+        
+        if (lineData.yAxisArray.count == 1) {
+            //只有一个点，画完这个点就结束，因为画path需要至少2个点
+            continue;
         }
         
         UIBezierPath *path = [UIBezierPath bezierPath];
         UIBezierPath *fillPath = [UIBezierPath bezierPath];
         [fillPath moveToPoint:startPoint];
         
-        CGPoint endPoint;
-        for (int i = 1; i < lineData.yAxisArray.count; i++){
-            x = i * positionStepX;
-            y = [[lineData.yAxisArray objectAtIndex:i] floatValue] * positionStepY;
+        for (int i = 1; i < lineData.yAxisArray.count; ++i) {
+            CGPoint nextPoint = [self pointForLine:lineData at:i];
             
-            endPoint = CGPointMake(x + OFFSET_X, HEIGHT(self.graphView) - ( y + OFFSET_Y));
-            
-            [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:endPoint]];
-            
-            [fillPath addLineToPoint:endPoint];
-            
-            startPoint = endPoint;
+            [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:nextPoint]];
+            [fillPath addLineToPoint:nextPoint];
             if (lineData.drawPoints) {
-                [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
+                [self drawPointsOnLine:nextPoint withColor:lineData.lineColor];
             }
+            startPoint = nextPoint;
         }
         
         [path closePath];
-        [path stroke];
         
         CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
         [shapeLayer setPath:[path CGPath]];
@@ -607,11 +634,10 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
         [self.graphView.layer addSublayer:shapeLayer];
         
         if (lineData.fillGraph) {
-            [fillPath addLineToPoint:CGPointMake(startPoint.x, HEIGHT(self.graphView) - OFFSET_Y)];
-            [fillPath addLineToPoint:CGPointMake(firstPoint.x, HEIGHT(self.graphView) - OFFSET_Y)];
-            [fillPath addLineToPoint:firstPoint];
+            [fillPath addLineToPoint:CGPointMake(startPoint.x, originalPoint.y)];
+            [fillPath addLineToPoint:originalPoint];//坐标原点的位置
+            [fillPath addLineToPoint:[self pointForLine:lineData at:0]];
             [fillPath closePath];
-            [fillPath stroke];
             
             [self fillGraphBackgroundWithPath:fillPath color:lineData.lineColor];
         }
@@ -681,7 +707,7 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     if (self.showMarker || self.showCustomMarkerView) {
         CGPoint pointTapped = [gesture locationInView:self.graphView];
         if (CGRectContainsPoint(self.graphView.frame, pointTapped)) {
-            [self findValueForTouch:pointTapped];
+            [self showMakerNearPoint:pointTapped];
         }
     }
 }
@@ -689,72 +715,64 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
 - (void)handleGraphZoom:(UIPinchGestureRecognizer *)gesture{
     [self hideMarker];
     
-    CGFloat pinchscale = [gesture scale];
-
-    if (gesture.state == UIGestureRecognizerStateEnded)  {
-        CGFloat pastScale = lastScale;
-        
-        width = pinchscale * width;
-        scaleFactor = height;
-        
-        lastScale = pinchscale;
-        
-        if (width <= WIDTH(self)) {
-            width = WIDTH(self);
-            scaleFactor = height;
-            lastScale = 1;
-        }
-        
-        if (pastScale != lastScale) {
-            [self zoomGraph];
-        }
+    if (gesture.state == UIGestureRecognizerStateEnded) {
+//        CGFloat pinchscale = [gesture scale];
+//        CGFloat pastScale = lastScale;
+//        CGFloat scaledWidth = pinchscale * WIDTH(self);
+//        scaleFactor = pinchscale;
+//        lastScale = pinchscale;
+//        
+//        if (scaledWidth <= WIDTH(self)) {
+//            scaledWidth = WIDTH(self);
+//            scaleFactor = scaledWidth / WIDTH(self);
+//            lastScale = 1;
+//        }
+//        
+//        if (pastScale != lastScale) {
+//            [self zoomGraph];
+//        }
     }
 }
 
 - (void)zoomGraph{
-    [self.graphView removeFromSuperview];
-    
-    self.graphView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, scaleFactor)];
-    [self.graphView setUserInteractionEnabled:YES];
-    
-    [self createYAxisLine];
-    [self createXAxisLine];
-    [self createGraph];
-    
-    [self.graphView setNeedsDisplay];
-    
-    [self.graphScrollView addSubview:self.graphView];
-    
-    [self.graphScrollView setNeedsDisplay];
-    
-    [self addSubview:self.graphScrollView];
-    [self.graphScrollView setContentSize:CGSizeMake(width, scaleFactor)];
-    
-    [self setNeedsDisplay];
+//    CGRect oldFrame = graphView.frame;
+//    [self.graphView removeFromSuperview];
+//    
+//    self.graphView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, oldFrame.size.width, scaleFactor)];
+//    [self.graphView setUserInteractionEnabled:YES];
+//    
+//    [self createYAxisLine];
+//    [self createXAxisLine];
+//    [self createGraph];
+//    
+//    [self.graphView setNeedsDisplay];
+//    
+//    [self.graphScrollView addSubview:self.graphView];
+//    
+//    [self.graphScrollView setNeedsDisplay];
+//    
+//    [self addSubview:self.graphScrollView];
+//    [self.graphScrollView setContentSize:CGSizeMake(oldFrame.size.width, scaleFactor)];
+//    
+//    [self setNeedsDisplay];
 }
 
--(CGPoint)pointForLine:(LineChartDataRenderer *)lineData at:(NSUInteger)pointIndex{
-    CGFloat yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] floatValue];
-    CGFloat positionY = k_graphVerticalMargin + yValue * positionStepY;//todo yValue * positionStepY需要按比例计算
-    return CGPointMake(k_graphHorizontalMargin + positionStepX * pointIndex, positionY);
-}
-
-#pragma mark Touch Action on a touch in a graph
-- (void)findValueForTouch:(CGPoint)pointTouched{
+- (void)showMakerNearPoint:(CGPoint)pointTouched{
     NSString *xString;
     NSNumber *yNumber;
     NSString *yString;//string presentation of yNumber
     CGFloat minDistance = MAXFLOAT;
-    NSUInteger closestPointIndex = MAXFLOAT;
-    CGPoint closestPoint;
+    CGPoint closestPoint;//距离最近的点
+    NSUInteger closestPointIndex = 0;
+    
     for (LineChartDataRenderer *lineData in self.lineDataArray) {
         for (int i = 0; i < lineData.yAxisArray.count; i++){
             CGPoint point = [self pointForLine:lineData at:i];
-            CGFloat distance = fabs([self distanceBetweenPoint:pointTouched andPoint:point]);
+            CGFloat distance = sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
             if (distance < minDistance) {
                 minDistance = distance;
-                closestPointIndex = i;
                 closestPoint = point;
+                closestPointIndex = i;
                 xString = [self.xAxisArray objectAtIndex:i];
                 yNumber = [lineData.yAxisArray objectAtIndex:i];
                 yString = [self yStringByPresion:((NSNumber *)yNumber).floatValue];
@@ -764,49 +782,66 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     
     [self hideMarker];
     
-    if (minDistance > positionStepX / 2 || closestPointIndex == MAXFLOAT) {
-        //距离过远的点不处理
+    //距离过远的点不处理
+    if (minDistance > (positionStepX + positionStepY) * 0.4) {
+        //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
         return;
     }
     
-    if (((UILabel *)self.xAxisLabels[closestPointIndex]).alpha < 1) {
-        //最近的点已经滑动到y轴左侧，不处理
-        return;
+    CGPoint contentOffset = graphScrollView.contentOffset;
+    if (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : k_pointRadius) < originalPoint.x + contentOffset.x) {
+        if (closestPoint.x == originalPoint.x){
+        }
+        //closestPoint左边缘在y轴左侧，需要将graphScrollView向右滑动使其完全显示出来，但是第一个点只显示一半
+        CGFloat needScroll = (originalPoint.x + contentOffset.x) - (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : k_pointRadius));
+        contentOffset.x -= needScroll;
+        [UIView animateWithDuration:0.2 animations:^{
+            self.graphScrollView.contentOffset = contentOffset;
+        }];
+    }
+    else if(closestPoint.x + (closestPoint.x == originalPoint.x ? 0 : k_pointRadius) > contentOffset.x + graphScrollView.frame.size.width){
+        //closestPoint在屏幕外右边，右边缘没有显示出来，需要将graphScrollView向左滑动使其完全显示出来
+        CGFloat needScroll = (closestPoint.x + k_pointRadius) - (contentOffset.x + graphScrollView.frame.size.width);
+        contentOffset.x += needScroll;
+        [UIView animateWithDuration:0.2 animations:^{
+            self.graphScrollView.contentOffset = contentOffset;
+        }];
     }
     
-    [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, HEIGHT(self.graphView) - OFFSET_Y) endPoint:CGPointMake(closestPoint.x, OFFSET_Y)] CGPath]];
+    [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) endPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
     [self.xMarker setHidden:NO];
     
-    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(OFFSET_X, closestPoint.y) endPoint:CGPointMake(WIDTH(self.graphView) - OFFSET_X, closestPoint.y)] CGPath]];
+    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count - 1], closestPoint.y)] CGPath]];
     [self.yMarker setHidden:NO];
     
     if (self.showCustomMarkerView){
         [self.marker setHidden:YES];
         [self.marker removeFromSuperview];
         
-        self.customMarkerView = [self.dataSource customViewForLineChartTouchWithXValue:xString andYValue:yString];
+        self.customMarkerView = [self.dataSource customViewForPoint:closestPointIndex andYValue:yNumber];
         
         if (self.customMarkerView != nil) {
-            CGFloat viewWidth = WIDTH(self.customMarkerView);
-            CGFloat viewHeight = HEIGHT(self.customMarkerView);
-            CGRect graphFrame = CGRectInset(self.graphView.frame, OFFSET_X, OFFSET_Y);
+            CGSize viewSize = self.customMarkerView.frame.size;
+            CGRect pathFrame = CGRectInset(self.graphView.frame, k_graphHorizontalMargin, k_graphVerticalMargin);//graphView中曲线区域的rect，去掉四周的空白
             
             //makerView优先显示在selectedPoint的左下角，如果显示不开则显示在右方或上方
             CGPoint makerViewOrigin = CGPointZero;
-            if (graphFrame.size.height + graphFrame.origin.y - closestPoint.y >= viewHeight) {
+            if (CGRectGetMaxY(pathFrame) - closestPoint.y >= viewSize.height) {
                 makerViewOrigin.y = closestPoint.y;
             }
             else{
-                makerViewOrigin.y = closestPoint.y - viewHeight;
+                makerViewOrigin.y = closestPoint.y - viewSize.height;
             }
-            if (closestPoint.x - graphFrame.origin.x >= viewWidth) {
-                makerViewOrigin.x = closestPoint.x - viewWidth;
+            if (closestPoint.x - pathFrame.origin.x >= viewSize.width
+                && closestPoint.x - viewSize.width >= originalPoint.x + graphScrollView.contentOffset.x) {
+                //如果pathFrame中closestPoint左边空间足够 && graphScrollView当前滚动后的显示区域仍然足够
+                makerViewOrigin.x = closestPoint.x - viewSize.width;
             }
             else{
                 makerViewOrigin.x = closestPoint.x;
             }
             
-            [self.customMarkerView setFrame:CGRectMake(makerViewOrigin.x, makerViewOrigin.y, viewWidth, viewHeight)];
+            [self.customMarkerView setFrame:CGRectMake(makerViewOrigin.x, makerViewOrigin.y, viewSize.width, viewSize.height)];
             [self.graphView addSubview:self.customMarkerView];
         }
         [self.graphScrollView addSubview:self.customMarkerView];
@@ -814,21 +849,15 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
     else if (self.showMarker) {
         [self.marker setXString:xString];
         [self.marker setYString:yString];
-        [self.marker drawAtPoint:CGPointMake(closestPoint.x, OFFSET_Y)];
+        [self.marker drawAtPoint:CGPointMake(closestPoint.x, k_graphVerticalMargin)];
         [self.marker setHidden:NO];
     }
     
     [self setNeedsDisplay];
     
-    if ([self.delegate respondsToSelector:@selector(didTapWithValuesAtX:valuesAtY:)]) {
-        [self.delegate didTapWithValuesAtX:xString valuesAtY:yString];
+    if ([self.delegate respondsToSelector:@selector(didTapPoint:valuesAtY:)]) {
+        [self.delegate didTapPoint:closestPointIndex valuesAtY:yNumber];
     }
-}
-
-- (CGFloat)distanceBetweenPoint:(CGPoint)a andPoint:(CGPoint)b{
-    CGFloat a2 = powf(a.x-b.x, 2.f);
-    CGFloat b2 = powf(a.y-b.y, 2.f);
-    return sqrtf(a2 + b2);
 }
 
 - (void)hideMarker{
@@ -886,13 +915,13 @@ const static CGFloat k_graphHorizontalMargin = OFFSET_X * 2;//y轴刻度值的�
 
 - (void)drawPointsOnLine:(CGPoint)point withColor:(UIColor *)color{
     UIBezierPath *pointPath = [UIBezierPath bezierPath];
-    [pointPath addArcWithCenter:point radius:3 startAngle:0 endAngle:2 * M_PI clockwise:YES];
+    [pointPath addArcWithCenter:point radius:k_pointRadius startAngle:0 endAngle:2 * M_PI clockwise:YES];
     
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     [shapeLayer setPath:pointPath.CGPath];
-    [shapeLayer setStrokeColor:[UIColor whiteColor].CGColor];
+    [shapeLayer setStrokeColor:color.CGColor];//如果StrokeColor和FillColor不同，则画出的是环
     [shapeLayer setFillColor:color.CGColor];
-    [shapeLayer setLineWidth:1.0];
+    [shapeLayer setLineWidth:0];
     [shapeLayer setShouldRasterize:YES];
     [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
     [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];

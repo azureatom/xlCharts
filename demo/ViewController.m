@@ -26,7 +26,7 @@
     [button setTitle:@"切换曲线数据" forState:UIControlStateNormal];
     button.titleLabel.font = [UIFont systemFontOfSize:10];
     [button setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    button.tag = 15;
+    button.tag = 28;
     [button addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
     
@@ -60,10 +60,11 @@
     [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
     
     lineGraphView.enablePinch = NO;
-    lineGraphView.showMarker = NO;
+    lineGraphView.showMarker = YES;
     lineGraphView.showCustomMarkerView = YES;
-    
-    
+    lineGraphView.markerColor = [UIColor orangeColor];
+    lineGraphView.markerWidth = 0.4;
+
     lineGraphView.minPositionStepX = 30;
     lineGraphView.segmentsOfYAxis = 5;
     lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
@@ -80,7 +81,7 @@
         case 0:
             return @[];
         case 1:
-            return @[@"只有一个点时不显示x轴"];
+            return @[@"只有一个点时不显示x轴"];//2个元素就会显示x轴：@[@"只有一个点时不显示x轴", @""];
         case 2:
             return @[@"1", @"2"];
         case 3:
@@ -134,6 +135,15 @@
             return @[@"原点x", @"x1", @"x2", @"x3", @"x4", @"x5", @"x6", @"x7", @"x8", @"x9"];
         case 27:
             return @[@"原点x", @"x1", @"x2", @"x3", @"x4", @"x5", @"x6", @"x7", @"x8", @"x9"];
+        
+        case 28:
+            return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9"];
+        case 29:
+            return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"10", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"20"];
+        case 30:
+            return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9"];
+        case 31:
+            return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"10", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"20"];
         default:
             button.tag = 0;
             return [self xDataForLineToBePlotted];
@@ -225,13 +235,22 @@
             return @[@1000, @300, @250, @210, @200, @150, @100, @-250, @-300, @-520];
         case 27:
             return @[@1000, @300, @250, @210, @200, @150, @100, @-250, @-300, @-700];
+            
+        case 28:
+            return @[@0, @1, @2, @3, @4, @5, @6, @7, @8, @9];
+        case 29:
+            return @[@0, @1, @2, @3, @4, @5, @6, @7, @8, @9, @10, @11, @12, @13, @14, @15, @16, @17, @18, @19, @20];
+        case 30:
+            return @[@9, @8, @2, @3, @4, @5, @6, @3, @2, @1];
+        case 31:
+            return @[@22, @21, @2, @3, @4, @5, @6, @7, @8, @9, @10, @11, @12, @13, @14, @15, @16, @17, @3, @2, @1];
         default:
             button.tag = 0;
             return [self dataForLineWithLineNumber:lineNumber];
     }
 }
 
-- (UIView *)customViewForLineChartTouchWithXValue:(NSString *)xValue andYValue:(NSString *)yValue{
+- (UIView *)customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
     UIView *view = [[UIView alloc] init];
     [view setBackgroundColor:[UIColor whiteColor]];
     [view.layer setCornerRadius:4.0F];
@@ -244,8 +263,9 @@
     UILabel *label = [[UILabel alloc] init];
     [label setFont:[UIFont systemFontOfSize:12]];
     [label setTextAlignment:NSTextAlignmentCenter];
-    [label setText:[NSString stringWithFormat:@"日期Line Data: %@", yValue]];
-    [label setFrame:CGRectMake(0, 0, 100, 30)];
+    [label setText:[NSString stringWithFormat:@"日期 %zi日\nLine Data: %@", pointIndex, yValue]];
+    label.numberOfLines = 2;
+    [label setFrame:CGRectMake(0, 0, 100, 50)];
     [view addSubview:label];
     
     [view setFrame:label.frame];
@@ -253,7 +273,7 @@
 }
 
 #pragma mark MultiLineGraphViewDelegate
-- (void)didTapWithValuesAtX:(NSString *)xValue valuesAtY:(NSString *)yValue{
-    NSLog(@"Line Chart: Value-X:%@, Value-Y:%@",xValue, yValue);
+- (void)didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
+    NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
 @end
