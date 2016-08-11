@@ -76,7 +76,7 @@
 }
 
 #pragma mark MultiLineGraphViewDataSource
-- (NSArray *)xDataForLineToBePlotted{
+- (NSArray *)lineGraphXAxisData:(MultiLineGraphView *)graph{
     switch (button.tag) {
         case 0:
             return @[];
@@ -146,35 +146,35 @@
             return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"10", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"20"];
         default:
             button.tag = 0;
-            return [self xDataForLineToBePlotted];
+            return [self lineGraphXAxisData:graph];
     }
 }
 
-- (NSInteger)numberOfLinesToBePlotted{
+- (NSInteger)lineGraphNumberOfLines:(MultiLineGraphView *)graph{
     return 1;
 }
 
-- (UIColor *)colorForTheLineWithLineNumber:(NSInteger)lineNumber{
+- (UIColor *)lineGraph:(MultiLineGraphView *)graph lineColor:(NSInteger)lineNumber{
     return [UIColor blueColor];
 }
 
-- (CGFloat)widthForTheLineWithLineNumber:(NSInteger)lineNumber{
+- (CGFloat)lineGraph:(MultiLineGraphView *)graph lineWidth:(NSInteger)lineNumber{
     return 1;
 }
 
-- (NSString *)nameForTheLineWithLineNumber:(NSInteger)lineNumber{
+- (NSString *)lineGraph:(MultiLineGraphView *)graph lineName:(NSInteger)lineNumber{
     return @"A折价率";
 }
 
-- (BOOL)shouldFillGraphWithLineNumber:(NSInteger)lineNumber{
+- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldFill:(NSInteger)lineNumber{
     return NO;
 }
 
-- (BOOL)shouldDrawPointsWithLineNumber:(NSInteger)lineNumber{
+- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldDrawPoints:(NSInteger)lineNumber{
     return YES;
 }
 
-- (NSArray *)dataForLineWithLineNumber:(NSInteger)lineNumber{
+- (NSArray *)lineGraph:(MultiLineGraphView *)graph yAxisData:(NSInteger)lineNumber{
     switch (button.tag) {
         case 0:
             return @[];
@@ -246,11 +246,11 @@
             return @[@22, @21, @2, @3, @4, @5, @6, @7, @8, @9, @10, @11, @12, @13, @14, @15, @16, @17, @3, @2, @1];
         default:
             button.tag = 0;
-            return [self dataForLineWithLineNumber:lineNumber];
+            return [self lineGraph:graph yAxisData:lineNumber];
     }
 }
 
-- (UIView *)customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
+- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
     UIView *view = [[UIView alloc] init];
     [view setBackgroundColor:[UIColor whiteColor]];
     [view.layer setCornerRadius:4.0F];
@@ -273,7 +273,7 @@
 }
 
 #pragma mark MultiLineGraphViewDelegate
-- (void)didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
+-(void)lineGraph:(MultiLineGraphView *)graph didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
     NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
 @end

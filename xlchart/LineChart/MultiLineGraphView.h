@@ -9,14 +9,17 @@
 #import <UIKit/UIKit.h>
 #import "LegendView.h"
 
+@class MultiLineGraphView;
+
 @protocol MultiLineGraphViewDelegate  <NSObject>
 /**
  *  点击点的index和y值
  *
+ *  @param graph
  *  @param pointIndex 是第几个点，也即x轴的第几个刻度值
  *  @param yValue 点击点对应的y值
  */
-- (void)didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
+- (void)lineGraph:(MultiLineGraphView *)graph didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
 @end
 
 @protocol MultiLineGraphViewDataSource  <NSObject>
@@ -25,36 +28,36 @@
  *
  *  @return array of NSString, only draw x-axis if string is not empty, that is exclude @""
  */
-- (NSArray *)xDataForLineToBePlotted;
+- (NSArray *)lineGraphXAxisData:(MultiLineGraphView *)graph;
 
-- (NSInteger)numberOfLinesToBePlotted;
+- (NSInteger)lineGraphNumberOfLines:(MultiLineGraphView *)graph;
 //Set number of lines to be plotted on the Line Graph
 
-- (UIColor *)colorForTheLineWithLineNumber:(NSInteger)lineNumber;
+- (UIColor *)lineGraph:(MultiLineGraphView *)graph lineColor:(NSInteger)lineNumber;
 //Set Line Color for each for Line on the Line Graph
 //Default is Black Color
 
-- (CGFloat)widthForTheLineWithLineNumber:(NSInteger)lineNumber;
+- (CGFloat)lineGraph:(MultiLineGraphView *)graph lineWidth:(NSInteger)lineNumber;
 //Set Line Width for each for Line on the Line Graph
 //Default is 1.0F
 
-- (NSString *)nameForTheLineWithLineNumber:(NSInteger)lineNumber;
+- (NSString *)lineGraph:(MultiLineGraphView *)graph lineName:(NSInteger)lineNumber;
 //Set Line Name for each for Line on the Line Graph
 //Default is Empty String
 
-- (BOOL)shouldFillGraphWithLineNumber:(NSInteger)lineNumber;
+- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldFill:(NSInteger)lineNumber;
 //Set Fill Property for each for Line on the Line Graph
 //Default is False
 
-- (BOOL)shouldDrawPointsWithLineNumber:(NSInteger)lineNumber;
+- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldDrawPoints:(NSInteger)lineNumber;
 //Set Draw Points Property for each for Line on the Line Graph
 //Default is False
 
-- (NSArray *)dataForLineWithLineNumber:(NSInteger)lineNumber;
+- (NSArray *)lineGraph:(MultiLineGraphView *)graph yAxisData:(NSInteger)lineNumber;
 //Set yData for Line on Line Graph
 
 @optional
-- (UIView *)customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
+- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
 @interface MultiLineGraphView : UIView

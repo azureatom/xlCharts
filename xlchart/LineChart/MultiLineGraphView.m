@@ -143,21 +143,21 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
 
 #pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
-    self.xAxisArray = [self.dataSource xDataForLineToBePlotted];
+    self.xAxisArray = [self.dataSource lineGraphXAxisData:self];
     xAxisLabels = [[NSMutableArray alloc] init];
     yAxisValues = [[NSMutableArray alloc] init];
     positionYOfYAxisValues = [[NSMutableArray alloc] init];
     self.lineDataArray = [[NSMutableArray alloc] init];
     self.legendArray = [[NSMutableArray alloc] init];
     
-    for (int i = 0 ; i < [self.dataSource numberOfLinesToBePlotted]; i++) {
+    for (int i = 0 ; i < [self.dataSource lineGraphNumberOfLines:self]; i++) {
         LineChartDataRenderer *lineData = [[LineChartDataRenderer alloc] init];
-        lineData.lineColor = [self.dataSource colorForTheLineWithLineNumber:i];
-        lineData.lineWidth = [self.dataSource widthForTheLineWithLineNumber:i];
-        lineData.graphName = [self.dataSource nameForTheLineWithLineNumber:i];
-        lineData.fillGraph = [self.dataSource shouldFillGraphWithLineNumber:i];
-        lineData.drawPoints = [self.dataSource shouldDrawPointsWithLineNumber:i];
-        lineData.yAxisArray = [self.dataSource dataForLineWithLineNumber:i];
+        lineData.lineColor = [self.dataSource lineGraph:self lineColor:i];
+        lineData.lineWidth = [self.dataSource lineGraph:self lineWidth:i];
+        lineData.graphName = [self.dataSource lineGraph:self lineName:i];
+        lineData.fillGraph = [self.dataSource lineGraph:self shouldFill:i];
+        lineData.drawPoints = [self.dataSource lineGraph:self shouldDrawPoints:i];
+        lineData.yAxisArray = [self.dataSource lineGraph:self yAxisData:i];
         [self.lineDataArray addObject:lineData];
         
         LegendDataRenderer *data = [[LegendDataRenderer alloc] init];
@@ -818,7 +818,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
         [self.marker setHidden:YES];
         [self.marker removeFromSuperview];
         
-        self.customMarkerView = [self.dataSource customViewForPoint:closestPointIndex andYValue:yNumber];
+        self.customMarkerView = [self.dataSource lineGraph:self customViewForPoint:closestPointIndex andYValue:yNumber];
         
         if (self.customMarkerView != nil) {
             CGSize viewSize = self.customMarkerView.frame.size;
@@ -855,8 +855,8 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     
     [self setNeedsDisplay];
     
-    if ([self.delegate respondsToSelector:@selector(didTapPoint:valuesAtY:)]) {
-        [self.delegate didTapPoint:closestPointIndex valuesAtY:yNumber];
+    if ([self.delegate respondsToSelector:@selector(lineGraph:didTapPoint:valuesAtY:)]) {
+        [self.delegate lineGraph:self didTapPoint:closestPointIndex valuesAtY:yNumber];
     }
 }
 
