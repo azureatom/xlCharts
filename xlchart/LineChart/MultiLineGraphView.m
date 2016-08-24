@@ -561,7 +561,7 @@
 -(CGPoint)pointForLine:(LineChartDataRenderer *)lineData at:(NSUInteger)pointIndex{
     double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
     for (int i = 0; i < yAxisValues.count; ++i){
-        if (yValue <= ((NSNumber *)yAxisValues[i]).doubleValue) {
+        if (yValue - ((NSNumber *)yAxisValues[i]).doubleValue < 0.000001) {//double的比较需要比较差值和一个小数，比如-0.5999999995和-0.6000000001
             //刻度值是上面的大，view里点的y坐标是下面的大
             double yValueAbove = ((NSNumber *)yAxisValues[i]).doubleValue;//点上方的y轴刻度值
             CGFloat positionYAbove = ((NSNumber *)positionYOfYAxisValues[i]).floatValue;//点上方的y轴刻度值的位置
