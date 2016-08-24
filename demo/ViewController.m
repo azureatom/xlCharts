@@ -250,7 +250,7 @@
     }
 }
 
-- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
+- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
     UIView *view = [[UIView alloc] init];
     [view setBackgroundColor:[UIColor whiteColor]];
     [view.layer setCornerRadius:4.0F];
@@ -273,7 +273,7 @@
 }
 
 #pragma mark MultiLineGraphViewDelegate
--(void)lineGraph:(MultiLineGraphView *)graph didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
+- (void)lineGraph:(MultiLineGraphView *)graph didTapLine:(NSInteger)lineNumber atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
     NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
 @end

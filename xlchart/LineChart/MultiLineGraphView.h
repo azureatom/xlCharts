@@ -16,10 +16,11 @@
  *  点击点的index和y值
  *
  *  @param graph
+ *  @lineNumber 第几根线
  *  @param pointIndex 是第几个点，也即x轴的第几个刻度值
  *  @param yValue 点击点对应的y值
  */
-- (void)lineGraph:(MultiLineGraphView *)graph didTapPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
+- (void)lineGraph:(MultiLineGraphView *)graph didTapLine:(NSInteger)lineNumber atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
 @end
 
 @protocol MultiLineGraphViewDataSource  <NSObject>
@@ -57,7 +58,7 @@
 //Set yData for Line on Line Graph
 
 @optional
-- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForPoint:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
+- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
 @interface MultiLineGraphView : UIView

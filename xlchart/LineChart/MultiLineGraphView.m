@@ -758,6 +758,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
 }
 
 - (void)showMakerNearPoint:(CGPoint)pointTouched{
+    NSInteger lineNumber = -1;//点击的是第几根线的点
     NSString *xString;
     NSNumber *yNumber;
     NSString *yString;//string presentation of yNumber
@@ -765,8 +766,9 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     CGPoint closestPoint;//距离最近的点
     NSUInteger closestPointIndex = 0;
     
-    for (LineChartDataRenderer *lineData in self.lineDataArray) {
-        for (int i = 0; i < lineData.yAxisArray.count; i++){
+    for (int lIndex = 0; lIndex < self.lineDataArray.count; ++lIndex) {
+        LineChartDataRenderer *lineData = self.lineDataArray[lIndex];
+        for (int i = 0; i < lineData.yAxisArray.count; ++i){
             CGPoint point = [self pointForLine:lineData at:i];
             CGFloat distance = sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
             if (distance < minDistance) {
@@ -776,6 +778,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
                 xString = [self.xAxisArray objectAtIndex:i];
                 yNumber = [lineData.yAxisArray objectAtIndex:i];
                 yString = [self yStringByPresion:((NSNumber *)yNumber).floatValue];
+                lineNumber = lIndex;
             }
         }
     }
@@ -818,8 +821,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
         [self.marker setHidden:YES];
         [self.marker removeFromSuperview];
         
-        self.customMarkerView = [self.dataSource lineGraph:self customViewForPoint:closestPointIndex andYValue:yNumber];
-        
+        self.customMarkerView = [self.dataSource lineGraph:self customViewForLine:lineNumber pointIndex:closestPointIndex andYValue:yNumber];
         if (self.customMarkerView != nil) {
             CGSize viewSize = self.customMarkerView.frame.size;
             CGRect pathFrame = CGRectInset(self.graphView.frame, k_graphHorizontalMargin, k_graphVerticalMargin);//graphView中曲线区域的rect，去掉四周的空白
@@ -855,8 +857,8 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     
     [self setNeedsDisplay];
     
-    if ([self.delegate respondsToSelector:@selector(lineGraph:didTapPoint:valuesAtY:)]) {
-        [self.delegate lineGraph:self didTapPoint:closestPointIndex valuesAtY:yNumber];
+    if ([self.delegate respondsToSelector:@selector(lineGraph:didTapLine:atPoint:valuesAtY:)]) {
+        [self.delegate lineGraph:self didTapLine:lineNumber atPoint:closestPointIndex valuesAtY:yNumber];
     }
 }
 
