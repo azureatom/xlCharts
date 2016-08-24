@@ -47,6 +47,7 @@
 @synthesize dataSource;
 @synthesize textFont;
 @synthesize textColor;
+@synthesize presion;
 @synthesize drawGridX;
 @synthesize drawGridY;
 @synthesize gridLineColor;
@@ -64,7 +65,8 @@
 @synthesize segmentsOfYAxis;
 @synthesize customMaxValidY;
 @synthesize customMinValidY;
-@synthesize presion;
+@synthesize filterYOutOfRange;
+@synthesize filteredIndexArray;
 
 @synthesize originalPoint;
 @synthesize positionStepX;
@@ -100,6 +102,7 @@
         
         self.textColor = [UIColor blackColor];
         self.textFont = [UIFont systemFontOfSize:12];
+        self.presion = 0;
         
         self.markerColor = [UIColor orangeColor];
         self.markerTextColor = [UIColor whiteColor];
@@ -108,7 +111,7 @@
         self.showLegend = TRUE;
         self.legendViewType = LegendTypeVertical;
         
-        self.enablePinch = YES;
+        self.enablePinch = NO;
         self.showMarker = YES;
         self.showCustomMarkerView = NO;
         
@@ -116,7 +119,8 @@
         segmentsOfYAxis = 5;
         customMaxValidY = MAXFLOAT / 4;
         customMinValidY = -MAXFLOAT / 4;
-        self.presion = 0;
+        filterYOutOfRange = NO;
+        filteredIndexArray = nil;
         
         scaleFactor = 1;
         lastScale = 1;
@@ -140,13 +144,13 @@
 
 #pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
-    self.xAxisArray = [self.dataSource lineGraphXAxisData:self];
     xAxisLabels = [[NSMutableArray alloc] init];
     yAxisValues = [[NSMutableArray alloc] init];
     positionYOfYAxisValues = [[NSMutableArray alloc] init];
     self.lineDataArray = [[NSMutableArray alloc] init];
     self.legendArray = [[NSMutableArray alloc] init];
     
+    filteredIndexArray = nil;
     for (int i = 0 ; i < [self.dataSource lineGraphNumberOfLines:self]; i++) {
         LineChartDataRenderer *lineData = [[LineChartDataRenderer alloc] init];
         lineData.lineColor = [self.dataSource lineGraph:self lineColor:i];
@@ -154,7 +158,23 @@
         lineData.graphName = [self.dataSource lineGraph:self lineName:i];
         lineData.fillGraph = [self.dataSource lineGraph:self shouldFill:i];
         lineData.drawPoints = [self.dataSource lineGraph:self shouldDrawPoints:i];
-        lineData.yAxisArray = [self.dataSource lineGraph:self yAxisData:i];
+        if (filterYOutOfRange) {
+            NSArray *unfilteredYAxisArray = [self.dataSource lineGraph:self yAxisData:i];
+            NSMutableArray *filteredYAxisArray = [NSMutableArray new];
+            NSMutableArray *tempFilteredIndexArray = [NSMutableArray new];//筛选后的在原始array里的index
+            for (int i = 0; i < unfilteredYAxisArray.count; ++i) {
+                NSNumber *n = unfilteredYAxisArray[i];
+                if (n.doubleValue - customMinValidY > 0.000001 && customMaxValidY - n.doubleValue > 0.000001) {
+                    [filteredYAxisArray addObject:n];
+                    [tempFilteredIndexArray addObject:@(i)];//警告⚠️：最后赋值给filteredIndexArray时没有考虑多条曲线的情况
+                }
+            }
+            filteredIndexArray = tempFilteredIndexArray;
+            lineData.yAxisArray = filteredYAxisArray;
+        }
+        else{
+            lineData.yAxisArray = [self.dataSource lineGraph:self yAxisData:i];
+        }
         [self.lineDataArray addObject:lineData];
         
         LegendDataRenderer *data = [[LegendDataRenderer alloc] init];
@@ -162,6 +182,8 @@
         [data setLegendColor:lineData.lineColor];
         [self.legendArray addObject:data];
     }
+    
+    self.xAxisArray = [self.dataSource lineGraphXAxisData:self filtered:filteredIndexArray];
 }
 
 #pragma mark Draw Graph: createXAxisLine, createYAxisLine, createGraph
@@ -185,32 +207,32 @@
      x轴和x轴刻度值、曲线在graphScrollView上，随graphScrollView左右滑动。
      x轴和y轴的刻度值都是label中点对准刻度线。
      原点的
-        x刻度值xAxisLabel显示在y轴的正下方，也即xAxisLabel中心和y轴对齐。当x轴刻度值label左滑超过y轴，且超过label一半长度后，继续左滑逐渐变透明，也即xAxisLabel.alpha = xAxisLabel在y轴右边的长度/xAxisLabel半长。
-        y刻度值显示在x轴的正左方，也即文字中点和x轴对齐，因此x轴下方余出k_graphVerticalMargin再显示x刻度值。
+     x刻度值xAxisLabel显示在y轴的正下方，也即xAxisLabel中心和y轴对齐。当x轴刻度值label左滑超过y轴，且超过label一半长度后，继续左滑逐渐变透明，也即xAxisLabel.alpha = xAxisLabel在y轴右边的长度/xAxisLabel半长。
+     y刻度值显示在x轴的正左方，也即文字中点和x轴对齐，因此x轴下方余出k_graphVerticalMargin再显示x刻度值。
      由于x轴刻度值左滑过y轴才会逐渐透明，因此self、graphView、graphScrollView宽度一样，但在self左部覆盖一个柱形yAxisView遮住graphScrollView左小半部。
      
      ******view排列关系******
      self水平方向：
-        self(yAxisView(宽度k_graphLeftMargin，显示y轴和y轴刻度值),
-             graphScrollView(左小半部k_graphLeftMargin范围被yAxisView覆盖)
-            )
+     self(yAxisView(宽度k_graphLeftMargin，显示y轴和y轴刻度值),
+     graphScrollView(左小半部k_graphLeftMargin范围被yAxisView覆盖)
+     )
      self竖直方向：
-        graphScrollView
-        LegendView
+     graphScrollView
+     LegendView
      
      如果y比y轴最大的刻度值还大，则y轴往上延伸一段表示无穷大，超大的数据点用空心而不是实心
      
      graphView占满graphScrollView，曲线点少则x相邻刻度值长度拉长，以保证graphView长度==graphScrollView长度；曲线点多则超过graphScrollView长度，需要左右滑动。graphScrollView.contentSize = graphView.frame.size
      水平方向：
-        左边空白 k_graphLeftMargin
-        曲线和各刻度线表格
-        右边空白 k_graphRightMargin
+     左边空白 k_graphLeftMargin
+     曲线和各刻度线表格
+     右边空白 k_graphRightMargin
      竖直方向：
-        空白 k_graphVerticalMargin
-        曲线和各刻度线表格
-        x轴
-        空白 k_graphVerticalMargin
-        x轴刻度值 k_xAxisLabelHeight
+     空白 k_graphVerticalMargin
+     曲线和各刻度线表格
+     x轴
+     空白 k_graphVerticalMargin
+     x轴刻度值 k_xAxisLabelHeight
      */
     self.graphScrollView = [[DRScrollView alloc] initWithFrame:CGRectMake(0, 0, selfWidth, graphScrollHeight)];
     self.graphScrollView.showsVerticalScrollIndicator = NO;
@@ -233,14 +255,14 @@
     self.yAxisView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, k_graphLeftMargin, graphScrollHeight - k_xAxisLabelHeight)];
     self.yAxisView.backgroundColor = [UIColor whiteColor];
     [self addSubview:self.yAxisView];
-
+    
     [self createXAxisLine];//设置x坐标和grid竖线，同时设置graphView的宽度。在yAxisView上显示y轴
     self.graphScrollView.contentSize = self.graphView.frame.size;
     //注意，如果self是navigationcontroller的第一个view，graphScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
     [self createYAxisLine];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
     originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
     [self createGraph];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
-
+    
     if (self.showMarker) {
         [self createMarker];
     }
@@ -296,7 +318,7 @@
         }
     }
     
-//    NSLog(@"x轴positionStepX[%f], 坐标：%@", positionStepX, self.xAxisArray);
+    //NSLog(@"x轴positionStepX[%f], 坐标：%@", positionStepX, self.xAxisArray);
     CGRect graphViewFrame = graphView.frame;
     graphViewFrame.size.width = x + k_graphRightMargin;
     graphView.frame = graphViewFrame;
@@ -359,7 +381,7 @@
         yFloor = minY;
     }
     else{
-        const double validYRange = customMaxValidY - customMinValidY;
+        const double validYRange = customMaxValidY - customMinValidY + 0.000001;//比较两个double值是否相等，需要将差值和一个很小数比较
         
         //如果有曲线>=3个点，可能某个点距其它2个点特别远，导致曲线不好看，需要检查最大最小值的差距是否 <= validYRange
         if (maxY - minY <= validYRange) {
@@ -529,10 +551,10 @@
             }
         }
     }
-//    NSLog(@"所有点的y轴坐标：%@", allPointsYOfLines);
-//    NSLog(@"y轴minY %f, yFloor %f, maxY %f, yCeil %f", minY, yFloor, maxY, yCeil);
-//    NSLog(@"y轴坐标刻度值%zi个，%@", yAxisValues.count, yAxisValues);
-//    NSLog(@"y轴坐标:%@", positionYOfYAxisValues);
+    //NSLog(@"所有点的y轴坐标：%@", allPointsYOfLines);
+    //NSLog(@"y轴minY %f, yFloor %f, maxY %f, yCeil %f", minY, yFloor, maxY, yCeil);
+    //NSLog(@"y轴坐标刻度值%zi个，%@", yAxisValues.count, yAxisValues);
+    //NSLog(@"y轴坐标:%@", positionYOfYAxisValues);
     
     const CGFloat lineStartX = k_graphLeftMargin;//等于yAxisView的右边缘位置
     const CGFloat lineEndX = self.graphView.frame.size.width - k_graphRightMargin;
@@ -783,7 +805,7 @@
     [self hideMarker];
     
     //距离过远的点不处理
-    if (minDistance > (positionStepX + positionStepY) * 0.4) {
+    if (minDistance > (positionStepX + positionStepY) * 0.8) {
         //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
         return;
     }
@@ -817,8 +839,8 @@
     if (self.showCustomMarkerView){
         [self.marker setHidden:YES];
         [self.marker removeFromSuperview];
+        self.customMarkerView = [self.dataSource lineGraph:self customViewForLine:lineNumber pointIndex:(filterYOutOfRange ? ((NSNumber *)filteredIndexArray[closestPointIndex]).intValue : closestPointIndex) andYValue:yNumber];
         
-        self.customMarkerView = [self.dataSource lineGraph:self customViewForLine:lineNumber pointIndex:closestPointIndex andYValue:yNumber];
         if (self.customMarkerView != nil) {
             CGSize viewSize = self.customMarkerView.frame.size;
             CGRect pathFrame = self.graphView.frame;
@@ -826,7 +848,7 @@
             pathFrame.size.width -= k_graphLeftMargin + k_graphRightMargin;
             pathFrame.origin.y += k_graphVerticalMargin;
             pathFrame.size.height -= k_graphVerticalMargin * 2;//graphView中曲线区域的rect，去掉四周的空白
-
+            
             //makerView优先显示在selectedPoint的左下角，如果显示不开则显示在右方或上方
             CGPoint makerViewOrigin = CGPointZero;
             if (CGRectGetMaxY(pathFrame) - closestPoint.y >= viewSize.height) {
@@ -859,7 +881,7 @@
     [self setNeedsDisplay];
     
     if ([self.delegate respondsToSelector:@selector(lineGraph:didTapLine:atPoint:valuesAtY:)]) {
-        [self.delegate lineGraph:self didTapLine:lineNumber atPoint:closestPointIndex valuesAtY:yNumber];
+        [self.delegate lineGraph:self didTapLine:lineNumber atPoint:(filterYOutOfRange ? ((NSNumber *)filteredIndexArray[closestPointIndex]).intValue : closestPointIndex) valuesAtY:yNumber];
     }
 }
 
@@ -892,7 +914,7 @@
     [pathAnimation setToValue:(id)[color CGColor]];
     [pathAnimation setBeginTime:CACurrentMediaTime()];
     [pathAnimation setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
-
+    
     [shapeLayer addAnimation:pathAnimation forKey:@"fill"];
     
     [self.graphView.layer addSublayer:shapeLayer];

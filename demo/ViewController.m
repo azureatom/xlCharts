@@ -58,6 +58,7 @@
     
     [lineGraphView setTextColor:[UIColor blackColor]];
     [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
+    lineGraphView.presion = 2;
     
     lineGraphView.enablePinch = NO;
     lineGraphView.showMarker = YES;
@@ -69,14 +70,26 @@
     lineGraphView.segmentsOfYAxis = 5;
     lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
     lineGraphView.customMaxValidY = 200;
-    lineGraphView.presion = 2;
+    lineGraphView.filterYOutOfRange = YES;
     
     [lineGraphView reloadGraph];
     [self.view addSubview:lineGraphView];
 }
 
 #pragma mark MultiLineGraphViewDataSource
-- (NSArray *)lineGraphXAxisData:(MultiLineGraphView *)graph{
+- (NSArray *)lineGraphXAxisData:(MultiLineGraphView *)graph filtered:(NSArray *)filteredIndexArray{
+    NSMutableArray *dateStringArray = [NSMutableArray new];
+    for (int i = 0; i < ((NSNumber *)filteredIndexArray.lastObject).intValue + 1; ++i) {
+        [dateStringArray addObject:[NSString stringWithFormat:@"%d", i]];
+    }
+    if (filteredIndexArray != nil) {
+        NSMutableArray *filteredDateStringArray = [NSMutableArray new];
+        for (NSNumber *index in filteredIndexArray) {
+            [filteredDateStringArray addObject:dateStringArray[index.intValue]];
+        }
+//        return filteredDateStringArray;
+    }
+    
     switch (button.tag) {
         case 0:
             return @[];
@@ -146,7 +159,7 @@
             return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"10", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"20"];
         default:
             button.tag = 0;
-            return [self lineGraphXAxisData:graph];
+            return [self lineGraphXAxisData:graph filtered:filteredIndexArray];
     }
 }
 
