@@ -51,6 +51,7 @@
 @synthesize drawGridY;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
+@synthesize pointRadius;
 @synthesize enablePinch;
 @synthesize showMarker;
 @synthesize showCustomMarkerView;
@@ -95,6 +96,7 @@
         
         self.gridLineColor = [UIColor lightGrayColor];
         self.gridLineWidth = 0.3;
+        self.pointRadius = 1.5;
         
         self.textColor = [UIColor blackColor];
         self.textFont = [UIFont systemFontOfSize:12];
@@ -787,19 +789,19 @@
     }
     
     CGPoint contentOffset = graphScrollView.contentOffset;
-    if (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : k_pointRadius) < originalPoint.x + contentOffset.x) {
+    if (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : pointRadius) < originalPoint.x + contentOffset.x) {
         if (closestPoint.x == originalPoint.x){
         }
         //closestPoint左边缘在y轴左侧，需要将graphScrollView向右滑动使其完全显示出来，但是第一个点只显示一半
-        CGFloat needScroll = (originalPoint.x + contentOffset.x) - (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : k_pointRadius));
+        CGFloat needScroll = (originalPoint.x + contentOffset.x) - (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : pointRadius));
         contentOffset.x -= needScroll;
         [UIView animateWithDuration:0.2 animations:^{
             self.graphScrollView.contentOffset = contentOffset;
         }];
     }
-    else if(closestPoint.x + (closestPoint.x == originalPoint.x ? 0 : k_pointRadius) > contentOffset.x + graphScrollView.frame.size.width){
+    else if(closestPoint.x + (closestPoint.x == originalPoint.x ? 0 : pointRadius) > contentOffset.x + graphScrollView.frame.size.width){
         //closestPoint在屏幕外右边，右边缘没有显示出来，需要将graphScrollView向左滑动使其完全显示出来
-        CGFloat needScroll = (closestPoint.x + k_pointRadius) - (contentOffset.x + graphScrollView.frame.size.width);
+        CGFloat needScroll = (closestPoint.x + pointRadius) - (contentOffset.x + graphScrollView.frame.size.width);
         contentOffset.x += needScroll;
         [UIView animateWithDuration:0.2 animations:^{
             self.graphScrollView.contentOffset = contentOffset;
@@ -916,7 +918,7 @@
 
 - (void)drawPointsOnLine:(CGPoint)point withColor:(UIColor *)color{
     UIBezierPath *pointPath = [UIBezierPath bezierPath];
-    [pointPath addArcWithCenter:point radius:k_pointRadius startAngle:0 endAngle:2 * M_PI clockwise:YES];
+    [pointPath addArcWithCenter:point radius:pointRadius startAngle:0 endAngle:2 * M_PI clockwise:YES];
     
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     [shapeLayer setPath:pointPath.CGPath];

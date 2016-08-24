@@ -13,7 +13,6 @@ const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
 const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
 const static CGFloat k_graphLeftMargin = 60;//y轴刻度值的宽度，图表左侧的空白
 const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
-const static CGFloat k_pointRadius = 3;//画的点的半径
 
 @class MultiLineGraphView;
 
@@ -79,7 +78,8 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
 @property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is TRUE
 //set property for the grid
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
-@property (nonatomic) CGFloat gridLineWidth; //Default is 0.3F
+@property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
+@property (assign, nonatomic) CGFloat pointRadius; //曲线上画的点的半径，默认1.5
 
 @property (assign, nonatomic) BOOL enablePinch;//是否支持pinch手势放大缩小
 
