@@ -12,11 +12,6 @@
 #import "Constants.h"
 #import "LineChartDataRenderer.h"
 
-const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
-const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
-const static CGFloat k_graphHorizontalMargin = 60;//y轴刻度值的宽度，图标右侧的空白
-const static CGFloat k_pointRadius = 3;//画的点的半径
-
 @interface MultiLineGraphView()<UIScrollViewDelegate>
 @property (assign, nonatomic) CGPoint originalPoint;//原点的位置
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离，默认采用用户设置minPositionStepX。如果值过小，会修改以保证填满横向宽度
@@ -194,8 +189,8 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
      
      ******view排列关系******
      self水平方向：
-        self(yAxisView(宽度k_graphHorizontalMargin，显示y轴和y轴刻度值),
-             graphScrollView(左小半部k_graphHorizontalMargin范围被yAxisView覆盖)
+        self(yAxisView(宽度k_graphLeftMargin，显示y轴和y轴刻度值),
+             graphScrollView(左小半部k_graphLeftMargin范围被yAxisView覆盖)
             )
      self竖直方向：
         graphScrollView
@@ -205,9 +200,9 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
      
      graphView占满graphScrollView，曲线点少则x相邻刻度值长度拉长，以保证graphView长度==graphScrollView长度；曲线点多则超过graphScrollView长度，需要左右滑动。graphScrollView.contentSize = graphView.frame.size
      水平方向：
-        左边空白 k_graphHorizontalMargin
+        左边空白 k_graphLeftMargin
         曲线和各刻度线表格
-        右边空白 k_graphHorizontalMargin
+        右边空白 k_graphRightMargin
      竖直方向：
         空白 k_graphVerticalMargin
         曲线和各刻度线表格
@@ -233,7 +228,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     self.graphView.userInteractionEnabled = YES;
     [self.graphScrollView addSubview:self.graphView];
     
-    self.yAxisView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, k_graphHorizontalMargin, graphScrollHeight - k_xAxisLabelHeight)];
+    self.yAxisView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, k_graphLeftMargin, graphScrollHeight - k_xAxisLabelHeight)];
     self.yAxisView.backgroundColor = [UIColor whiteColor];
     [self addSubview:self.yAxisView];
 
@@ -270,13 +265,13 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     };
     
     //如果self.xAxisArray只有一个，则只会显示y轴
-    CGFloat everagePStepX = self.xAxisArray.count > 1 ? (self.graphScrollView.frame.size.width - k_graphHorizontalMargin * 2) / (self.xAxisArray.count - 1) : 0;
+    CGFloat everagePStepX = self.xAxisArray.count > 1 ? (self.graphScrollView.frame.size.width - k_graphLeftMargin - k_graphRightMargin) / (self.xAxisArray.count - 1) : 0;
     positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
     
     //划线的最高点和最低点的y
     const CGFloat positionYTop = k_graphVerticalMargin;
     const CGFloat positionYBottom = self.graphView.frame.size.height - k_graphVerticalMargin - k_xAxisLabelHeight;
-    CGFloat x = k_graphHorizontalMargin;
+    CGFloat x = k_graphLeftMargin;
     const CGFloat yOfXAxisLabel = positionYBottom + k_graphVerticalMargin;
     
     //在yAxisView上显示y轴
@@ -301,7 +296,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     
 //    NSLog(@"x轴positionStepX[%f], 坐标：%@", positionStepX, self.xAxisArray);
     CGRect graphViewFrame = graphView.frame;
-    graphViewFrame.size.width = x + k_graphHorizontalMargin;
+    graphViewFrame.size.width = x + k_graphRightMargin;
     graphView.frame = graphViewFrame;
 }
 
@@ -328,7 +323,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
     
     void(^createYAxisLabel)() = ^(NSString *s, CGFloat right, CGFloat centerY){
         NSAttributedString *attrString = [LegendView getAttributedString:s withFont:self.textFont];
-        CGSize textSize = [attrString boundingRectWithSize:CGSizeMake(k_graphHorizontalMargin, MAXFLOAT) options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil].size;
+        CGSize textSize = [attrString boundingRectWithSize:CGSizeMake(k_graphLeftMargin, MAXFLOAT) options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil].size;
         UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(right - textSize.width, centerY - textSize.height / 2, textSize.width, textSize.height)];
         l.adjustsFontSizeToFitWidth = YES;
         l.minimumScaleFactor = 0.7;
@@ -537,8 +532,8 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
 //    NSLog(@"y轴坐标刻度值%zi个，%@", yAxisValues.count, yAxisValues);
 //    NSLog(@"y轴坐标:%@", positionYOfYAxisValues);
     
-    const CGFloat lineStartX = k_graphHorizontalMargin;//等于yAxisView的右边缘位置
-    const CGFloat lineEndX = self.graphView.frame.size.width - k_graphHorizontalMargin;
+    const CGFloat lineStartX = k_graphLeftMargin;//等于yAxisView的右边缘位置
+    const CGFloat lineEndX = self.graphView.frame.size.width - k_graphRightMargin;
     
     //显示x轴、原点的y轴刻度值
     [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionYBottom) end:CGPointMake(lineEndX, positionYBottom)]];
@@ -560,7 +555,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
 
 -(CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
     //第pointIndex个点在x轴的位置
-    return k_graphHorizontalMargin + positionStepX * pointIndex;
+    return k_graphLeftMargin + positionStepX * pointIndex;
 }
 
 -(CGPoint)pointForLine:(LineChartDataRenderer *)lineData at:(NSUInteger)pointIndex{
@@ -682,7 +677,7 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
 #pragma mark UIScrollViewDelegate
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView{
     if (scrollView == graphScrollView) {
-        CGFloat comparedX = graphScrollView.contentOffset.x + k_graphHorizontalMargin;//坐标系原点距离左边缘 k_graphHorizontalMargin
+        CGFloat comparedX = graphScrollView.contentOffset.x + k_graphLeftMargin;//坐标系原点距离左边缘 k_graphLeftMargin
         for (UILabel *l in xAxisLabels) {
             if (CGRectGetMaxX(l.frame) <= comparedX) {
                 l.alpha = 0;
@@ -824,8 +819,12 @@ const static CGFloat k_pointRadius = 3;//画的点的半径
         self.customMarkerView = [self.dataSource lineGraph:self customViewForLine:lineNumber pointIndex:closestPointIndex andYValue:yNumber];
         if (self.customMarkerView != nil) {
             CGSize viewSize = self.customMarkerView.frame.size;
-            CGRect pathFrame = CGRectInset(self.graphView.frame, k_graphHorizontalMargin, k_graphVerticalMargin);//graphView中曲线区域的rect，去掉四周的空白
-            
+            CGRect pathFrame = self.graphView.frame;
+            pathFrame.origin.x += k_graphLeftMargin;
+            pathFrame.size.width -= k_graphLeftMargin + k_graphRightMargin;
+            pathFrame.origin.y += k_graphVerticalMargin;
+            pathFrame.size.height -= k_graphVerticalMargin * 2;//graphView中曲线区域的rect，去掉四周的空白
+
             //makerView优先显示在selectedPoint的左下角，如果显示不开则显示在右方或上方
             CGPoint makerViewOrigin = CGPointZero;
             if (CGRectGetMaxY(pathFrame) - closestPoint.y >= viewSize.height) {

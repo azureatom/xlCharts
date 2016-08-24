@@ -9,6 +9,12 @@
 #import <UIKit/UIKit.h>
 #import "LegendView.h"
 
+const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
+const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
+const static CGFloat k_graphLeftMargin = 60;//y轴刻度值的宽度，图表左侧的空白
+const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
+const static CGFloat k_pointRadius = 3;//画的点的半径
+
 @class MultiLineGraphView;
 
 @protocol MultiLineGraphViewDelegate  <NSObject>
