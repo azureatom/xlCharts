@@ -47,7 +47,7 @@
 @synthesize dataSource;
 @synthesize textFont;
 @synthesize textColor;
-@synthesize presion;
+@synthesize precision;
 @synthesize drawGridX;
 @synthesize drawGridY;
 @synthesize gridLineColor;
@@ -102,7 +102,7 @@
         
         self.textColor = [UIColor blackColor];
         self.textFont = [UIFont systemFontOfSize:12];
-        self.presion = 0;
+        self.precision = 0;
         
         self.markerColor = [UIColor orangeColor];
         self.markerTextColor = [UIColor whiteColor];
@@ -136,9 +136,9 @@
     [self drawGraph];
 }
 
-- (NSString *)yStringByPresion:(CGFloat)y{
-    //返回y的精确度为presion的NSString
-    NSString *formatter = [NSString stringWithFormat:@"%%.%zif", presion];//%.0f返回的是整数，而不是xxx.0
+- (NSString *)yStringByPrecision:(CGFloat)y{
+    //返回y的精确度为precision的NSString
+    NSString *formatter = [NSString stringWithFormat:@"%%.%zif", precision];//%.0f返回的是整数，而不是xxx.0
     return [NSString stringWithFormat:formatter, y];
 }
 
@@ -562,7 +562,7 @@
     //显示x轴、原点的y轴刻度值
     [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionYBottom) end:CGPointMake(lineEndX, positionYBottom)]];
     if (shouldShowMinYLabel) {
-        createYAxisLabel([self yStringByPresion:((NSNumber *)yAxisValues[0]).doubleValue], lineStartX, positionYBottom);
+        createYAxisLabel([self yStringByPrecision:((NSNumber *)yAxisValues[0]).doubleValue], lineStartX, positionYBottom);
     }
     
     //显示除x轴外的横线、y轴刻度值
@@ -572,7 +572,7 @@
             [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
         }
         if (i < positionYOfYAxisValues.count - 1 || shouldShowMaxYLabel) {//非最高横线 或者 should显示最高横线刻度值
-            createYAxisLabel([self yStringByPresion:((NSNumber *)yAxisValues[i]).doubleValue], lineStartX, positionY);
+            createYAxisLabel([self yStringByPrecision:((NSNumber *)yAxisValues[i]).doubleValue], lineStartX, positionY);
         }
     }
 }
@@ -796,7 +796,7 @@
                 closestPointIndex = i;
                 xString = [self.xAxisArray objectAtIndex:i];
                 yNumber = [lineData.yAxisArray objectAtIndex:i];
-                yString = [self yStringByPresion:((NSNumber *)yNumber).doubleValue];
+                yString = [self yStringByPrecision:((NSNumber *)yNumber).doubleValue];
                 lineNumber = lIndex;
             }
         }

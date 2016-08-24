@@ -58,7 +58,7 @@
     
     [lineGraphView setTextColor:[UIColor blackColor]];
     [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
-    lineGraphView.presion = 2;
+    lineGraphView.precision = 2;
     
     lineGraphView.enablePinch = NO;
     lineGraphView.showMarker = YES;
