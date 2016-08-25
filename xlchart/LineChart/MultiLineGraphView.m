@@ -47,7 +47,7 @@
 @synthesize dataSource;
 @synthesize textFont;
 @synthesize textColor;
-@synthesize precision;
+@synthesize fractionDigits;
 @synthesize drawGridX;
 @synthesize drawGridY;
 @synthesize gridLineColor;
@@ -102,7 +102,7 @@
         
         self.textColor = [UIColor blackColor];
         self.textFont = [UIFont systemFontOfSize:12];
-        self.precision = 0;
+        self.fractionDigits = 0;
         
         self.markerColor = [UIColor orangeColor];
         self.markerTextColor = [UIColor whiteColor];
@@ -136,10 +136,21 @@
     [self drawGraph];
 }
 
-- (NSString *)yStringByPrecision:(CGFloat)y{
-    //返回y的精确度为precision的NSString
-    NSString *formatter = [NSString stringWithFormat:@"%%.%zif", precision];//%.0f返回的是整数，而不是xxx.0
-    return [NSString stringWithFormat:formatter, y];
+- (CGFloat)visibleWidthExcludeMargin{
+    return graphScrollView.frame.size.width - k_graphLeftMargin - k_graphRightMargin;
+}
+
+- (NSString *)formattedStringForNumber:(NSNumber *)n{
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    formatter.numberStyle = NSNumberFormatterDecimalStyle;
+    formatter.usesGroupingSeparator = YES;
+    formatter.groupingSeparator = @",";
+    formatter.groupingSize = 3;//每千位逗号分隔
+    formatter.roundingMode = NSNumberFormatterRoundHalfUp;//四舍五入
+    formatter.minimumFractionDigits = fractionDigits;
+    formatter.maximumFractionDigits = fractionDigits;
+    formatter.alwaysShowsDecimalSeparator = NO;//是否总显示小数点号，如1.0显示为1.而12显示为12.
+    return [formatter stringFromNumber:n];
 }
 
 #pragma mark Setup all data with dataSource
@@ -196,10 +207,9 @@
     
     [self setupDataWithDataSource];
     
-    const CGFloat selfWidth = self.frame.size.width;
     CGFloat graphScrollHeight = self.frame.size.height;
     if (self.showLegend) {
-        graphScrollHeight -= [LegendView getLegendHeightWithLegendArray:self.legendArray legendType:self.legendViewType withFont:self.textFont width:selfWidth - 2 * SIDE_PADDING];
+        graphScrollHeight -= [LegendView getLegendHeightWithLegendArray:self.legendArray legendType:self.legendViewType withFont:self.textFont width:self.frame.size.width - 2 * SIDE_PADDING];
     }
     /*
      ******界面布局******
@@ -234,7 +244,7 @@
      空白 k_graphVerticalMargin
      x轴刻度值 k_xAxisLabelHeight
      */
-    self.graphScrollView = [[DRScrollView alloc] initWithFrame:CGRectMake(0, 0, selfWidth, graphScrollHeight)];
+    self.graphScrollView = [[DRScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, graphScrollHeight)];
     self.graphScrollView.showsVerticalScrollIndicator = NO;
     self.graphScrollView.showsHorizontalScrollIndicator = NO;
     self.graphScrollView.bounces = NO;
@@ -289,7 +299,7 @@
     };
     
     //如果self.xAxisArray只有一个，则只会显示y轴
-    CGFloat everagePStepX = self.xAxisArray.count > 1 ? (self.graphScrollView.frame.size.width - k_graphLeftMargin - k_graphRightMargin) / (self.xAxisArray.count - 1) : 0;
+    CGFloat everagePStepX = self.xAxisArray.count > 1 ? [self visibleWidthExcludeMargin] / (self.xAxisArray.count - 1) : 0;
     positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
     
     //划线的最高点和最低点的y
@@ -562,7 +572,7 @@
     //显示x轴、原点的y轴刻度值
     [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionYBottom) end:CGPointMake(lineEndX, positionYBottom)]];
     if (shouldShowMinYLabel) {
-        createYAxisLabel([self yStringByPrecision:((NSNumber *)yAxisValues[0]).doubleValue], lineStartX, positionYBottom);
+        createYAxisLabel([self formattedStringForNumber:yAxisValues[0]], lineStartX, positionYBottom);
     }
     
     //显示除x轴外的横线、y轴刻度值
@@ -572,7 +582,7 @@
             [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
         }
         if (i < positionYOfYAxisValues.count - 1 || shouldShowMaxYLabel) {//非最高横线 或者 should显示最高横线刻度值
-            createYAxisLabel([self yStringByPrecision:((NSNumber *)yAxisValues[i]).doubleValue], lineStartX, positionY);
+            createYAxisLabel([self formattedStringForNumber:yAxisValues[i]], lineStartX, positionY);
         }
     }
 }
@@ -796,7 +806,7 @@
                 closestPointIndex = i;
                 xString = [self.xAxisArray objectAtIndex:i];
                 yNumber = [lineData.yAxisArray objectAtIndex:i];
-                yString = [self yStringByPrecision:((NSNumber *)yNumber).doubleValue];
+                yString = [self formattedStringForNumber:yNumber];
                 lineNumber = lIndex;
             }
         }

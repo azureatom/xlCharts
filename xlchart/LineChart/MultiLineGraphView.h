@@ -73,7 +73,7 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 //set FONT property for the graph
 @property (nonatomic, strong) UIFont *textFont; //Default is [UIFont systemFontOfSize:12];
 @property (nonatomic, strong) UIColor *textColor; //Default is [UIColor blackColor]
-@property (assign, nonatomic) NSUInteger precision;//显示的y轴刻度值取小数点后几位小数，默认是0也即整数
+@property (assign, nonatomic) NSUInteger fractionDigits;//显示的y轴刻度值取小数点后几位小数，默认是0也即整数
 
 //show Grid with the graph
 @property (nonatomic) BOOL drawGridX; //x轴竖直刻度线，Default is TRUE
@@ -115,4 +115,5 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 
 //To reload data on the graph
 - (void)reloadGraph;
+- (CGFloat)visibleWidthExcludeMargin;//可显示曲线的区域宽度，排除两边的margin
 @end
