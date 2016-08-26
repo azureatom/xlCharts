@@ -63,6 +63,7 @@
 @synthesize showLegend;
 @synthesize legendViewType;
 @synthesize minPositionStepX;
+@synthesize spaceBetweenVisibleXLabels;
 @synthesize segmentsOfYAxis;
 @synthesize customMaxValidY;
 @synthesize customMinValidY;
@@ -119,6 +120,7 @@
         self.showCustomMarkerView = NO;
         
         minPositionStepX = (320 - k_graphLeftMargin - k_graphRightMargin) / 10;//25
+        spaceBetweenVisibleXLabels = 60;
         segmentsOfYAxis = 5;
         customMaxValidY = MAXFLOAT / 4;
         customMinValidY = -MAXFLOAT / 4;
@@ -358,17 +360,17 @@
             positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
         }
         
+        int numberOfLabelsBetweenVisibleX = ceil(spaceBetweenVisibleXLabels / positionStepX);//相邻可见的x轴刻度值之间的总共刻度值数目（包括可见和不可见的）
         //显示原点外的竖直刻度线和x轴刻度值。不显示@""的刻度，只显示非空的刻度，因此两个刻度之间可能包含多个曲线点
         for (int i = 1; i < self.xAxisArray.count; ++i) {
             x += positionStepX;
-            NSString *xAxisString = self.xAxisArray[i];//x轴刻度
-            if (xAxisString.length > 0) {//只显示非空的刻度值
+            if (i % numberOfLabelsBetweenVisibleX == 0) {
                 if (self.drawGridX) {
                     //在graphView上显示其它竖线
                     [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
                 }
                 //显示x轴刻度值
-                createXAxisLabel(xAxisString, x, yOfXAxisLabel);
+                createXAxisLabel(self.xAxisArray[i], x, yOfXAxisLabel);
             }
         }
     }

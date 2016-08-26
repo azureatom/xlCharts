@@ -119,6 +119,7 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 @property (nonatomic) LegendType legendViewType; //Default is LegendTypeVertical i.e. VERTICAL
 
 @property (assign, nonatomic) CGFloat minPositionStepX;//默认25.用户自定义相邻点的x方向距离，用于设置positionStepX。如果所有点的x方向距离之和不能占满横向区域，则实际距离positionStepX会采用恰好占满的值
+@property (assign, nonatomic) CGFloat spaceBetweenVisibleXLabels;//默认60.相邻的可见的x轴刻度值的距离，之间可能包含多个不可见的x轴刻度值（因为都显示则空间不够）
 @property (assign, nonatomic) NSUInteger segmentsOfYAxis;//即y轴分段数，也等于除x轴外的横线数目，默认为5，必须>=2
 /**
  *  用户定义的y轴坐标的最大值和最小值。

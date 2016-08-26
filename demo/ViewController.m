@@ -69,8 +69,8 @@
     
     
     lineGraphView.enablePanAndLongPress = YES;
-    //lineGraphView.minPositionStepX = 30; //当 enablePanAndLongPress 为NO时才有效
-    
+    //lineGraphView.minPositionStepX = 30;//当 enablePanAndLongPress 为NO时才有效
+    lineGraphView.spaceBetweenVisibleXLabels = 60;
     lineGraphView.segmentsOfYAxis = 5;
     lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
     lineGraphView.customMaxValidY = 200;
