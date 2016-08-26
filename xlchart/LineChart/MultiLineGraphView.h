@@ -97,6 +97,12 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 
 @property (assign, nonatomic) BOOL enablePinch;//是否支持pinch手势放大缩小.尚未实现该功能
 
+/**
+ *  是否支持Pan和LongPress手势。
+ *  默认YES，忽略minPositionStepX而将positionStepX设为使 graphView 刚好占满 graphScrollView 的值，不可左右滚动，识别多种手势
+ *  NO 只支持TapGesture显示Marker，不识别LongPressGesture和PanGesture手势，也即 graphView 可以超过 graphScrollView 的长度 从而左右滚动
+ */
+@property (assign, nonatomic) BOOL enablePanAndLongPress;
 //show MARKER when interacting with graph
 @property (nonatomic) BOOL showMarker; //是否显示十字线和默认的提示框，提示框默认显示在坐标系的上方，Default is YES
 //show CUSTOM MARKER when interacting with graph.

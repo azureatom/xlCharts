@@ -54,6 +54,7 @@
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
 @synthesize enablePinch;
+@synthesize enablePanAndLongPress;
 @synthesize showMarker;
 @synthesize showCustomMarkerView;
 @synthesize markerColor;
@@ -112,6 +113,8 @@
         self.legendViewType = LegendTypeVertical;
         
         self.enablePinch = NO;
+        
+        self.enablePanAndLongPress = YES;
         self.showMarker = YES;
         self.showCustomMarkerView = NO;
         
@@ -262,8 +265,16 @@
     self.graphScrollView.delegate = self;
     [self addSubview:self.graphScrollView];
     
-    //长按后即使拖拽也不会触发scroll操作，即使 shouldRecognizeSimultaneouslyWithGestureRecognizer:返回YES也不行
-    [self.graphScrollView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)]];
+    //如果手势被TapGesture、LongPressGesture成功识别，或者增加了PanGesture（无论是否成功识别），不会触发scrollViewDidScroll，即使 shouldRecognizeSimultaneouslyWithGestureRecognizer:返回YES也不行
+    [self.graphScrollView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
+    if (enablePanAndLongPress) {
+        [self.graphScrollView addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
+        
+        UILongPressGestureRecognizer *longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)];
+        //如果minimumPressDuration设置过小，则TapGesture也会被认为是LongPressGesture
+        //    longPressGestureRecognizer.minimumPressDuration = 0.3;
+        [self.graphScrollView addGestureRecognizer:longPressGestureRecognizer];
+    }
     
     if (self.enablePinch) {
         [self.graphScrollView addGestureRecognizer:[[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handleGraphZoom:)]];
@@ -340,7 +351,12 @@
     }
     else{
         CGFloat everagePStepX = [self visibleWidthExcludeMargin] / (self.xAxisArray.count - 1);
-        positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
+        if (enablePanAndLongPress) {
+            positionStepX = everagePStepX;
+        }
+        else{
+            positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
+        }
         
         //显示原点外的竖直刻度线和x轴刻度值。不显示@""的刻度，只显示非空的刻度，因此两个刻度之间可能包含多个曲线点
         for (int i = 1; i < self.xAxisArray.count; ++i) {
@@ -355,7 +371,6 @@
                 createXAxisLabel(xAxisString, x, yOfXAxisLabel);
             }
         }
-
     }
     
     //NSLog(@"x轴positionStepX[%f], 坐标：%@", positionStepX, self.xAxisArray);
@@ -768,11 +783,12 @@
 }
 
 #pragma mark handle gestures
--(void)handleTap:(UITapGestureRecognizer *)gesture{
+-(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture{
     if (self.showMarker || self.showCustomMarkerView) {
-        CGPoint pointTapped = [gesture locationInView:self.graphView];
-        if (CGRectContainsPoint(self.graphView.frame, pointTapped)) {
-            [self showMakerNearPoint:pointTapped];
+        CGPoint currentPoint = [gesture locationInView:self.graphView];
+        if (CGRectContainsPoint(self.graphView.frame, currentPoint)) {
+            //TapGesture需要检查手指和曲线上最近点的距离是否过大，过大则不显示十字线；而PanGesture和LongPressGesture不需要检查
+            [self showMakerNearPoint:currentPoint checkDistance:[gesture isMemberOfClass:[UITapGestureRecognizer class]]];
         }
     }
 }
@@ -822,7 +838,7 @@
 //    [self setNeedsDisplay];
 }
 
-- (void)showMakerNearPoint:(CGPoint)pointTouched{
+- (void)showMakerNearPoint:(CGPoint)pointTouched checkDistance:(BOOL)shouldCheckDistance{
     NSInteger lineNumber = -1;//点击的是第几根线的点
     NSString *xString;
     NSNumber *yNumber;
@@ -851,7 +867,7 @@
     [self hideMarker];
     
     //距离过远的点不处理
-    if (minDistance > (positionStepX + positionStepY) * 0.8) {
+    if (shouldCheckDistance && minDistance > (positionStepX + positionStepY) * 0.8) {
         //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
         return;
     }

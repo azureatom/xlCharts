@@ -26,7 +26,7 @@
     [button setTitle:@"切换曲线数据" forState:UIControlStateNormal];
     button.titleLabel.font = [UIFont systemFontOfSize:10];
     [button setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    button.tag = 0;
+    button.tag = 28;
     [button addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
     
@@ -61,12 +61,16 @@
     lineGraphView.fractionDigits = 2;
     
     lineGraphView.enablePinch = NO;
+    
     lineGraphView.showMarker = YES;
     lineGraphView.showCustomMarkerView = YES;
     lineGraphView.markerColor = [UIColor orangeColor];
     lineGraphView.markerWidth = 0.4;
-
-    lineGraphView.minPositionStepX = 0;
+    
+    
+    lineGraphView.enablePanAndLongPress = YES;
+    //lineGraphView.minPositionStepX = 30; //当 enablePanAndLongPress 为NO时才有效
+    
     lineGraphView.segmentsOfYAxis = 5;
     lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
     lineGraphView.customMaxValidY = 200;
