@@ -789,8 +789,9 @@
     if (self.showMarker || self.showCustomMarkerView) {
         CGPoint currentPoint = [gesture locationInView:self.graphView];
         if (CGRectContainsPoint(self.graphView.frame, currentPoint)) {
-            //TapGesture需要检查手指和曲线上最近点的距离是否过大，过大则不显示十字线；而PanGesture和LongPressGesture不需要检查
-            [self showMakerNearPoint:currentPoint checkDistance:[gesture isMemberOfClass:[UITapGestureRecognizer class]]];
+            //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
+            //而PanGesture和LongPressGesture 只取曲线x方向距离最近的点即可，不需检查距离是否过大。这样可以保证在拖拽时，曲线上的点依次显示十字线信息。
+            [self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]];
         }
     }
 }
@@ -839,8 +840,13 @@
 //    
 //    [self setNeedsDisplay];
 }
-
-- (void)showMakerNearPoint:(CGPoint)pointTouched checkDistance:(BOOL)shouldCheckDistance{
+/**
+ *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框
+ *
+ *  @param pointTouched       点击或拖拽到的点
+ *  @param checkXDistanceOnly YES 则选取曲线上跟 pointTouched x轴方向距离最近的点即可；NO 则比较 曲线上点跟 pointTouched 的最短距离是否足够小
+ */
+- (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
     NSInteger lineNumber = -1;//点击的是第几根线的点
     NSString *xString;
     NSNumber *yNumber;
@@ -853,7 +859,7 @@
         LineChartDataRenderer *lineData = self.lineDataArray[lIndex];
         for (int i = 0; i < lineData.yAxisArray.count; ++i){
             CGPoint point = [self pointForLine:lineData at:i];
-            CGFloat distance = sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
+            CGFloat distance = checkXDistanceOnly ? fabs(pointTouched.x - point.x) : sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
             if (distance < minDistance) {
                 minDistance = distance;
                 closestPoint = point;
@@ -869,7 +875,7 @@
     [self hideMarker];
     
     //距离过远的点不处理
-    if (shouldCheckDistance && minDistance > (positionStepX + positionStepY) * 0.8) {
+    if (!checkXDistanceOnly && minDistance > (positionStepX + positionStepY) * 0.8) {
         //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
         return;
     }
