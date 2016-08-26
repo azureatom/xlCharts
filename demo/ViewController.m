@@ -26,7 +26,7 @@
     [button setTitle:@"切换曲线数据" forState:UIControlStateNormal];
     button.titleLabel.font = [UIFont systemFontOfSize:10];
     [button setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    button.tag = 28;
+    button.tag = 0;
     [button addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
     

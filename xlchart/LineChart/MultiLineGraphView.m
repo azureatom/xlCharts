@@ -303,10 +303,6 @@
         [self.xAxisLabels addObject:l];
     };
     
-    //如果self.xAxisArray只有一个，则只会显示y轴
-    CGFloat everagePStepX = self.xAxisArray.count > 1 ? [self visibleWidthExcludeMargin] / (self.xAxisArray.count - 1) : 0;
-    positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
-    
     //划线的最高点和最低点的y
     const CGFloat positionYTop = k_graphVerticalMargin;
     const CGFloat positionYBottom = self.graphView.frame.size.height - k_graphVerticalMargin - k_xAxisLabelHeight;
@@ -319,18 +315,29 @@
     //在graphView上显示原点的x轴刻度值
     createXAxisLabel(self.xAxisArray[0], x, yOfXAxisLabel);
     
-    //显示原点外的竖直刻度线和x轴刻度值。不显示@""的刻度，只显示非空的刻度，因此两个刻度之间可能包含多个曲线点
-    for (int i = 1; i < self.xAxisArray.count; ++i) {
+    if (self.xAxisArray.count == 1) {
+        //只有一个点也显示x轴
+        positionStepX = [self visibleWidthExcludeMargin];
         x += positionStepX;
-        NSString *xAxisString = self.xAxisArray[i];//x轴刻度
-        if (xAxisString.length > 0) {//只显示非空的刻度值
-            if (self.drawGridX) {
-                //在graphView上显示其它竖线
-                [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
+    }
+    else{
+        CGFloat everagePStepX = [self visibleWidthExcludeMargin] / (self.xAxisArray.count - 1);
+        positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
+        
+        //显示原点外的竖直刻度线和x轴刻度值。不显示@""的刻度，只显示非空的刻度，因此两个刻度之间可能包含多个曲线点
+        for (int i = 1; i < self.xAxisArray.count; ++i) {
+            x += positionStepX;
+            NSString *xAxisString = self.xAxisArray[i];//x轴刻度
+            if (xAxisString.length > 0) {//只显示非空的刻度值
+                if (self.drawGridX) {
+                    //在graphView上显示其它竖线
+                    [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
+                }
+                //显示x轴刻度值
+                createXAxisLabel(xAxisString, x, yOfXAxisLabel);
             }
-            //显示x轴刻度值
-            createXAxisLabel(xAxisString, x, yOfXAxisLabel);
         }
+
     }
     
     //NSLog(@"x轴positionStepX[%f], 坐标：%@", positionStepX, self.xAxisArray);
@@ -380,16 +387,22 @@
     BOOL shouldShowMinYLabel = YES;
     
     if (allPointsSet.count <= 2) {//包含了所有点的y值相等，也即minY == maxY的情况
-        //所有曲线的点y值相等或只有2种值，则除x轴外再画2个横线，最大的点在中间的横线上，另一个点在x轴上（若y值都相同则也在中间横线上），最高的横线上没有点
-        //如果只有一种y值，则positionStepY设为该y值绝对值的一半，否则设为最大值和最小值的差
-        self.positionStepY = (minY == maxY ? fabs(maxY / 2) : maxY - minY);//需要用绝对值，防止minY和maxY都为负数
+        /*所有曲线的点y值相等或只有2种值，则除x轴外再画2个横线，最大的点在中间的横线上，另一个点在x轴上（若y值都相同则也在中间横线上），最高的横线上没有点
+         如果只有一种y值，则valueStepY设为该y值绝对值的一半，否则设为最大值和最小值的差
+         如果valueStepY为0，则改为1
+         */
+        double valueStepY = (minY == maxY ? fabs(maxY / 2) : maxY - minY);//需要用绝对值，防止minY和maxY都为负数
+        if (valueStepY == 0) {
+            valueStepY = 1;
+        }
         
-        [yAxisValues addObject:@(maxY - self.positionStepY)];//原点的y轴刻度值
+        [yAxisValues addObject:@(maxY - valueStepY)];//原点的y轴刻度值
         [yAxisValues addObject:@(maxY)];//中间横线的y轴刻度值
-        [yAxisValues addObject:@(maxY + self.positionStepY)];//最高横线的y轴刻度值
+        [yAxisValues addObject:@(maxY + valueStepY)];//最高横线的y轴刻度值
         
+        positionStepY = (positionYBottom - positionYTop) / 2;
         [positionYOfYAxisValues addObject:@(positionYBottom)];//x轴的位置
-        [positionYOfYAxisValues addObject:@((positionYTop + positionYBottom) / 2)];
+        [positionYOfYAxisValues addObject:@(positionYBottom - positionStepY)];
         [positionYOfYAxisValues addObject:@(positionYTop)];//最高横线位置
         
         yCeil = maxY;
@@ -431,7 +444,7 @@
         
         //根据 yCeil跟maxY、yFloor跟minY 是否相等来计算positionStepY、y轴刻度值yAxisValues、刻度值在view中的y坐标positionYOfYAxisValues
         if (yCeil == maxY && yFloor == minY) {
-            self.positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;//totestwith @[@300, @300, @200, @-100, @-100]
+            positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;//totestwith @[@300, @300, @200, @-100, @-100]
             double valueStepY = (yCeil - yFloor) / segmentsOfYAxis;
             //x轴及全部横线的 位置、y轴刻度值
             for (int i = 0; i <= segmentsOfYAxis; ++i) {
@@ -850,7 +863,7 @@
     [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) endPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
     [self.xMarker setHidden:NO];
     
-    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count - 1], closestPoint.y)] CGPath]];
+    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
     [self.yMarker setHidden:NO];
     
     if (self.showCustomMarkerView){
