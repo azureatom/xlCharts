@@ -153,6 +153,11 @@
     return [formatter stringFromNumber:n];
 }
 
+- (CGPoint)optimizedPoint:(CGPoint)point{
+    //当view的位置不是整数或者0.5的倍数时，由于屏幕分辨率和像素匹配问题，view显示会略微模糊
+    return CGPointMake(floor(point.x), floor(point.y));
+}
+
 #pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
     xAxisLabels = [[NSMutableArray alloc] init];
@@ -840,6 +845,8 @@
         }];
     }
     
+    closestPoint = [self optimizedPoint:closestPoint];
+    
     [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) endPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
     [self.xMarker setHidden:NO];
     
@@ -876,7 +883,7 @@
                 makerViewOrigin.x = closestPoint.x;
             }
             
-            [self.customMarkerView setFrame:CGRectMake(makerViewOrigin.x, makerViewOrigin.y, viewSize.width, viewSize.height)];
+            self.customMarkerView.frame = CGRectMake(makerViewOrigin.x, makerViewOrigin.y, viewSize.width, viewSize.height);
             [self.graphView addSubview:self.customMarkerView];
         }
         [self.graphScrollView addSubview:self.customMarkerView];
@@ -940,8 +947,8 @@
 
 - (UIBezierPath *)drawPathWithStartPoint:(CGPoint)startPoint endPoint:(CGPoint)endPoint{
     UIBezierPath *path = [UIBezierPath bezierPath];
-    [path moveToPoint:startPoint];
-    [path addLineToPoint:endPoint];
+    [path moveToPoint:[self optimizedPoint:startPoint]];
+    [path addLineToPoint:[self optimizedPoint:endPoint]];
     
     [path closePath];
     
@@ -950,7 +957,7 @@
 
 - (void)drawPointsOnLine:(CGPoint)point withColor:(UIColor *)color{
     UIBezierPath *pointPath = [UIBezierPath bezierPath];
-    [pointPath addArcWithCenter:point radius:pointRadius startAngle:0 endAngle:2 * M_PI clockwise:YES];
+    [pointPath addArcWithCenter:[self optimizedPoint:point] radius:pointRadius startAngle:0 endAngle:2 * M_PI clockwise:YES];
     
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     [shapeLayer setPath:pointPath.CGPath];

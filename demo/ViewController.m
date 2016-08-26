@@ -66,7 +66,7 @@
     lineGraphView.markerColor = [UIColor orangeColor];
     lineGraphView.markerWidth = 0.4;
 
-    lineGraphView.minPositionStepX = 30;
+    lineGraphView.minPositionStepX = 0;
     lineGraphView.segmentsOfYAxis = 5;
     lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
     lineGraphView.customMaxValidY = 200;
@@ -265,15 +265,16 @@
 
 - (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
     UIView *view = [[UIView alloc] init];
-    [view setBackgroundColor:[UIColor whiteColor]];
+    view.backgroundColor = [UIColor orangeColor];
     [view.layer setCornerRadius:4.0F];
     [view.layer setBorderWidth:1.0F];
     [view.layer setBorderColor:[[UIColor lightGrayColor] CGColor]];
-    [view.layer setShadowColor:[[UIColor blackColor] CGColor]];
-    [view.layer setShadowRadius:2.0F];
-    [view.layer setShadowOpacity:0.3F];
+//    [view.layer setShadowColor:[[UIColor blackColor] CGColor]];
+//    [view.layer setShadowRadius:2.0F];
+//    [view.layer setShadowOpacity:0.3F];
     
     UILabel *label = [[UILabel alloc] init];
+    label.textColor = [UIColor whiteColor];
     [label setFont:[UIFont systemFontOfSize:12]];
     [label setTextAlignment:NSTextAlignmentCenter];
     [label setText:[NSString stringWithFormat:@"日期 %zi日\nLine Data: %@", pointIndex, yValue]];
@@ -287,6 +288,6 @@
 
 #pragma mark MultiLineGraphViewDelegate
 - (void)lineGraph:(MultiLineGraphView *)graph didTapLine:(NSInteger)lineNumber atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
-    NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
+//    NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
 @end

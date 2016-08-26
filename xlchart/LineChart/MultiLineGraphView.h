@@ -64,6 +64,16 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 //Set yData for Line on Line Graph
 
 @optional
+/**
+ *  返回的自定义view.frame.size的 width和height 必须是整数，如果是小数可能由于屏幕分辨率和像素匹配问题导致显示模糊
+ *
+ *  @param graph
+ *  @param lineNumber
+ *  @param pointIndex
+ *  @param yValue
+ *
+ *  @return 自定义view
+ */
 - (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
