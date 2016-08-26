@@ -171,6 +171,10 @@
     return [UIColor blueColor];
 }
 
+- (CGFloat)lineGraph:(MultiLineGraphView *)graph pointRadius:(NSInteger)lineNumber{
+    return 1.5;
+}
+
 - (CGFloat)lineGraph:(MultiLineGraphView *)graph lineWidth:(NSInteger)lineNumber{
     return 1;
 }

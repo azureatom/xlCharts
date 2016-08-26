@@ -11,7 +11,7 @@
 
 const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
 const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
-const static CGFloat k_graphLeftMargin = 60;//y轴刻度值的宽度，图表左侧的空白
+const static CGFloat k_graphLeftMargin = 50;//y轴刻度值的宽度，图表左侧的空白
 const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 
 @class MultiLineGraphView;
@@ -47,6 +47,9 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 - (CGFloat)lineGraph:(MultiLineGraphView *)graph lineWidth:(NSInteger)lineNumber;
 //Set Line Width for each for Line on the Line Graph
 //Default is 1.0F
+
+//返回曲线上点的半径，画线时最终采用的点半径可能随点数增多而减少至线宽
+- (CGFloat)lineGraph:(MultiLineGraphView *)graph pointRadius:(NSInteger)lineNumber;
 
 - (NSString *)lineGraph:(MultiLineGraphView *)graph lineName:(NSInteger)lineNumber;
 //Set Line Name for each for Line on the Line Graph
@@ -91,7 +94,6 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 //set property for the grid
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
 @property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
-@property (assign, nonatomic) CGFloat pointRadius; //曲线上画的点的半径，默认1.5
 
 @property (assign, nonatomic) BOOL enablePinch;//是否支持pinch手势放大缩小.尚未实现该功能
 
@@ -110,7 +112,7 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 //Set LEGEND TYPE Horizontal or Vertical
 @property (nonatomic) LegendType legendViewType; //Default is LegendTypeVertical i.e. VERTICAL
 
-@property (assign, nonatomic) CGFloat minPositionStepX;//默认30.用户自定义相邻点的x方向距离，用于设置positionStepX。如果所有点的x方向距离之和不能占满横向区域，则实际距离positionStepX会采用恰好占满的值
+@property (assign, nonatomic) CGFloat minPositionStepX;//默认25.用户自定义相邻点的x方向距离，用于设置positionStepX。如果所有点的x方向距离之和不能占满横向区域，则实际距离positionStepX会采用恰好占满的值
 @property (assign, nonatomic) NSUInteger segmentsOfYAxis;//即y轴分段数，也等于除x轴外的横线数目，默认为5，必须>=2
 /**
  *  用户定义的y轴坐标的最大值和最小值。

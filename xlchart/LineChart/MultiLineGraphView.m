@@ -30,6 +30,7 @@
 @property (nonatomic, strong) UIView *yAxisView;//固定的y轴和y刻度值
 @property (nonatomic, strong) UIView *graphView;
 
+@property (assign, nonatomic) CGFloat pointRadius; //曲线上画的点的半径，默认1.5
 @property (nonatomic, strong) NSArray *xAxisArray;//array of NSString, x轴的刻度，@""表示不显示该刻度值和竖直刻度线
 @property (strong, nonatomic) NSMutableArray *xAxisLabels;//array of UILabel, 显示x轴的刻度值的label
 @property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值，第一个yAxisValues[0]和最后一个yAxisValues[last]分别是数据点的y最小值和最大值，但是最小值和最大值如果差距太大则不会显示在y轴刻度上，其它元素之间的差值等于positionStepY。
@@ -52,7 +53,6 @@
 @synthesize drawGridY;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
-@synthesize pointRadius;
 @synthesize enablePinch;
 @synthesize showMarker;
 @synthesize showCustomMarkerView;
@@ -81,6 +81,7 @@
 @synthesize graphScrollView;
 @synthesize yAxisView;
 @synthesize graphView;
+@synthesize pointRadius;
 @synthesize xAxisArray;
 @synthesize xAxisLabels;
 @synthesize yAxisValues;
@@ -98,7 +99,6 @@
         
         self.gridLineColor = [UIColor lightGrayColor];
         self.gridLineWidth = 0.3;
-        self.pointRadius = 1.5;
         
         self.textColor = [UIColor blackColor];
         self.textFont = [UIFont systemFontOfSize:12];
@@ -115,7 +115,7 @@
         self.showMarker = YES;
         self.showCustomMarkerView = NO;
         
-        minPositionStepX = 30;
+        minPositionStepX = (320 - k_graphLeftMargin - k_graphRightMargin) / 10;//25
         segmentsOfYAxis = 5;
         customMaxValidY = MAXFLOAT / 4;
         customMinValidY = -MAXFLOAT / 4;
@@ -160,6 +160,12 @@
 
 #pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
+    if ([self.dataSource respondsToSelector:@selector(lineGraph:pointRadius:)]) {
+        pointRadius = [self.dataSource lineGraph:self pointRadius:0];
+    }
+    else{
+        pointRadius = 1.5;
+    }
     xAxisLabels = [[NSMutableArray alloc] init];
     yAxisValues = [[NSMutableArray alloc] init];
     positionYOfYAxisValues = [[NSMutableArray alloc] init];
@@ -276,6 +282,18 @@
     //注意，如果self是navigationcontroller的第一个view，graphScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
     [self createYAxisLine];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
     originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
+    
+    //如果 pointRadius > lineWidth，则当 positionStepX 在(5, 10)之间时，pointRadius的大小按照 positionStepX与5的距离 成比例缩小，但最小不能小于lineWidth
+    CGFloat lineWidth = [self.dataSource lineGraph:self lineWidth:0];
+    if (pointRadius > lineWidth) {
+        if (5 < positionStepX && positionStepX < 10) {
+            pointRadius = (lineWidth - pointRadius) / 5 * (positionStepX - 5);
+        }
+        else if(positionStepX <= 5){
+            pointRadius = lineWidth;
+        }
+    }
+    
     [self createGraph];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
     
     if (self.showMarker) {
@@ -444,7 +462,7 @@
         
         //根据 yCeil跟maxY、yFloor跟minY 是否相等来计算positionStepY、y轴刻度值yAxisValues、刻度值在view中的y坐标positionYOfYAxisValues
         if (yCeil == maxY && yFloor == minY) {
-            positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;//totestwith @[@300, @300, @200, @-100, @-100]
+            positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
             double valueStepY = (yCeil - yFloor) / segmentsOfYAxis;
             //x轴及全部横线的 位置、y轴刻度值
             for (int i = 0; i <= segmentsOfYAxis; ++i) {
@@ -466,16 +484,16 @@
                  2.2 否则，最高横线的刻度值设为maxY，最高横线间的距离设为 positionStepY * (1 + maxMultipleMoreThanPositionStepY)，也即最高横线位置为positionYTop
                  */
                 if (maxY - yCeil <= valueStepY) {//最高2横线的实际距离同positionStepY
-                    positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;//totestwith @[@330, @300, @200, @-80, @-100]
+                    positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
                     valueOfYTop = yCeil + valueStepY;//>= maxY
                 }
                 else{
                     if ((maxY - yCeil - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {//最高2横线的实际距离按比例计算
-                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + (maxY - yCeil - valueStepY) / valueStepY);//totestwith @[@420, @300, @200, @-80, @-100]
+                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + (maxY - yCeil - valueStepY) / valueStepY);
                     }
                     else{//最高2横线的实际距离设为positionStepY的(1 + maxMultipleMoreThanPositionStepY)倍
                         shouldShowMaxYLabel = NO;
-                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + maxMultipleMoreThanPositionStepY);//totestwith @[@500, @300, @200, @-80, @-100]
+                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + maxMultipleMoreThanPositionStepY);
                     }
                     valueOfYTop = maxY;
                 }
@@ -501,16 +519,16 @@
                  2.2 否则，x轴的刻度值设为minY，最低横线间的距离设为 positionStepY * (1 + maxMultipleMoreThanPositionStepY)，也即x轴位置为positionYBottom
                  */
                 if (yFloor - minY <= valueStepY) {//x轴同上面横线的实际距离同positionStepY
-                    positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;//totestwith @[@200, @200, @-50, @-200, @-220]
+                    positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
                     valueOfYBottom = yFloor-valueStepY;
                 }
                 else{
                     if ((yFloor - minY - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {//x轴同上面横线的实际距离按比例计算
-                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + (yFloor - minY - valueStepY) / valueStepY);//totestwith @[@200, @200, @-50, @-200, @-330]
+                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + (yFloor - minY - valueStepY) / valueStepY);
                     }
                     else{//x轴同上面横线的实际距离设为positionStepY的(1 + maxMultipleMoreThanPositionStepY)倍
                         shouldShowMinYLabel = NO;
-                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + maxMultipleMoreThanPositionStepY);//totestwith @[@300, @200, @-50, @-100, @-1000]
+                        positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + maxMultipleMoreThanPositionStepY);
                     }
                     valueOfYBottom = minY;
                 }
@@ -533,30 +551,30 @@
                 double actualMultipleMoreThan_bottom;
                 if (maxY - yCeil <= valueStepY) {
                     actualMultipleMoreThan_top = 0;
-                    valueOfYTop = yCeil + valueStepY;//totestwith @[@450, @300, @250, @210, @200, @150, @100, @-250, @-300, @-1000]
+                    valueOfYTop = yCeil + valueStepY;
                 }
                 else{
                     if ((maxY - yCeil - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {
-                        actualMultipleMoreThan_top = (maxY - yCeil - valueStepY) / valueStepY;//totestwith @[@520, @300, @250, @210, @200, @150, @100, @-250, @-300, @-1000]
+                        actualMultipleMoreThan_top = (maxY - yCeil - valueStepY) / valueStepY;
                     }
                     else{
                         shouldShowMaxYLabel = NO;
-                        actualMultipleMoreThan_top = maxMultipleMoreThanPositionStepY;//totestwith @[@700, @300, @250, @210, @200, @150, @100, @-250, @-300, @-1000]
+                        actualMultipleMoreThan_top = maxMultipleMoreThanPositionStepY;
                     }
                     valueOfYTop = maxY;
                 }
                 
                 if (yFloor - minY <= valueStepY) {
-                    actualMultipleMoreThan_bottom = 0;//totestwith @[@1000, @300, @250, @210, @200, @150, @100, @-250, @-300, @-380]
+                    actualMultipleMoreThan_bottom = 0;
                     valueOfYBottom = yFloor - valueStepY;
                 }
                 else{
                     if ((yFloor - minY - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {
-                        actualMultipleMoreThan_bottom = (yFloor - minY - valueStepY) / valueStepY;//totestwith @[@1000, @300, @250, @210, @200, @150, @100, @-250, @-300, @-520]
+                        actualMultipleMoreThan_bottom = (yFloor - minY - valueStepY) / valueStepY;
                     }
                     else{
                         shouldShowMinYLabel = NO;
-                        actualMultipleMoreThan_bottom = maxMultipleMoreThanPositionStepY;//totestwith @[@1000, @300, @250, @210, @200, @150, @100, @-250, @-300, @-700]
+                        actualMultipleMoreThan_bottom = maxMultipleMoreThanPositionStepY;
                     }
                     valueOfYBottom = minY;
                 }
