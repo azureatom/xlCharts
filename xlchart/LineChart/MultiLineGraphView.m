@@ -12,12 +12,14 @@
 #import "Constants.h"
 #import "LineChartDataRenderer.h"
 
+//保留fractionDigits位小数的上值、下值
+#define CeilWithDigits(x) ceil(x * pow(10, self.fractionDigits)) / pow(10, self.fractionDigits)
+#define FloorWithDigits(x) floor(x * pow(10, self.fractionDigits)) / pow(10, self.fractionDigits)
+
 @interface MultiLineGraphView()<UIScrollViewDelegate>
 @property (assign, nonatomic) CGPoint originalPoint;//原点的位置
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离，默认采用用户设置minPositionStepX。如果值过小，会修改以保证填满横向宽度
 @property (assign, nonatomic) CGFloat positionStepY;
-@property (assign, nonatomic) double yCeil;//实际采用的y轴刻度值的最大值，可能有点的y坐标比其还大。对于y坐标更大的点，画在最高的两条横线之间。
-@property (assign, nonatomic) double yFloor;//实际采用的y轴刻度值的最小值，可能有点的y坐标比其还小。对于y坐标更小的点，画在x轴和次低横线之间。
 
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
 @property (nonatomic, strong) CAShapeLayer *yMarker;//点击显示十字线的横线
@@ -73,8 +75,6 @@
 @synthesize originalPoint;
 @synthesize positionStepX;
 @synthesize positionStepY;
-@synthesize yCeil;
-@synthesize yFloor;
 @synthesize xMarker;
 @synthesize yMarker;
 @synthesize marker;
@@ -220,7 +220,6 @@
      enablePinch实际没有实现，缩放代码handleGraphZoom, zoomGraph未完成。
      目前只支持一条曲线，self.lineDataArray中多曲线(LineChartDataRenderer *)的支持未完善。
      x轴显示的刻度值是从原点按照同样间隔显示，因此最后一个x刻度值经常不显示，导致显示的最后一个刻度值实际上不是最后那个值。
-     y轴显示的刻度值为取整后的结果（如取2位小数），比如0.657显示为0.66，但是曲线点0.66是严格按照比例计算y轴的位置，导致显示在刻度值0.66的上方。需要在计算y轴相邻刻度值之间的y值差距时直接向上取整为指定精度，而不是只将显示的刻度值文字取整。
      */
     
     [self setupDataWithDataSource];
@@ -427,35 +426,42 @@
         /*所有曲线的点y值相等或只有2种值，则除x轴外再画2个横线，最大的点在中间的横线上，另一个点在x轴上（若y值都相同则也在中间横线上），最高的横线上没有点
          如果只有一种y值，则valueStepY设为该y值绝对值的一半，否则设为最大值和最小值的差
          如果valueStepY为0，则改为1
+         注意：考虑到minY和maxY对应的yFloor和yCeil都会取整，取整后曲线上的点不一定在x轴或中间横线上
          */
-        double valueStepY = (minY == maxY ? fabs(maxY / 2) : maxY - minY);//需要用绝对值，防止minY和maxY都为负数
+        double yFloor = FloorWithDigits(minY);
+        double yCeil = CeilWithDigits(maxY);
+        double valueStepY = CeilWithDigits(yFloor == yCeil ? fabs(yCeil / 2) : yCeil - yFloor);//需要用绝对值，防止minY和maxY都为负数
         if (valueStepY == 0) {
             valueStepY = 1;
         }
         
-        [yAxisValues addObject:@(maxY - valueStepY)];//原点的y轴刻度值
-        [yAxisValues addObject:@(maxY)];//中间横线的y轴刻度值
-        [yAxisValues addObject:@(maxY + valueStepY)];//最高横线的y轴刻度值
+        [yAxisValues addObject:@(yCeil - valueStepY)];//原点的y轴刻度值
+        [yAxisValues addObject:@(yCeil)];//中间横线的y轴刻度值
+        [yAxisValues addObject:@(yCeil + valueStepY)];//最高横线的y轴刻度值
         
         positionStepY = (positionYBottom - positionYTop) / 2;
         [positionYOfYAxisValues addObject:@(positionYBottom)];//x轴的位置
         [positionYOfYAxisValues addObject:@(positionYBottom - positionStepY)];
         [positionYOfYAxisValues addObject:@(positionYTop)];//最高横线位置
-        
-        yCeil = maxY;
-        yFloor = minY;
     }
     else{
         const double validYRange = customMaxValidY - customMinValidY + 0.000001;//比较两个double值是否相等，需要将差值和一个很小数比较
         
-        //如果有曲线>=3个点，可能某个点距其它2个点特别远，导致曲线不好看，需要检查最大最小值的差距是否 <= validYRange
-        if (maxY - minY <= validYRange) {
-            //在范围内，则直接将yCeil设为最大值，yFloor设为最小值
-            yCeil = maxY;
-            yFloor = minY;
-        }
-        else{
-            //超过范围，选取满足 yCeil-yFloor>=validRange && 范围内包含80%以上的点、差值最小的yCeil和yFloor，其中yCeil和yFloor必然是2个不同点的y值（因为包含了80%以上的点）
+        /*
+         如果有曲线>=3个点，可能某个点距其它2个点特别远，导致曲线不好看，需要检查最大最小值的差距是否 > validYRange
+         先将yCeil和yFloor分别设为范围内的最大值maxY和最小值minY
+         如果超过范围，选取满足 yCeil-yFloor>=validRange && 范围内包含80%以上的点、差值最小的yCeil和yFloor，其中yCeil和yFloor必然是2个不同点的y值（因为包含了80%以上的点）
+         
+         [yFloor, yCeil]为最终计算决定的y轴合理刻度值范围（yFloor和yCeil已经分别按精度fractionDigits向下、向上取整）。如果范围外有更大值，则在yCeil对应的横线上面再显示一根横线；如果范围外有更小值，则x轴对应的y刻度为最小值，yFloor为x轴上方的横线刻度值。
+         _________yCeil
+         _________ or yCeil（范围外有更大值）
+         _________
+         _________yFloor
+         _________ or yFloor（范围外有更小值）
+         */
+        double yCeil = maxY;
+        double yFloor = minY;
+        if (maxY - minY > validYRange){
             //注意，最后满足条件时可能出现yCeil == maxY && yFloor == minY，比如只有三个y值
             [allPointsYOfLines sortWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(NSNumber *obj1, NSNumber *obj2) {
                 return [obj1 compare:obj2];//所有点y值升序排列
@@ -479,11 +485,16 @@
             }
         }
         
-        //根据 yCeil跟maxY、yFloor跟minY 是否相等来计算positionStepY、y轴刻度值yAxisValues、刻度值在view中的y坐标positionYOfYAxisValues
+        /*根据 yCeil跟maxY、yFloor跟minY 是否相等来计算positionStepY、y轴刻度值yAxisValues、刻度值在view中的y坐标positionYOfYAxisValues。
+         其中yFloor需要向下取整到精度为fractionDigits的小数，valueStepY向上取整，yCeil根据新的yFloor和valueStep计算并向上取整。
+         */
+        
         if (yCeil == maxY && yFloor == minY) {
-            positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
-            double valueStepY = (yCeil - yFloor) / segmentsOfYAxis;
+            yFloor = FloorWithDigits(yFloor);
+            double valueStepY = CeilWithDigits((CeilWithDigits(yCeil) - yFloor) / segmentsOfYAxis);
+            
             //x轴及全部横线的 位置、y轴刻度值
+            positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
             for (int i = 0; i <= segmentsOfYAxis; ++i) {
                 [yAxisValues addObject:@(yFloor + valueStepY * i)];
                 [positionYOfYAxisValues addObject:@(positionYBottom - positionStepY * i)];
@@ -493,8 +504,10 @@
             //yFloor跟minY、yCeil跟maxY 不全相等，因此最低或最高两根横线的距离 <> 其他相邻横线通常距离positionStepY，受view高度限制规定最多为positionStepY的1.5倍，为了好看又限制>=positionStepY。
             const double maxMultipleMoreThanPositionStepY = 0.5;//最低或最高两根横线的距离比positionStepY多的最大倍数，多0.5倍也就是等于1.5倍
             if (yFloor == minY) {//x轴y刻度值为minY
-                double valueStepY = (yCeil - yFloor) / (segmentsOfYAxis - 1);
-                double valueOfYTop;//最高横线的y刻度值
+                yFloor = FloorWithDigits(yFloor);
+                double valueStepY = CeilWithDigits((CeilWithDigits(yCeil) - yFloor) / (segmentsOfYAxis - 1));
+                yCeil = yFloor + valueStepY * (segmentsOfYAxis - 1);
+                
                 /*
                  原则：最高2横线的距离比通常距离大 0至maxMultipleMoreThanPositionStepY倍。(maxY - yCeil) / valueStepY <= 1.5倍时，最高横线的y刻度值和高度（1至1.5倍通常高度）成正比；大于等于1.5倍时，最高横线的y刻度值(为超大数)和高度（仍限定为1.5倍通常高度）不按比例，具体逻辑：
                  1. 如果maxY - yCeil <= valueStepY，则最高横线的y刻度值 设为 次高横线刻度值yCeil+valueStepY，最高2横线间距离同positionStepY，也即最高横线位置为positionYTop
@@ -502,12 +515,13 @@
                  2.1 如果maxY - yCeil > valueStepY 且 (maxY - yCeil - valueStepY) / valueStepY < maxMultipleMoreThanPositionStepY，则最高横线的刻度值设为maxY，最高2横线间的距离设为 positionStepY * (1 + 实际多的倍数)，根据positionStepY的计算方法可知最高横线位置恰好为positionYTop
                  2.2 否则，最高横线的刻度值设为maxY，最高横线间的距离设为 positionStepY * (1 + maxMultipleMoreThanPositionStepY)，也即最高横线位置为positionYTop
                  */
-                if (maxY - yCeil <= valueStepY) {//最高2横线的实际距离同positionStepY
+                double valueOfYTop;//最高横线的y刻度值
+                if (maxY - yCeil <= valueStepY) {//yCeil对应横线上方positionStepY处再加一横线
                     positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
                     valueOfYTop = yCeil + valueStepY;//>= maxY
                 }
                 else{
-                    if ((maxY - yCeil - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {//最高2横线的实际距离按比例计算
+                    if ((maxY - yCeil - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {//yCeil对应横线跟上方横线的距离按比例计算
                         positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + (maxY - yCeil - valueStepY) / valueStepY);
                     }
                     else{//最高2横线的实际距离设为positionStepY的(1 + maxMultipleMoreThanPositionStepY)倍
@@ -527,8 +541,10 @@
                 [positionYOfYAxisValues addObject:@(positionYTop)];
             }
             else if(yCeil == maxY){//最高横线y刻度值为maxY
-                double valueStepY = (yCeil - yFloor) / (segmentsOfYAxis - 1);
-                double valueOfYBottom;//最低横线（x轴）的y刻度值
+                yFloor = FloorWithDigits(yFloor);
+                double valueStepY = CeilWithDigits((CeilWithDigits(yCeil) - yFloor) / (segmentsOfYAxis - 1));
+                yCeil = yFloor + valueStepY * (segmentsOfYAxis - 1);
+                
                 /*
                  原则：最低2横线的距离比通常距离大 0至maxMultipleMoreThanPositionStepY倍。(yFloor - minY) / valueStepY <= 1.5倍时，x轴的y刻度值和高度（1至1.5倍通常高度）成正比；大于等于1.5倍时，x轴的y刻度值(为超小数)和高度（仍限定为1.5倍通常高度）不按比例，具体逻辑：
                  原则：最低2横线的高度是其他横线高度的1-1.5倍，小于1.5倍时y刻度值和高度成正比，大于等于1.5倍时y刻度值(超小数)和高度不按比例，具体逻辑：
@@ -537,12 +553,13 @@
                  2.1 如果yFloor - minY > valueStepY 且 (yFloor - minY - valueStepY) / valueStepY < maxMultipleMoreThanPositionStepY，则x轴横线的刻度值设为minY，最低2横线间的距离设为 positionStepY * (1 + 实际多的倍数)，根据positionStepY的计算方法可知x轴位置恰好为positionYBottom
                  2.2 否则，x轴的刻度值设为minY，最低横线间的距离设为 positionStepY * (1 + maxMultipleMoreThanPositionStepY)，也即x轴位置为positionYBottom
                  */
-                if (yFloor - minY <= valueStepY) {//x轴同上面横线的实际距离同positionStepY
+                double valueOfYBottom;//最低横线（x轴）的y刻度值
+                if (yFloor - minY <= valueStepY) {//yFloor对应横线在x轴上方positionStepY处
                     positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
                     valueOfYBottom = yFloor-valueStepY;
                 }
                 else{
-                    if ((yFloor - minY - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {//x轴同上面横线的实际距离按比例计算
+                    if ((yFloor - minY - valueStepY) / valueStepY <= maxMultipleMoreThanPositionStepY) {//yFloor对应横线跟x轴的距离按比例计算
                         positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + (yFloor - minY - valueStepY) / valueStepY);
                     }
                     else{//x轴同上面横线的实际距离设为positionStepY的(1 + maxMultipleMoreThanPositionStepY)倍
@@ -562,7 +579,10 @@
                 }
             }
             else{//x轴和最高横线y刻度值重新计算
-                double valueStepY = (yCeil - yFloor) / (segmentsOfYAxis - 2);
+                yFloor = FloorWithDigits(yFloor);
+                double valueStepY = CeilWithDigits((CeilWithDigits(yCeil) - yFloor) / (segmentsOfYAxis - 2));
+                yCeil = yFloor + valueStepY * (segmentsOfYAxis - 2);
+                
                 double valueOfYTop;
                 double valueOfYBottom;
                 
