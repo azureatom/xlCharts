@@ -219,7 +219,6 @@
      ****** TODO ******
      enablePinch实际没有实现，缩放代码handleGraphZoom, zoomGraph未完成。
      目前只支持一条曲线，self.lineDataArray中多曲线(LineChartDataRenderer *)的支持未完善。
-     x轴显示的刻度值是从原点按照同样间隔显示，因此最后一个x刻度值经常不显示，导致显示的最后一个刻度值实际上不是最后那个值。
      */
     
     [self setupDataWithDataSource];
@@ -365,7 +364,10 @@
         //显示原点外的竖直刻度线和x轴刻度值。不显示@""的刻度，只显示非空的刻度，因此两个刻度之间可能包含多个曲线点
         for (int i = 1; i < self.xAxisArray.count; ++i) {
             x += positionStepX;
-            if (i % numberOfLabelsBetweenVisibleX == 0) {
+            //每numberOfLabelsBetweenVisibleX个刻度值显示一个，如果显示完i处的刻度值后，余下的点数<要求点数的0.7倍，则不显示i处的刻度值
+            //最后一个刻度值总是显示
+            if ((i % numberOfLabelsBetweenVisibleX == 0 && self.xAxisArray.count - i > numberOfLabelsBetweenVisibleX * 0.7)
+                || i == self.xAxisArray.count - 1) {
                 if (self.drawGridX) {
                     //在graphView上显示其它竖线
                     [self.graphView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
