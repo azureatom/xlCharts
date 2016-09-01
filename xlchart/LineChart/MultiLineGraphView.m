@@ -322,7 +322,7 @@
         return;//无x数据
     }
     
-    void(^createXAxisLabel)() = ^(NSString *s, CGFloat centerX, CGFloat top){
+    void(^createXAxisLabel)(NSString *, CGFloat, CGFloat) = ^(NSString *s, CGFloat centerX, CGFloat top){
         NSAttributedString *attrString = [LegendView getAttributedString:s withFont:self.textFont];
         CGSize textSize = [attrString boundingRectWithSize:CGSizeMake(MAXFLOAT, k_xAxisLabelHeight) options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil].size;
         UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(centerX - textSize.width/2, top, textSize.width, textSize.height)];
@@ -405,7 +405,7 @@
         return;//所有的lineDataArray.yAxisArray都没有点
     }
     
-    void(^createYAxisLabel)() = ^(NSString *s, CGFloat right, CGFloat centerY){
+    void(^createYAxisLabel)(NSString *, CGFloat, CGFloat) = ^(NSString *s, CGFloat right, CGFloat centerY){
         NSAttributedString *attrString = [LegendView getAttributedString:s withFont:self.textFont];
         CGSize textSize = [attrString boundingRectWithSize:CGSizeMake(k_graphLeftMargin, MAXFLOAT) options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil].size;
         UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(right - textSize.width, centerY - textSize.height / 2, textSize.width, textSize.height)];
