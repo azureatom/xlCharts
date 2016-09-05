@@ -23,30 +23,30 @@
 
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
 @property (nonatomic, strong) CAShapeLayer *yMarker;//点击显示十字线的横线
-@property (nonatomic, strong) LineGraphMarker *marker;//点击显示的提示信息view
-@property (nonatomic, strong) UIView *customMarkerView;//点击显示的自定义提示信息view
+@property (nonatomic, strong) LineGraphMarker *defaultMarker;//点击显示的提示信息view
+@property (nonatomic, strong) UIView *customMarkerView;//自定义 点击显示的提示信息view
 
-//self(graphScrollView(x-axis, y-axis, graphView 曲线图(), maker, customMarkerView), legendView)
+//self(graphScrollView(x-axis, y-axis, graphView 曲线图), defaultMarker or customMarkerView, legendView)
 @property (nonatomic, strong) LegendView *legendView;
+@property (nonatomic, strong) NSMutableArray *legendArray;//array of LegendDataRenderer
 @property (nonatomic, strong) DRScrollView *graphScrollView;
+@property (nonatomic, strong) LineChartDataRenderer *lineDataRenderer;//曲线的数据结构
 @property (nonatomic, strong) UIView *yAxisView;//固定的y轴和y刻度值
 @property (nonatomic, strong) UIView *graphView;
 
 @property (nonatomic, strong) NSArray *xAxisArray;//array of NSString, x轴的刻度，@""表示不显示该刻度值和竖直刻度线
 @property (strong, nonatomic) NSMutableArray *xAxisLabels;//array of UILabel, 显示x轴的刻度值的label
-@property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值，第一个yAxisValues[0]和最后一个yAxisValues[last]分别是数据点的y最小值和最大值，但是最小值和最大值如果差距太大则不会显示在y轴刻度上，其它元素之间的差值等于positionStepY。
+@property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值，firstObject和lastObject分别是数据点的y最小值和最大值，但是最小值和最大值如果差距太大则不会显示在y轴刻度上，其它元素之间的差值等于positionStepY。
 @property (strong, nonatomic) NSMutableArray *positionYOfYAxisValues;//arrray of NSNumber，yAxisValues对应的y轴刻度值的view的y位置，从原点到最高点。
-
-@property (nonatomic, strong) NSMutableArray *legendArray;//array of LegendDataRenderer
-@property (nonatomic, strong) NSMutableArray *lineDataArray;//array of LineChartDataRenderer
 @end
 
 @implementation SingleLineGraph
 @synthesize delegate;
 @synthesize dataSource;
+@synthesize fractionDigits;
+@synthesize enablePanAndLongPress;
 @synthesize textFont;
 @synthesize textColor;
-@synthesize fractionDigits;
 @synthesize lineColor;
 @synthesize lineWidth;
 @synthesize lineName;
@@ -58,9 +58,7 @@
 @synthesize drawGridY;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
-@synthesize enablePanAndLongPress;
 @synthesize showMarker;
-@synthesize showCustomMarkerView;
 @synthesize markerColor;
 @synthesize markerTextColor;
 @synthesize markerWidth;
@@ -79,28 +77,33 @@
 @synthesize positionStepY;
 @synthesize xMarker;
 @synthesize yMarker;
-@synthesize marker;
+@synthesize defaultMarker;
 @synthesize customMarkerView;
 @synthesize legendView;
+@synthesize legendArray;
 @synthesize graphScrollView;
+@synthesize lineDataRenderer;
 @synthesize yAxisView;
 @synthesize graphView;
 @synthesize xAxisArray;
 @synthesize xAxisLabels;
 @synthesize yAxisValues;
 @synthesize positionYOfYAxisValues;
-@synthesize legendArray;
-@synthesize lineDataArray;
 
 - (instancetype)initWithFrame:(CGRect)frame{
     self = [super initWithFrame:frame];
     if(self){
+        self.enablePanAndLongPress = YES;
+        self.textColor = [UIColor blackColor];
+        self.textFont = [UIFont systemFontOfSize:12];
+        self.fractionDigits = 0;
+        
         lineColor = [UIColor blackColor];
         lineWidth = 0.5;
         lineName = @"";
-        self.shouldFill = YES;
-        self.shouldDrawPoints = YES;
-        self.maxPointRadius = 1.5;
+        shouldFill = YES;
+        shouldDrawPoints = YES;
+        maxPointRadius = 1.5;
         
         self.drawGridY = YES;
         self.drawGridX = YES;
@@ -108,20 +111,13 @@
         self.gridLineColor = [UIColor lightGrayColor];
         self.gridLineWidth = 0.3;
         
-        self.textColor = [UIColor blackColor];
-        self.textFont = [UIFont systemFontOfSize:12];
-        self.fractionDigits = 0;
-        
+        self.showMarker = YES;
         self.markerColor = [UIColor orangeColor];
         self.markerTextColor = [UIColor whiteColor];
         self.markerWidth = 0.4;
         
-        self.showLegend = TRUE;
+        self.showLegend = NO;
         self.legendViewType = LegendTypeVertical;
-        
-        self.enablePanAndLongPress = YES;
-        self.showMarker = YES;
-        self.showCustomMarkerView = NO;
         
         minPositionStepX = (320 - k_graphLeftMargin - k_graphRightMargin) / 10;//25
         spaceBetweenVisibleXLabels = 60;
@@ -137,7 +133,22 @@
 - (void)reloadGraph{
     [self.yAxisView removeFromSuperview];
     [self.graphScrollView removeFromSuperview];
-    [self.legendView removeFromSuperview];
+    if (defaultMarker != nil) {
+        [defaultMarker removeFromSuperview];
+        defaultMarker = nil;
+    }
+    if (xMarker != nil) {
+        [xMarker removeFromSuperlayer];
+        xMarker = nil;
+    }
+    if (yMarker != nil) {
+        [yMarker removeFromSuperlayer];
+        yMarker = nil;
+    }
+    if (legendView != nil) {
+        [self.legendView removeFromSuperview];
+        legendView = nil;
+    }
     
     [self drawGraph];
 }
@@ -169,16 +180,15 @@
     xAxisLabels = [[NSMutableArray alloc] init];
     yAxisValues = [[NSMutableArray alloc] init];
     positionYOfYAxisValues = [[NSMutableArray alloc] init];
-    self.lineDataArray = [[NSMutableArray alloc] init];
     self.legendArray = [[NSMutableArray alloc] init];
     
     filteredIndexArray = nil;
-    LineChartDataRenderer *lineData = [[LineChartDataRenderer alloc] init];
-    lineData.lineColor = self.lineColor;
-    lineData.lineWidth = self.lineWidth;
-    lineData.graphName = self.lineName;
-    lineData.fillGraph = self.shouldFill;
-    lineData.drawPoints = self.shouldDrawPoints;
+    lineDataRenderer = [[LineChartDataRenderer alloc] init];
+    lineDataRenderer.lineColor = self.lineColor;
+    lineDataRenderer.lineWidth = self.lineWidth;
+    lineDataRenderer.graphName = self.lineName;
+    lineDataRenderer.fillGraph = self.shouldFill;
+    lineDataRenderer.drawPoints = self.shouldDrawPoints;
     if (filterYOutOfRange) {
         NSArray *unfilteredYAxisArray = [self.dataSource yAxisDataForline:self];
         NSMutableArray *filteredYAxisArray = [NSMutableArray new];
@@ -191,16 +201,15 @@
             }
         }
         filteredIndexArray = tempFilteredIndexArray;
-        lineData.yAxisArray = filteredYAxisArray;
+        lineDataRenderer.yAxisArray = filteredYAxisArray;
     }
     else{
-        lineData.yAxisArray = [self.dataSource yAxisDataForline:self];
+        lineDataRenderer.yAxisArray = [self.dataSource yAxisDataForline:self];
     }
-    [self.lineDataArray addObject:lineData];
     
     LegendDataRenderer *data = [[LegendDataRenderer alloc] init];
-    [data setLegendText:lineData.graphName];
-    [data setLegendColor:lineData.lineColor];
+    [data setLegendText:lineDataRenderer.graphName];
+    [data setLegendColor:lineDataRenderer.lineColor];
     [self.legendArray addObject:data];
     
     self.xAxisArray = [self.dataSource xAxisDataForLine:self filtered:filteredIndexArray];
@@ -208,11 +217,6 @@
 
 #pragma mark Draw Graph: createXAxisLine, createYAxisLine, createGraph
 - (void)drawGraph{
-    /*
-     ****** TODO ******
-     目前只支持一条曲线，self.lineDataArray中多曲线(LineChartDataRenderer *)的支持未完善。
-     */
-    
     [self setupDataWithDataSource];
     
     CGFloat graphScrollHeight = self.frame.size.height;
@@ -377,20 +381,19 @@
     double maxY = -MAXFLOAT;
     NSMutableSet *allPointsSet = [[NSMutableSet alloc] init];//所有曲线中不同的y值。注意[NSNumber numberWithFloat:]和[NSNumber numberWithDouble:]不同
     NSMutableArray *allPointsYOfLines = [NSMutableArray new];//所有曲线的所有点的y值，包括y相同的值
-    for (LineChartDataRenderer *lineData in self.lineDataArray) {
-        [allPointsSet addObjectsFromArray:lineData.yAxisArray];
-        for (NSNumber *n in lineData.yAxisArray) {
-            [allPointsYOfLines addObject:n];
-            if (n.doubleValue > maxY) {
-                maxY = n.doubleValue;
-            }
-            if (n.doubleValue < minY) {
-                minY = n.doubleValue;
-            }
+    [allPointsSet addObjectsFromArray:lineDataRenderer.yAxisArray];
+    for (NSNumber *n in lineDataRenderer.yAxisArray) {
+        [allPointsYOfLines addObject:n];
+        if (n.doubleValue > maxY) {
+            maxY = n.doubleValue;
+        }
+        if (n.doubleValue < minY) {
+            minY = n.doubleValue;
         }
     }
+
     if (allPointsSet.count == 0) {
-        return;//所有的lineDataArray.yAxisArray都没有点
+        return;//没有点
     }
     
     void(^createYAxisLabel)(NSString *, CGFloat, CGFloat) = ^(NSString *s, CGFloat right, CGFloat centerY){
@@ -679,74 +682,74 @@
 }
 
 - (void)createGraph{
-    for (LineChartDataRenderer *lineData in self.lineDataArray) {
-        if (lineData.yAxisArray.count == 0) {//没有点
-            continue;
+    if (lineDataRenderer.yAxisArray.count == 0) {//没有点
+        return;
+    }
+    
+    CGPoint startPoint = [self pointForLine:lineDataRenderer at:0];
+    if (lineDataRenderer.drawPoints) {
+        [self drawPointsOnLine:startPoint withColor:lineDataRenderer.lineColor];
+    }
+    
+    if (lineDataRenderer.yAxisArray.count == 1) {
+        //只有一个点，画完这个点就结束，因为画path需要至少2个点
+        return;
+    }
+    
+    UIBezierPath *path = [UIBezierPath bezierPath];
+    UIBezierPath *fillPath = [UIBezierPath bezierPath];
+    [fillPath moveToPoint:startPoint];
+    
+    for (int i = 1; i < lineDataRenderer.yAxisArray.count; ++i) {
+        CGPoint nextPoint = [self pointForLine:lineDataRenderer at:i];
+        
+        [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:nextPoint]];
+        [fillPath addLineToPoint:nextPoint];
+        if (lineDataRenderer.drawPoints) {
+            [self drawPointsOnLine:nextPoint withColor:lineDataRenderer.lineColor];
         }
+        startPoint = nextPoint;
+    }
+    
+    [path closePath];
+    
+    CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
+    [shapeLayer setPath:[path CGPath]];
+    [shapeLayer setStrokeColor:lineDataRenderer.lineColor.CGColor];
+    [shapeLayer setLineWidth:lineDataRenderer.lineWidth];
+    shapeLayer.shouldRasterize = YES;
+    shapeLayer.rasterizationScale = [UIScreen mainScreen].scale;
+    shapeLayer.contentsScale = [UIScreen mainScreen].scale;
+    
+    CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
+    [pathAnimation setDuration:ANIMATION_DURATION];
+    [pathAnimation setFromValue:[NSNumber numberWithFloat:0.0f]];
+    [pathAnimation setToValue:[NSNumber numberWithFloat:1.0f]];
+    [shapeLayer addAnimation:pathAnimation forKey:@"strokeEnd"];
+    
+    [self.graphView.layer addSublayer:shapeLayer];
+    
+    if (lineDataRenderer.fillGraph) {
+        [fillPath addLineToPoint:CGPointMake(startPoint.x, originalPoint.y)];
+        [fillPath addLineToPoint:originalPoint];//坐标原点的位置
+        [fillPath addLineToPoint:[self pointForLine:lineDataRenderer at:0]];
+        [fillPath closePath];
         
-        CGPoint startPoint = [self pointForLine:lineData at:0];
-        if (lineData.drawPoints) {
-            [self drawPointsOnLine:startPoint withColor:lineData.lineColor];
-        }
-        
-        if (lineData.yAxisArray.count == 1) {
-            //只有一个点，画完这个点就结束，因为画path需要至少2个点
-            continue;
-        }
-        
-        UIBezierPath *path = [UIBezierPath bezierPath];
-        UIBezierPath *fillPath = [UIBezierPath bezierPath];
-        [fillPath moveToPoint:startPoint];
-        
-        for (int i = 1; i < lineData.yAxisArray.count; ++i) {
-            CGPoint nextPoint = [self pointForLine:lineData at:i];
-            
-            [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:nextPoint]];
-            [fillPath addLineToPoint:nextPoint];
-            if (lineData.drawPoints) {
-                [self drawPointsOnLine:nextPoint withColor:lineData.lineColor];
-            }
-            startPoint = nextPoint;
-        }
-        
-        [path closePath];
-        
-        CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-        [shapeLayer setPath:[path CGPath]];
-        [shapeLayer setStrokeColor:lineData.lineColor.CGColor];
-        [shapeLayer setLineWidth:lineData.lineWidth];
-        shapeLayer.shouldRasterize = YES;
-        shapeLayer.rasterizationScale = [UIScreen mainScreen].scale;
-        shapeLayer.contentsScale = [UIScreen mainScreen].scale;
-        
-        CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-        [pathAnimation setDuration:ANIMATION_DURATION];
-        [pathAnimation setFromValue:[NSNumber numberWithFloat:0.0f]];
-        [pathAnimation setToValue:[NSNumber numberWithFloat:1.0f]];
-        [shapeLayer addAnimation:pathAnimation forKey:@"strokeEnd"];
-        
-        [self.graphView.layer addSublayer:shapeLayer];
-        
-        if (lineData.fillGraph) {
-            [fillPath addLineToPoint:CGPointMake(startPoint.x, originalPoint.y)];
-            [fillPath addLineToPoint:originalPoint];//坐标原点的位置
-            [fillPath addLineToPoint:[self pointForLine:lineData at:0]];
-            [fillPath closePath];
-            
-            [self fillGraphBackgroundWithPath:fillPath color:lineData.lineColor];
-        }
+        [self fillGraphBackgroundWithPath:fillPath color:lineDataRenderer.lineColor];
     }
 }
 
-#pragma mark Create marker, legend
-- (void)createMarker{
-    self.marker = [[LineGraphMarker alloc] init];
-    [self.marker setHidden:YES];
-    [self.marker setFrame:CGRectZero];
-    [self.marker setBgColor:self.markerColor];
-    [self.marker setTextColor:self.markerTextColor];
-    [self.marker setTextFont:self.textFont];
-    [self.graphScrollView addSubview:self.marker];
+#pragma mark Create marker and legend
+-(void)createMarker{
+    if (![self.dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]) {
+        defaultMarker = [[LineGraphMarker alloc] init];
+        defaultMarker.hidden = YES;
+        defaultMarker.frame = CGRectZero;
+        defaultMarker.bgColor = markerColor;
+        defaultMarker.textColor = markerTextColor;
+        defaultMarker.textFont = textFont;
+        [graphScrollView addSubview:defaultMarker];
+    }
     
     self.xMarker = [[CAShapeLayer alloc] init];
     [self.xMarker setStrokeColor:self.markerColor.CGColor];
@@ -798,7 +801,7 @@
 
 #pragma mark handle gestures
 -(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture{
-    if (self.showMarker || self.showCustomMarkerView) {
+    if (showMarker) {
         CGPoint currentPoint = [gesture locationInView:self.graphView];
         if (CGRectContainsPoint(self.graphView.frame, currentPoint)) {
             //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
@@ -815,7 +818,6 @@
  *  @param checkXDistanceOnly YES 则选取曲线上跟 pointTouched x轴方向距离最近的点即可；NO 则比较 曲线上点跟 pointTouched 的最短距离是否足够小
  */
 - (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
-    NSInteger lineNumber = -1;//点击的是第几根线的点
     NSString *xString;
     NSNumber *yNumber;
     NSString *yString;//string presentation of yNumber
@@ -823,24 +825,29 @@
     CGPoint closestPoint;//距离最近的点
     NSUInteger closestPointIndex = 0;
     
-    for (int lIndex = 0; lIndex < self.lineDataArray.count; ++lIndex) {
-        LineChartDataRenderer *lineData = self.lineDataArray[lIndex];
-        for (int i = 0; i < lineData.yAxisArray.count; ++i){
-            CGPoint point = [self pointForLine:lineData at:i];
-            CGFloat distance = checkXDistanceOnly ? fabs(pointTouched.x - point.x) : sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPoint = point;
-                closestPointIndex = i;
-                xString = [self.xAxisArray objectAtIndex:i];
-                yNumber = [lineData.yAxisArray objectAtIndex:i];
-                yString = [self formattedStringForNumber:yNumber];
-                lineNumber = lIndex;
-            }
+    for (int i = 0; i < lineDataRenderer.yAxisArray.count; ++i){
+        CGPoint point = [self pointForLine:lineDataRenderer at:i];
+        CGFloat distance = checkXDistanceOnly ? fabs(pointTouched.x - point.x) : sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+            closestPointIndex = i;
+            xString = [self.xAxisArray objectAtIndex:i];
+            yNumber = [lineDataRenderer.yAxisArray objectAtIndex:i];
+            yString = [self formattedStringForNumber:yNumber];
         }
     }
     
-    [self hideMarker];
+    //先隐藏十字线和提示框
+    self.xMarker.hidden = YES;
+    self.yMarker.hidden = YES;
+    if (self.customMarkerView != nil) {
+        [self.customMarkerView removeFromSuperview];
+        self.customMarkerView = nil;
+    }
+    if (self.defaultMarker != nil) {
+        self.defaultMarker.hidden = YES;
+    }
     
     //距离过远的点不处理
     if (!checkXDistanceOnly && minDistance > (positionStepX + positionStepY) * 0.8) {
@@ -871,14 +878,12 @@
     closestPoint = [self optimizedPoint:closestPoint];
     
     [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) endPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
-    [self.xMarker setHidden:NO];
+    self.xMarker.hidden = NO;
     
     [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
-    [self.yMarker setHidden:NO];
+    self.yMarker.hidden = NO;
     
-    if (self.showCustomMarkerView){
-        [self.marker setHidden:YES];
-        [self.marker removeFromSuperview];
+    if ([self.dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]) {
         self.customMarkerView = [self.dataSource markerViewForline:self pointIndex:(filterYOutOfRange ? ((NSNumber *)filteredIndexArray[closestPointIndex]).intValue : closestPointIndex) andYValue:yNumber];
         
         if (self.customMarkerView != nil) {
@@ -911,33 +916,16 @@
         }
         [self.graphScrollView addSubview:self.customMarkerView];
     }
-    else if (self.showMarker) {
-        [self.marker setXString:xString];
-        [self.marker setYString:yString];
-        [self.marker drawAtPoint:CGPointMake(closestPoint.x, k_graphVerticalMargin)];
-        [self.marker setHidden:NO];
+    else{
+        [self.defaultMarker setXString:xString];
+        [self.defaultMarker setYString:yString];
+        [self.defaultMarker drawAtPoint:CGPointMake(closestPoint.x, k_graphVerticalMargin)];
+        self.defaultMarker.hidden = NO;
     }
-    
-    [self setNeedsDisplay];
     
     if ([self.delegate respondsToSelector:@selector(didTapLine:atPoint:valuesAtY:)]) {
         [self.delegate didTapLine:self atPoint:(filterYOutOfRange ? ((NSNumber *)filteredIndexArray[closestPointIndex]).intValue : closestPointIndex) valuesAtY:yNumber];
     }
-}
-
-- (void)hideMarker{
-    if (self.showCustomMarkerView){
-        [self.customMarkerView removeFromSuperview];
-    }
-    else if (self.showMarker) {
-        [self.marker setHidden:YES];
-        [self.marker setFrame:CGRectZero];
-    }
-    
-    [self.xMarker setHidden:YES];
-    [self.yMarker setHidden:YES];
-    
-    [self setNeedsDisplay];
 }
 
 #pragma mark Graph line drawing operation

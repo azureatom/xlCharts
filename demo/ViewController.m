@@ -56,25 +56,24 @@
     
     lineGraphView.delegate = self;
     lineGraphView.dataSource = self;
-    lineGraphView.showLegend = YES;
-    lineGraphView.legendViewType = LegendTypeHorizontal;
+    lineGraphView.fractionDigits = 2;
+    lineGraphView.enablePanAndLongPress = YES;
+    
+    [lineGraphView setTextColor:[UIColor blackColor]];
+    [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
     
     lineGraphView.drawGridX = NO;
     lineGraphView.drawGridY = YES;
     lineGraphView.gridLineColor = [UIColor lightGrayColor];
     lineGraphView.gridLineWidth = 0.3;
     
-    [lineGraphView setTextColor:[UIColor blackColor]];
-    [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
-    lineGraphView.fractionDigits = 2;
-    
     lineGraphView.showMarker = YES;
-    lineGraphView.showCustomMarkerView = YES;
     lineGraphView.markerColor = [UIColor orangeColor];
     lineGraphView.markerWidth = 0.4;
     
+    lineGraphView.showLegend = YES;
+    lineGraphView.legendViewType = LegendTypeHorizontal;
     
-    lineGraphView.enablePanAndLongPress = YES;
     //lineGraphView.minPositionStepX = 30;//当 enablePanAndLongPress 为NO时才有效
     lineGraphView.spaceBetweenVisibleXLabels = 60;
     lineGraphView.segmentsOfYAxis = 5;
