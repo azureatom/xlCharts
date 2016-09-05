@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		50BE81971D7D1A070001E1AC /* TimeLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81961D7D1A070001E1AC /* TimeLineGraph.m */; };
+		50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81991D7D27870001E1AC /* MultiLineGraph.m */; };
 		50F371891D541CEC005CB142 /* xlchartTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371881D541CEC005CB142 /* xlchartTests.m */; };
 		50F371941D541CEC005CB142 /* xlchartUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371931D541CEC005CB142 /* xlchartUITests.m */; };
 		50F371AF1D541D1A005CB142 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371A31D541D1A005CB142 /* AppDelegate.m */; };
@@ -20,7 +22,7 @@
 		50F371C61D5880BC005CB142 /* DRScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371BD1D5880BC005CB142 /* DRScrollView.m */; };
 		50F371C71D5880BC005CB142 /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C01D5880BC005CB142 /* LegendView.m */; };
 		50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C31D5880BC005CB142 /* LineGraphMarker.m */; };
-		50F371C91D5880BC005CB142 /* MultiLineGraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C51D5880BC005CB142 /* MultiLineGraphView.m */; };
+		50F371C91D5880BC005CB142 /* SingleLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C51D5880BC005CB142 /* SingleLineGraph.m */; };
 		50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +44,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		50BE81951D7D1A070001E1AC /* TimeLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeLineGraph.h; sourceTree = "<group>"; };
+		50BE81961D7D1A070001E1AC /* TimeLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TimeLineGraph.m; sourceTree = "<group>"; };
+		50BE81981D7D27870001E1AC /* MultiLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiLineGraph.h; sourceTree = "<group>"; };
+		50BE81991D7D27870001E1AC /* MultiLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MultiLineGraph.m; sourceTree = "<group>"; };
 		50F371681D541CEC005CB142 /* xlchart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xlchart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50F371841D541CEC005CB142 /* xlchartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = xlchartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		50F371881D541CEC005CB142 /* xlchartTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = xlchartTests.m; sourceTree = "<group>"; };
@@ -66,8 +72,8 @@
 		50F371C01D5880BC005CB142 /* LegendView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LegendView.m; sourceTree = "<group>"; };
 		50F371C21D5880BC005CB142 /* LineGraphMarker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineGraphMarker.h; sourceTree = "<group>"; };
 		50F371C31D5880BC005CB142 /* LineGraphMarker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineGraphMarker.m; sourceTree = "<group>"; };
-		50F371C41D5880BC005CB142 /* MultiLineGraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiLineGraphView.h; sourceTree = "<group>"; };
-		50F371C51D5880BC005CB142 /* MultiLineGraphView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MultiLineGraphView.m; sourceTree = "<group>"; };
+		50F371C41D5880BC005CB142 /* SingleLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleLineGraph.h; sourceTree = "<group>"; };
+		50F371C51D5880BC005CB142 /* SingleLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SingleLineGraph.m; sourceTree = "<group>"; };
 		50F371CA1D5888BA005CB142 /* LineChartDataRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineChartDataRenderer.h; sourceTree = "<group>"; };
 		50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineChartDataRenderer.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -180,10 +186,14 @@
 			children = (
 				50F371C21D5880BC005CB142 /* LineGraphMarker.h */,
 				50F371C31D5880BC005CB142 /* LineGraphMarker.m */,
-				50F371C41D5880BC005CB142 /* MultiLineGraphView.h */,
-				50F371C51D5880BC005CB142 /* MultiLineGraphView.m */,
 				50F371CA1D5888BA005CB142 /* LineChartDataRenderer.h */,
 				50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */,
+				50BE81951D7D1A070001E1AC /* TimeLineGraph.h */,
+				50BE81961D7D1A070001E1AC /* TimeLineGraph.m */,
+				50F371C41D5880BC005CB142 /* SingleLineGraph.h */,
+				50F371C51D5880BC005CB142 /* SingleLineGraph.m */,
+				50BE81981D7D27870001E1AC /* MultiLineGraph.h */,
+				50BE81991D7D27870001E1AC /* MultiLineGraph.m */,
 			);
 			name = LineChart;
 			path = xlchart/LineChart;
@@ -320,10 +330,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				50F371C91D5880BC005CB142 /* MultiLineGraphView.m in Sources */,
+				50F371C91D5880BC005CB142 /* SingleLineGraph.m in Sources */,
 				50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */,
+				50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */,
 				50F371C71D5880BC005CB142 /* LegendView.m in Sources */,
 				50F371B51D541D1A005CB142 /* ViewController.m in Sources */,
+				50BE81971D7D1A070001E1AC /* TimeLineGraph.m in Sources */,
 				50F371C61D5880BC005CB142 /* DRScrollView.m in Sources */,
 				50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */,
 				50F371B41D541D1A005CB142 /* main.m in Sources */,

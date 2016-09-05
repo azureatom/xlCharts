@@ -1,5 +1,5 @@
 //
-//  MultiLineGraphView.h
+//  SingleLineGraph.h
 //  xlchart
 //
 //  Created by lei xue on 16/8/5.
@@ -14,56 +14,29 @@ const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的�
 const static CGFloat k_graphLeftMargin = 50;//y轴刻度值的宽度，图表左侧的空白
 const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 
-@class MultiLineGraphView;
+@class SingleLineGraph;
 
-@protocol MultiLineGraphViewDelegate  <NSObject>
+@protocol SingleLineGraphDelegate  <NSObject>
 /**
  *  点击点的index和y值
  *
  *  @param graph
- *  @lineNumber 第几根线
  *  @param pointIndex 是第几个点，也即x轴的第几个刻度值
  *  @param yValue 点击点对应的y值
  */
-- (void)lineGraph:(MultiLineGraphView *)graph didTapLine:(NSInteger)lineNumber atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
+- (void)didTapLine:(SingleLineGraph *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
 @end
 
-@protocol MultiLineGraphViewDataSource  <NSObject>
+@protocol SingleLineGraphDataSource  <NSObject>
 /**
  *  Set data for x-Axis for the Line Graph
  *  如果filteredIndexArray非nil，则只选择原始数据中指定index的值
  *
  *  @return array of NSString, only draw x-axis if string is not empty, that is exclude @""
  */
-- (NSArray *)lineGraphXAxisData:(MultiLineGraphView *)graph filtered:(NSArray *)filteredIndexArray;
+- (NSArray *)xAxisDataForLine:(SingleLineGraph *)graph filtered:(NSArray *)filteredIndexArray;
 
-- (NSInteger)lineGraphNumberOfLines:(MultiLineGraphView *)graph;
-//Set number of lines to be plotted on the Line Graph
-
-- (UIColor *)lineGraph:(MultiLineGraphView *)graph lineColor:(NSInteger)lineNumber;
-//Set Line Color for each for Line on the Line Graph
-//Default is Black Color
-
-- (CGFloat)lineGraph:(MultiLineGraphView *)graph lineWidth:(NSInteger)lineNumber;
-//Set Line Width for each for Line on the Line Graph
-//Default is 1.0F
-
-//返回曲线上点的半径，画线时最终采用的点半径可能随点数增多而减少至线宽
-- (CGFloat)lineGraph:(MultiLineGraphView *)graph pointRadius:(NSInteger)lineNumber;
-
-- (NSString *)lineGraph:(MultiLineGraphView *)graph lineName:(NSInteger)lineNumber;
-//Set Line Name for each for Line on the Line Graph
-//Default is Empty String
-
-- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldFill:(NSInteger)lineNumber;
-//Set Fill Property for each for Line on the Line Graph
-//Default is False
-
-- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldDrawPoints:(NSInteger)lineNumber;
-//Set Draw Points Property for each for Line on the Line Graph
-//Default is False
-
-- (NSArray *)lineGraph:(MultiLineGraphView *)graph yAxisData:(NSInteger)lineNumber;
+- (NSArray *)yAxisDataForline:(SingleLineGraph *)graph;
 //Set yData for Line on Line Graph
 
 @optional
@@ -71,27 +44,34 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
  *  返回的自定义view.frame.size的 width和height 必须是整数，如果是小数可能由于屏幕分辨率和像素匹配问题导致显示模糊
  *
  *  @param graph
- *  @param lineNumber
  *  @param pointIndex
  *  @param yValue
  *
  *  @return 自定义view
  */
-- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
+- (UIView *)markerViewForline:(SingleLineGraph *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
-@interface MultiLineGraphView : UIView
-@property (weak, nonatomic) id<MultiLineGraphViewDelegate> delegate;
-@property (weak, nonatomic) id<MultiLineGraphViewDataSource> dataSource;
+@interface SingleLineGraph : UIView
+@property (weak, nonatomic) id<SingleLineGraphDelegate> delegate;
+@property (weak, nonatomic) id<SingleLineGraphDataSource> dataSource;
 //set FONT property for the graph
 @property (nonatomic, strong) UIFont *textFont; //Default is [UIFont systemFontOfSize:12];
 @property (nonatomic, strong) UIColor *textColor; //Default is [UIColor blackColor]
 @property (assign, nonatomic) NSUInteger fractionDigits;//显示的y轴刻度值取小数点后几位小数，默认是0也即整数
 
+//line and points
+@property (strong, nonatomic) UIColor *lineColor;//曲线颜色，默认黑色
+@property (assign, nonatomic) CGFloat lineWidth;//曲线线宽，默认0.5
+@property (strong, nonatomic) NSString *lineName;//曲线名字，显示在legendView上
+@property (assign, nonatomic) BOOL shouldFill;//是否将曲线的区域填充颜色，默认YES
+@property (assign, nonatomic) BOOL shouldDrawPoints;//是否画出曲线上的点，默认YES
+@property (assign, nonatomic) CGFloat maxPointRadius;//曲线上点的最大半径，默认1.5
+@property (assign, nonatomic) CGFloat pointRadius;//根据maxPointRadius计算的点的半径，画线时最终采用的点半径可能随点数增多而减少至线宽
+
 //show Grid with the graph
-@property (nonatomic) BOOL drawGridX; //x轴竖直刻度线，Default is TRUE
-@property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is TRUE
-//set property for the grid
+@property (nonatomic) BOOL drawGridX; //x轴竖直刻度线，Default is YES
+@property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is YES
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
 @property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
 
@@ -101,10 +81,9 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
  *  NO 只支持TapGesture显示Marker，不识别LongPressGesture和PanGesture手势，也即 graphView 可以超过 graphScrollView 的长度 从而左右滚动
  */
 @property (assign, nonatomic) BOOL enablePanAndLongPress;
-//show MARKER when interacting with graph
-@property (nonatomic) BOOL showMarker; //是否显示十字线和默认的提示框，提示框默认显示在坐标系的上方，Default is YES
-//show CUSTOM MARKER when interacting with graph.
+//show marker or customMarker when interacting with graph.
 //If Both MARKER and CUSTOM MARKER view are True then CUSTOM MARKER View Priorties over MARKER View.
+@property (nonatomic) BOOL showMarker; //是否显示十字线和默认的提示框，提示框默认显示在坐标系的上方，Default is YES
 @property (nonatomic) BOOL showCustomMarkerView; //是否显示自定义提示框，Default is NO
 //to set marker property
 @property (nonatomic, strong) UIColor *markerColor; //Default is [UIColor orangeColor]

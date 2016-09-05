@@ -7,11 +7,11 @@
 //
 
 #import "ViewController.h"
-#import "MultiLineGraphView.h"
+#import "SingleLineGraph.h"
 
-@interface ViewController ()<MultiLineGraphViewDataSource, MultiLineGraphViewDelegate>
+@interface ViewController ()<SingleLineGraphDataSource, SingleLineGraphDelegate>
 @property(strong, nonatomic) UIButton *button;
-@property(strong, nonatomic) MultiLineGraphView *lineGraphView;
+@property(strong, nonatomic) SingleLineGraph *lineGraphView;
 @end
 
 @implementation ViewController
@@ -45,7 +45,15 @@
 
 - (void)createLineGraph{
 //    self.automaticallyAdjustsScrollViewInsets = NO;
-    lineGraphView = [[MultiLineGraphView alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 400)];
+    lineGraphView = [[SingleLineGraph alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 400)];
+    
+    lineGraphView.lineColor = [UIColor blueColor];
+    lineGraphView.lineWidth = 1;
+    lineGraphView.lineName = @"A折价率";
+    lineGraphView.shouldFill = YES;
+    lineGraphView.shouldDrawPoints = YES;
+    lineGraphView.maxPointRadius = 1.5;
+    
     lineGraphView.delegate = self;
     lineGraphView.dataSource = self;
     lineGraphView.showLegend = YES;
@@ -78,8 +86,8 @@
     [self.view addSubview:lineGraphView];
 }
 
-#pragma mark MultiLineGraphViewDataSource
-- (NSArray *)lineGraphXAxisData:(MultiLineGraphView *)graph filtered:(NSArray *)filteredIndexArray{
+#pragma mark SingleLineGraphDataSource
+- (NSArray *)xAxisDataForLine:(SingleLineGraph *)graph filtered:(NSArray *)filteredIndexArray{
     NSMutableArray *dateStringArray = [NSMutableArray new];
     for (int i = 0; i < ((NSNumber *)filteredIndexArray.lastObject).intValue + 1; ++i) {
         [dateStringArray addObject:[NSString stringWithFormat:@"%d", i]];
@@ -161,39 +169,11 @@
             return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"10", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"20"];
         default:
             button.tag = 0;
-            return [self lineGraphXAxisData:graph filtered:filteredIndexArray];
+            return [self xAxisDataForLine:graph filtered:filteredIndexArray];
     }
 }
 
-- (NSInteger)lineGraphNumberOfLines:(MultiLineGraphView *)graph{
-    return 1;
-}
-
-- (UIColor *)lineGraph:(MultiLineGraphView *)graph lineColor:(NSInteger)lineNumber{
-    return [UIColor blueColor];
-}
-
-- (CGFloat)lineGraph:(MultiLineGraphView *)graph pointRadius:(NSInteger)lineNumber{
-    return 1.5;
-}
-
-- (CGFloat)lineGraph:(MultiLineGraphView *)graph lineWidth:(NSInteger)lineNumber{
-    return 1;
-}
-
-- (NSString *)lineGraph:(MultiLineGraphView *)graph lineName:(NSInteger)lineNumber{
-    return @"A折价率";
-}
-
-- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldFill:(NSInteger)lineNumber{
-    return NO;
-}
-
-- (BOOL)lineGraph:(MultiLineGraphView *)graph shouldDrawPoints:(NSInteger)lineNumber{
-    return YES;
-}
-
-- (NSArray *)lineGraph:(MultiLineGraphView *)graph yAxisData:(NSInteger)lineNumber{
+- (NSArray *)yAxisDataForline:(SingleLineGraph *)graph{
     switch (button.tag) {
         case 0:
             return @[];
@@ -265,11 +245,11 @@
             return @[@22, @21, @2, @3, @4, @5, @6, @7, @8, @9, @10, @11, @12, @13, @14, @15, @16, @17, @3, @2, @1];
         default:
             button.tag = 0;
-            return [self lineGraph:graph yAxisData:lineNumber];
+            return [self yAxisDataForline:graph];
     }
 }
 
-- (UIView *)lineGraph:(MultiLineGraphView *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
+- (UIView *)markerViewForline:(SingleLineGraph *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
     UIView *view = [[UIView alloc] init];
     view.backgroundColor = [UIColor orangeColor];
     [view.layer setCornerRadius:4.0F];
@@ -292,8 +272,8 @@
     return view;
 }
 
-#pragma mark MultiLineGraphViewDelegate
-- (void)lineGraph:(MultiLineGraphView *)graph didTapLine:(NSInteger)lineNumber atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
+#pragma mark SingleLineGraphDelegate
+- (void)didTapLine:(SingleLineGraph *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
 //    NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
 @end

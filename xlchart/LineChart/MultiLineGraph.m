@@ -1,12 +1,12 @@
 //
-//  MultiLineGraphView.m
+//  MultiLineGraph.m
 //  xlchart
 //
 //  Created by lei xue on 16/8/5.
 //  Copyright © 2016年 userstar. All rights reserved.
 //
 
-#import "MultiLineGraphView.h"
+#import "MultiLineGraph.h"
 #import "LineGraphMarker.h"
 #import "DRScrollView.h"
 #import "Constants.h"
@@ -16,7 +16,7 @@
 #define CeilWithDigits(x) ceil(x * pow(10, self.fractionDigits)) / pow(10, self.fractionDigits)
 #define FloorWithDigits(x) floor(x * pow(10, self.fractionDigits)) / pow(10, self.fractionDigits)
 
-@interface MultiLineGraphView()<UIScrollViewDelegate>
+@interface MultiLineGraph()<UIScrollViewDelegate>
 @property (assign, nonatomic) CGPoint originalPoint;//原点的位置
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离，默认采用用户设置minPositionStepX。如果值过小，会修改以保证填满横向宽度
 @property (assign, nonatomic) CGFloat positionStepY;
@@ -42,7 +42,7 @@
 @property (nonatomic, strong) NSMutableArray *lineDataArray;//array of LineChartDataRenderer
 @end
 
-@implementation MultiLineGraphView
+@implementation MultiLineGraph
 @synthesize delegate;
 @synthesize dataSource;
 @synthesize textFont;
