@@ -60,8 +60,6 @@
     [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
     lineGraphView.fractionDigits = 2;
     
-    lineGraphView.enablePinch = NO;
-    
     lineGraphView.showMarker = YES;
     lineGraphView.showCustomMarkerView = YES;
     lineGraphView.markerColor = [UIColor orangeColor];

@@ -40,9 +40,6 @@
 
 @property (nonatomic, strong) NSMutableArray *legendArray;//array of LegendDataRenderer
 @property (nonatomic, strong) NSMutableArray *lineDataArray;//array of LineChartDataRenderer
-
-@property (assign, nonatomic) CGFloat lastScale;
-@property (assign, nonatomic) CGFloat scaleFactor;
 @end
 
 @implementation MultiLineGraphView
@@ -55,7 +52,6 @@
 @synthesize drawGridY;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
-@synthesize enablePinch;
 @synthesize enablePanAndLongPress;
 @synthesize showMarker;
 @synthesize showCustomMarkerView;
@@ -90,8 +86,6 @@
 @synthesize positionYOfYAxisValues;
 @synthesize legendArray;
 @synthesize lineDataArray;
-@synthesize lastScale;
-@synthesize scaleFactor;
 
 - (instancetype)initWithFrame:(CGRect)frame{
     self = [super initWithFrame:frame];
@@ -113,8 +107,6 @@
         self.showLegend = TRUE;
         self.legendViewType = LegendTypeVertical;
         
-        self.enablePinch = NO;
-        
         self.enablePanAndLongPress = YES;
         self.showMarker = YES;
         self.showCustomMarkerView = NO;
@@ -126,9 +118,6 @@
         customMinValidY = -MAXFLOAT / 4;
         filterYOutOfRange = NO;
         filteredIndexArray = nil;
-        
-        scaleFactor = 1;
-        lastScale = 1;
     }
     return self;
 }
@@ -217,7 +206,6 @@
 - (void)drawGraph{
     /*
      ****** TODO ******
-     enablePinch实际没有实现，缩放代码handleGraphZoom, zoomGraph未完成。
      目前只支持一条曲线，self.lineDataArray中多曲线(LineChartDataRenderer *)的支持未完善。
      */
     
@@ -276,10 +264,6 @@
         //如果minimumPressDuration设置过小，则TapGesture也会被认为是LongPressGesture
         //    longPressGestureRecognizer.minimumPressDuration = 0.3;
         [self.graphScrollView addGestureRecognizer:longPressGestureRecognizer];
-    }
-    
-    if (self.enablePinch) {
-        [self.graphScrollView addGestureRecognizer:[[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handleGraphZoom:)]];
     }
     
     self.graphView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, graphScrollHeight)];
@@ -727,9 +711,9 @@
         [shapeLayer setPath:[path CGPath]];
         [shapeLayer setStrokeColor:lineData.lineColor.CGColor];
         [shapeLayer setLineWidth:lineData.lineWidth];
-        [shapeLayer setShouldRasterize:YES];
-        [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
-        [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
+        shapeLayer.shouldRasterize = YES;
+        shapeLayer.rasterizationScale = [UIScreen mainScreen].scale;
+        shapeLayer.contentsScale = [UIScreen mainScreen].scale;
         
         CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
         [pathAnimation setDuration:ANIMATION_DURATION];
@@ -820,50 +804,6 @@
     }
 }
 
-- (void)handleGraphZoom:(UIPinchGestureRecognizer *)gesture{
-    [self hideMarker];
-    
-    if (gesture.state == UIGestureRecognizerStateEnded) {
-//        CGFloat pinchscale = [gesture scale];
-//        CGFloat pastScale = lastScale;
-//        CGFloat scaledWidth = pinchscale * WIDTH(self);
-//        scaleFactor = pinchscale;
-//        lastScale = pinchscale;
-//        
-//        if (scaledWidth <= WIDTH(self)) {
-//            scaledWidth = WIDTH(self);
-//            scaleFactor = scaledWidth / WIDTH(self);
-//            lastScale = 1;
-//        }
-//        
-//        if (pastScale != lastScale) {
-//            [self zoomGraph];
-//        }
-    }
-}
-
-- (void)zoomGraph{
-//    CGRect oldFrame = graphView.frame;
-//    [self.graphView removeFromSuperview];
-//    
-//    self.graphView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, oldFrame.size.width, scaleFactor)];
-//    [self.graphView setUserInteractionEnabled:YES];
-//    
-//    [self createYAxisLine];
-//    [self createXAxisLine];
-//    [self createGraph];
-//    
-//    [self.graphView setNeedsDisplay];
-//    
-//    [self.graphScrollView addSubview:self.graphView];
-//    
-//    [self.graphScrollView setNeedsDisplay];
-//    
-//    [self addSubview:self.graphScrollView];
-//    [self.graphScrollView setContentSize:CGSizeMake(oldFrame.size.width, scaleFactor)];
-//    
-//    [self setNeedsDisplay];
-}
 /**
  *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框
  *
@@ -1043,9 +983,9 @@
     [shapeLayer setStrokeColor:color.CGColor];//如果StrokeColor和FillColor不同，则画出的是环
     [shapeLayer setFillColor:color.CGColor];
     [shapeLayer setLineWidth:0];
-    [shapeLayer setShouldRasterize:YES];
-    [shapeLayer setRasterizationScale:[[UIScreen mainScreen] scale]];
-    [shapeLayer setContentsScale:[[UIScreen mainScreen] scale]];
+    shapeLayer.shouldRasterize = YES;
+    shapeLayer.rasterizationScale = [UIScreen mainScreen].scale;
+    shapeLayer.contentsScale = [UIScreen mainScreen].scale;
     [self.graphView.layer addSublayer:shapeLayer];
 }
 @end

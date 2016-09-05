@@ -95,8 +95,6 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
 @property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
 
-@property (assign, nonatomic) BOOL enablePinch;//是否支持pinch手势放大缩小.尚未实现该功能
-
 /**
  *  是否支持Pan和LongPress手势。
  *  默认YES，忽略minPositionStepX而将positionStepX设为使 graphView 刚好占满 graphScrollView 的值，不可左右滚动，识别多种手势
