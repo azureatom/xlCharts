@@ -8,7 +8,6 @@
 
 #import "MultiLineGraph.h"
 #import "LineGraphMarker.h"
-#import "DRScrollView.h"
 #import "Constants.h"
 #import "LineChartDataRenderer.h"
 
@@ -17,7 +16,6 @@
 #define FloorWithDigits(x) floor(x * pow(10, self.fractionDigits)) / pow(10, self.fractionDigits)
 
 @interface MultiLineGraph()<UIScrollViewDelegate>
-@property (assign, nonatomic) CGPoint originalPoint;//原点的位置
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离，默认采用用户设置minPositionStepX。如果值过小，会修改以保证填满横向宽度
 @property (assign, nonatomic) CGFloat positionStepY;
 
@@ -28,7 +26,7 @@
 
 //self(graphScrollView(x-axis, y-axis, graphView 曲线图(), maker, customMarkerView), legendView)
 @property (nonatomic, strong) LegendView *legendView;
-@property (nonatomic, strong) DRScrollView *graphScrollView;
+@property (nonatomic, strong) UIScrollView *graphScrollView;
 @property (nonatomic, strong) UIView *yAxisView;//固定的y轴和y刻度值
 @property (nonatomic, strong) UIView *graphView;
 
@@ -68,7 +66,6 @@
 @synthesize filterYOutOfRange;
 @synthesize filteredIndexArray;
 
-@synthesize originalPoint;
 @synthesize positionStepX;
 @synthesize positionStepY;
 @synthesize xMarker;
@@ -248,7 +245,7 @@
      空白 k_graphVerticalMargin
      x轴刻度值 k_xAxisLabelHeight
      */
-    self.graphScrollView = [[DRScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, graphScrollHeight)];
+    self.graphScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, graphScrollHeight)];
     self.graphScrollView.showsVerticalScrollIndicator = NO;
     self.graphScrollView.showsHorizontalScrollIndicator = NO;
     self.graphScrollView.bounces = NO;
@@ -278,7 +275,7 @@
     self.graphScrollView.contentSize = self.graphView.frame.size;
     //注意，如果self是navigationcontroller的第一个view，graphScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
     [self createYAxisLine];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
-    originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
+    self.originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
     
     //如果 pointRadius > lineWidth，则当 positionStepX 在(5, 10)之间时，pointRadius的大小按照 positionStepX与5的距离 成比例缩小，但最小不能小于lineWidth
     CGFloat lineWidth = [self.dataSource lineGraph:self lineWidth:0];
@@ -291,7 +288,7 @@
         }
     }
     
-    [self createGraph];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
+    [self createGraph];//必须在self.originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
     
     if (self.showMarker) {
         [self createMarker];
@@ -724,8 +721,8 @@
         [self.graphView.layer addSublayer:shapeLayer];
         
         if (lineData.fillGraph) {
-            [fillPath addLineToPoint:CGPointMake(startPoint.x, originalPoint.y)];
-            [fillPath addLineToPoint:originalPoint];//坐标原点的位置
+            [fillPath addLineToPoint:CGPointMake(startPoint.x, self.originalPoint.y)];
+            [fillPath addLineToPoint:self.originalPoint];//坐标原点的位置
             [fillPath addLineToPoint:[self pointForLine:lineData at:0]];
             [fillPath closePath];
             
@@ -845,17 +842,17 @@
     }
     
     CGPoint contentOffset = graphScrollView.contentOffset;
-    if (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : pointRadius) < originalPoint.x + contentOffset.x) {
-        if (closestPoint.x == originalPoint.x){
+    if (closestPoint.x - (closestPoint.x == self.originalPoint.x ? 0 : pointRadius) < self.originalPoint.x + contentOffset.x) {
+        if (closestPoint.x == self.originalPoint.x){
         }
         //closestPoint左边缘在y轴左侧，需要将graphScrollView向右滑动使其完全显示出来，但是第一个点只显示一半
-        CGFloat needScroll = (originalPoint.x + contentOffset.x) - (closestPoint.x - (closestPoint.x == originalPoint.x ? 0 : pointRadius));
+        CGFloat needScroll = (self.originalPoint.x + contentOffset.x) - (closestPoint.x - (closestPoint.x == self.originalPoint.x ? 0 : pointRadius));
         contentOffset.x -= needScroll;
         [UIView animateWithDuration:0.2 animations:^{
             self.graphScrollView.contentOffset = contentOffset;
         }];
     }
-    else if(closestPoint.x + (closestPoint.x == originalPoint.x ? 0 : pointRadius) > contentOffset.x + graphScrollView.frame.size.width){
+    else if(closestPoint.x + (closestPoint.x == self.originalPoint.x ? 0 : pointRadius) > contentOffset.x + graphScrollView.frame.size.width){
         //closestPoint在屏幕外右边，右边缘没有显示出来，需要将graphScrollView向左滑动使其完全显示出来
         CGFloat needScroll = (closestPoint.x + pointRadius) - (contentOffset.x + graphScrollView.frame.size.width);
         contentOffset.x += needScroll;
@@ -869,7 +866,7 @@
     [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) endPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
     [self.xMarker setHidden:NO];
     
-    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
+    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(self.originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
     [self.yMarker setHidden:NO];
     
     if (self.showCustomMarkerView){
@@ -894,7 +891,7 @@
                 makerViewOrigin.y = closestPoint.y - viewSize.height;
             }
             if (closestPoint.x - pathFrame.origin.x >= viewSize.width
-                && closestPoint.x - viewSize.width >= originalPoint.x + graphScrollView.contentOffset.x) {
+                && closestPoint.x - viewSize.width >= self.originalPoint.x + graphScrollView.contentOffset.x) {
                 //如果pathFrame中closestPoint左边空间足够 && graphScrollView当前滚动后的显示区域仍然足够
                 makerViewOrigin.x = closestPoint.x - viewSize.width;
             }

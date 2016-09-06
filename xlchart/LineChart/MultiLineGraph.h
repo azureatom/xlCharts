@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "LineGraphBase.h"
 #import "LegendView.h"
 
 const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
@@ -83,7 +84,33 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 - (UIView *)lineGraph:(MultiLineGraph *)graph customViewForLine:(NSInteger)lineNumber pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
-@interface MultiLineGraph : UIView
+typedef enum{
+    LineTypeFixedTimeLine,//固定x轴刻度值，分时线
+    LineTypeFixed5DaysTimeLine,//固定x轴刻度值，5日分时线，暂时不实现
+    LineTypeAuto,//x轴刻度值自动计算，比如日K线、周K线、月K线
+} LineType;
+
+/*
+ MultiLineGraph 多条曲线
+ 曲线点的所有y值都在一个较小的范围内，因此所有的点都会显示。
+ y方向同时显示价格和百分比。y轴有侧显示价格。最右边竖线的左侧显示涨跌幅百分百，只显示最高和最低横线的涨跌幅，不显示中间线的0%。
+ 价格取整fractionDigits（基金价格取3位小数），百分比取整百分数的2位小数。
+ 
+ 根据LineType的类型设置x轴刻度值的逻辑：
+    x轴的首尾刻度线为竖直实线，刻度值显示在线下方内侧；中间的刻度线为竖直虚线，刻度值显示在线正下方。
+    LineTypeFixedTimeLine，分时线：x轴刻度分4段，分别为9:30， 10:30， 11:30/13:00, 14:00, 15:00。
+    LineTypeFixed5DaysTimeLine，5日分时线：x轴刻度值分为5段，日期显示在刻度段下方，而不是显示在刻度线正下方。
+    LineTypeAuto，日K/周K/月K线：x轴相邻刻度值超过一定长度就显示，其中第一个和最后一个刻度值总是显示，同SingleLineGraph的逻辑。在TimeLineGraph中额外显示蜡烛图。
+    注意：LineTypeAuto的部分曲线可以跳过前N个点，比如 5日均线ma5 跳过前4个点。
+ 根据LineType的类型设置y轴刻度值的逻辑：
+    以 所有曲线的正负 max(fabs(最高价), fabs(最低价)) 作为y轴的最高、最低刻度值（刻度线为实线）。
+    LineTypeFixedTimeLine 为三根横线，，以昨日收盘价作为y轴中间刻度值（刻度线为虚线）。如果 fabs(max值/昨日收盘价 - 1) < 0.02（也即涨跌幅<2%），则将max值设为昨日收盘价*1.02。
+    LineTypeAuto为5跟横线，按照最大值最小值评分，主要最大值==最小值，为0的特殊情况。
+ 
+ 点击曲线上的点，显示十字线，并且在十字线左右端点内侧显示价格、涨幅百分比，在x轴下方显示时间。外界在曲线上方显示“价格、涨跌幅、成交量、均价、日期时间”，曲线上的点未点击时显示的是最新值。
+ 
+ */
+@interface MultiLineGraph : LineGraphBase
 @property (weak, nonatomic) id<MultiLineGraphDelegate> delegate;
 @property (weak, nonatomic) id<MultiLineGraphDataSource> dataSource;
 //set FONT property for the graph

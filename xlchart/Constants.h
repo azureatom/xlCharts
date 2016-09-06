@@ -19,7 +19,4 @@
 #define LEGEND_VIEW 15
 #define OFFSET_PADDING 5
 
-
-#define ANIMATION_DURATION 1.2f
-
 #endif /* Constants_h */

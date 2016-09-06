@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "LineGraphBase.h"
 #import "LegendView.h"
 
 const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
@@ -51,16 +52,18 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 - (UIView *)markerViewForline:(SingleLineGraph *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
-@interface SingleLineGraph : UIView
+/*
+ SingleLineGraph 一条曲线
+ segmentsOfYAxis设置y轴的刻度段数，y轴的刻度值显示在y轴左方。
+ 自动处理超范围的y值：
+    1. 曲线上的点的y值，如果filterYOutOfRange为YES则排除超过范围的值；
+    2. 如果y值的 最大值-最小值差额过大，超过 validYRange = customMaxValidY - customMinValidY，则计算取差额<validYRange的最多的点计算y轴的平均刻度值，范围外的点显示在y轴刻度值的最大/最小值的上方/下方。
+ 点击曲线上的点，显示十字线，并且在十字线处弹出提示框。
+ x轴的刻度值显示在刻度线的正下方。如果启用曲线的左右滑动功能，当曲线左移动，越过x轴的部分会被挡住，x轴刻度值也会逐渐消失。
+ */
+@interface SingleLineGraph : LineGraphBase
 @property (weak, nonatomic) id<SingleLineGraphDelegate> delegate;
 @property (weak, nonatomic) id<SingleLineGraphDataSource> dataSource;
-@property (assign, nonatomic) NSUInteger fractionDigits;//显示的y轴刻度值取小数点后几位小数，默认是0也即整数
-/**
- *  是否支持Pan和LongPress手势。
- *  默认YES，忽略minPositionStepX而将positionStepX设为使 graphView 刚好占满 graphScrollView 的值，不可左右滚动，识别多种手势
- *  NO 只支持TapGesture显示Marker，不识别LongPressGesture和PanGesture手势，也即 graphView 可以超过 graphScrollView 的长度 从而左右滚动
- */
-@property (assign, nonatomic) BOOL enablePanAndLongPress;
 
 //text font and color
 @property (nonatomic, strong) UIFont *textFont; //Default is [UIFont systemFontOfSize:12];
@@ -71,28 +74,12 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 @property (assign, nonatomic) CGFloat lineWidth;//曲线线宽，默认0.5
 @property (strong, nonatomic) NSString *lineName;//曲线名字，显示在legendView上
 @property (assign, nonatomic) BOOL shouldFill;//是否将曲线的区域填充颜色，默认YES
-@property (assign, nonatomic) BOOL shouldDrawPoints;//是否画出曲线上的点，默认YES
-@property (assign, nonatomic) CGFloat maxPointRadius;//曲线上点的最大半径，默认1.5
-@property (assign, nonatomic) CGFloat pointRadius;//根据maxPointRadius计算的点的半径，画线时最终采用的点半径可能随点数增多而减少至线宽
 
 //grid lines
 @property (nonatomic) BOOL drawGridX; //x轴竖直刻度线，Default is YES
 @property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is YES
-@property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
-@property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
 
-//marker和十字线
-@property (nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES。如果[dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]则优先显示用户自定义提示框，否则直接显示默认提示框（显示在坐标系的上方）
-@property (nonatomic, strong) UIColor *markerTextColor; //默认提示框的文字颜色，默认[UIColor whiteColor]
-@property (nonatomic, strong) UIColor *markerColor; //十字线的颜色，默认[UIColor orangeColor]
-@property (nonatomic) CGFloat markerWidth; //十字线的线宽，默认0.4
-
-//legend
-@property (nonatomic) BOOL showLegend; //Default is NO
-//Set LEGEND TYPE Horizontal or Vertical
-@property (nonatomic) LegendType legendViewType; //Default is LegendTypeVertical i.e. VERTICAL
-
-@property (assign, nonatomic) CGFloat minPositionStepX;//默认25.用户自定义相邻点的x方向距离，用于设置positionStepX。如果所有点的x方向距离之和不能占满横向区域，则实际距离positionStepX会采用恰好占满的值
+@property (assign, nonatomic) CGFloat minPositionStepX;//默认25，当enablePanAndLongPress为NO时起作用。用户自定义相邻点的x方向距离，用于设置positionStepX。如果所有点的x方向距离之和不能占满横向区域，则实际距离positionStepX会采用恰好占满的值
 @property (assign, nonatomic) CGFloat spaceBetweenVisibleXLabels;//默认60.相邻的可见的x轴刻度值的距离，之间可能包含多个不可见的x轴刻度值（因为都显示则空间不够）
 @property (assign, nonatomic) NSUInteger segmentsOfYAxis;//即y轴分段数，也等于除x轴外的横线数目，默认为5，必须>=2
 /**
@@ -108,5 +95,5 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 
 //To reload data on the graph
 - (void)reloadGraph;
-- (CGFloat)visibleWidthExcludeMargin;//可显示曲线的区域宽度，排除两边的margin
+- (CGFloat)widthGraph;//可显示曲线的区域宽度，排除两边的margin
 @end

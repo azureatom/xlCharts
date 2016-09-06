@@ -26,7 +26,7 @@
     [button setTitle:@"切换曲线数据" forState:UIControlStateNormal];
     button.titleLabel.font = [UIFont systemFontOfSize:10];
     [button setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    button.tag = 28;
+    button.tag = 30;
     [button addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
     
@@ -39,8 +39,9 @@
 }
 
 -(void)onButtonTapped:(UIButton *)b{
-    b.tag++;
+    NSLog(@"button.tag %d", b.tag);
     [lineGraphView reloadGraph];
+    b.tag++;
 }
 
 - (void)createLineGraph{
@@ -58,6 +59,7 @@
     lineGraphView.dataSource = self;
     lineGraphView.fractionDigits = 2;
     lineGraphView.enablePanAndLongPress = YES;
+//    lineGraphView.minPositionStepX = 30;//当 enablePanAndLongPress 为NO时才有效
     
     [lineGraphView setTextColor:[UIColor blackColor]];
     [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
@@ -74,7 +76,6 @@
     lineGraphView.showLegend = YES;
     lineGraphView.legendViewType = LegendTypeHorizontal;
     
-    //lineGraphView.minPositionStepX = 30;//当 enablePanAndLongPress 为NO时才有效
     lineGraphView.spaceBetweenVisibleXLabels = 60;
     lineGraphView.segmentsOfYAxis = 5;
     lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
@@ -103,7 +104,7 @@
         case 0:
             return @[];
         case 1:
-            return @[@"只有一个点时不显示x轴"];//2个元素就会显示x轴：@[@"只有一个点时不显示x轴", @""];
+            return @[@"只有一个点时显示无刻度的x轴"];
         case 2:
             return @[@"1", @"2"];
         case 3:
