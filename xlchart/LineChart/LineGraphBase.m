@@ -86,10 +86,9 @@
 }
 
 - (CGPoint)optimizedPoint:(CGPoint)point{
-    return CGPointMake(round(point.x), round(point.y));
-    return point;
     //当view的位置不是整数或者0.5的倍数时，由于屏幕分辨率和像素匹配问题，view显示会略微模糊
-    return CGPointMake(floor(point.x), floor(point.y));
+    //但这样会导致在同一直线上的点，之间的各线段略微有折角
+    return CGPointMake(round(point.x), round(point.y));
 }
 
 - (void)drawGraph{
@@ -167,7 +166,7 @@
     for (int i = 1; i < lineData.yAxisArray.count; ++i) {
         CGPoint nextPoint = [self pointAtIndex:i inLine:lineData];
         
-        [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:nextPoint]];
+        [path appendPath:[self pathFrom:startPoint to:nextPoint]];
         [fillPath addLineToPoint:nextPoint];
         if (lineData.drawPoints) {
             [self drawPointsOnLine:nextPoint withColor:lineData.lineColor];
@@ -225,13 +224,13 @@
 
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint{
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-    shapeLayer.path = [[self drawPathWithStartPoint:startPoint endPoint:endPoint] CGPath];
+    shapeLayer.path = [[self pathFrom:startPoint to:endPoint] CGPath];
     shapeLayer.strokeColor = self.gridLineColor.CGColor;
     shapeLayer.lineWidth = self.gridLineWidth;
     return shapeLayer;
 }
 
-- (UIBezierPath *)drawPathWithStartPoint:(CGPoint)startPoint endPoint:(CGPoint)endPoint{
+- (UIBezierPath *)pathFrom:(CGPoint)startPoint to:(CGPoint)endPoint{
     UIBezierPath *path = [UIBezierPath bezierPath];
     [path moveToPoint:[self optimizedPoint:startPoint]];
     [path addLineToPoint:[self optimizedPoint:endPoint]];

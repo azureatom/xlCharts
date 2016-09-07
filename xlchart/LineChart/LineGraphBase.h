@@ -68,7 +68,7 @@
 - (void)drawOneLine:(LineChartDataRenderer *)lineData;
 - (void)fillGraphBackgroundWithPath:(UIBezierPath *)path color:(UIColor *)color;
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint;
-- (UIBezierPath *)drawPathWithStartPoint:(CGPoint)startPoint endPoint:(CGPoint)endPoint;
+- (UIBezierPath *)pathFrom:(CGPoint)startPoint to:(CGPoint)endPoint;
 - (void)drawPointsOnLine:(CGPoint)point withColor:(UIColor *)color;
 -(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture;
 

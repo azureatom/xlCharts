@@ -693,7 +693,7 @@
         for (int i = 1; i < lineData.yAxisArray.count; ++i) {
             CGPoint nextPoint = [self pointForLine:lineData at:i];
             
-            [path appendPath:[self drawPathWithStartPoint:startPoint endPoint:nextPoint]];
+            [path appendPath:[self pathFrom:startPoint to:nextPoint]];
             [fillPath addLineToPoint:nextPoint];
             if (lineData.drawPoints) {
                 [self drawPointsOnLine:nextPoint withColor:lineData.lineColor];
@@ -862,10 +862,10 @@
     
     closestPoint = [self optimizedPoint:closestPoint];
     
-    [self.xMarker setPath:[[self drawPathWithStartPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) endPoint:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
+    [self.xMarker setPath:[[self pathFrom:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) to:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
     [self.xMarker setHidden:NO];
     
-    [self.yMarker setPath:[[self drawPathWithStartPoint:CGPointMake(self.originalPoint.x, closestPoint.y) endPoint:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
+    [self.yMarker setPath:[[self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
     [self.yMarker setHidden:NO];
     
     if (self.showCustomMarkerView){
@@ -954,13 +954,13 @@
 
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint{
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-    [shapeLayer setPath:[[self drawPathWithStartPoint:startPoint endPoint:endPoint] CGPath]];
+    [shapeLayer setPath:[[self pathFrom:startPoint to:endPoint] CGPath]];
     [shapeLayer setStrokeColor:self.gridLineColor.CGColor];
     [shapeLayer setLineWidth:self.gridLineWidth];
     return shapeLayer;
 }
 
-- (UIBezierPath *)drawPathWithStartPoint:(CGPoint)startPoint endPoint:(CGPoint)endPoint{
+- (UIBezierPath *)pathFrom:(CGPoint)startPoint to:(CGPoint)endPoint{
     UIBezierPath *path = [UIBezierPath bezierPath];
     [path moveToPoint:[self optimizedPoint:startPoint]];
     [path addLineToPoint:[self optimizedPoint:endPoint]];
