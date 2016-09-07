@@ -7,12 +7,9 @@
 //
 
 #import "LineGraphMarker.h"
-#import "Constants.h"
 
 @interface LineGraphMarker()
-
 @property (nonatomic, strong) UILabel *markerLabel;
-
 @end
 
 @implementation LineGraphMarker
@@ -49,15 +46,15 @@
     
     [self.markerLabel setFrame:CGRectMake(5, 5, size.width, size.height)];
     
-    CGFloat x = point.x - (WIDTH(self.markerLabel) + 10)/2;
+    CGFloat x = point.x - (self.markerLabel.frame.size.width + 10)/2;
 //    if (x < 0) {
 //        x = point.x;
 //    }
-//    else if(x + (WIDTH(self.markerLabel) + 10) > [UIScreen mainScreen].bounds.size.width){
-//        x = point.x - (WIDTH(self.markerLabel) + 10);
+//    else if(x + (self.markerLabel.frame.size.width + 10) > [UIScreen mainScreen].bounds.size.width){
+//        x = point.x - (self.markerLabel.frame.size.width + 10);
 //    }
     
-    [self setFrame:CGRectMake(x, point.y - (HEIGHT(self.markerLabel) + 10), WIDTH(self.markerLabel) + 10, HEIGHT(self.markerLabel) + 10)];
+    [self setFrame:CGRectMake(x, point.y - (self.markerLabel.frame.size.height + 10), self.markerLabel.frame.size.width + 10, self.markerLabel.frame.size.height + 10)];
 }
 
 @end

@@ -7,16 +7,19 @@
 //
 
 #import "ViewController.h"
-#import "SingleLineGraph.h"
+#import "SingleLineGraphScrollable.h"
+#import "SingleLineGraphNonScrollable.h"
 
-@interface ViewController ()<SingleLineGraphDataSource, SingleLineGraphDelegate>
+@interface ViewController ()<SingleLineGraphBaseDataSource, SingleLineGraphBaseDelegate>
 @property(strong, nonatomic) UIButton *button;
-@property(strong, nonatomic) SingleLineGraph *lineGraphView;
+@property(strong, nonatomic) SingleLineGraphScrollable *lineGraphScrollable;
+@property(strong, nonatomic) SingleLineGraphNonScrollable *lineGraphNonScrollable;
 @end
 
 @implementation ViewController
 @synthesize button;
-@synthesize lineGraphView;
+@synthesize lineGraphScrollable;
+@synthesize lineGraphNonScrollable;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -39,55 +42,60 @@
 }
 
 -(void)onButtonTapped:(UIButton *)b{
-    NSLog(@"button.tag %d", b.tag);
-    [lineGraphView reloadGraph];
+    NSLog(@"button.tag %zi", b.tag);
+    [lineGraphScrollable reloadGraph];
+    [lineGraphNonScrollable reloadGraph];
     b.tag++;
 }
 
 - (void)createLineGraph{
 //    self.automaticallyAdjustsScrollViewInsets = NO;
-    lineGraphView = [[SingleLineGraph alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 400)];
+    lineGraphScrollable = [[SingleLineGraphScrollable alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 200)];
+    lineGraphScrollable.minPositionStepX = 30;
     
-    lineGraphView.lineColor = [UIColor blueColor];
-    lineGraphView.lineWidth = 1;
-    lineGraphView.lineName = @"A折价率";
-    lineGraphView.shouldFill = YES;
-    lineGraphView.shouldDrawPoints = YES;
-    lineGraphView.maxPointRadius = 1.5;
+    lineGraphNonScrollable = [[SingleLineGraphNonScrollable alloc] initWithFrame:CGRectMake(0, 300, self.view.frame.size.width, 200)];
+    lineGraphNonScrollable.enablePanAndLongPress = YES;
     
-    lineGraphView.delegate = self;
-    lineGraphView.dataSource = self;
-    lineGraphView.fractionDigits = 2;
-    lineGraphView.enablePanAndLongPress = YES;
-//    lineGraphView.minPositionStepX = 30;//当 enablePanAndLongPress 为NO时才有效
-    
-    [lineGraphView setTextColor:[UIColor blackColor]];
-    [lineGraphView setTextFont:[UIFont systemFontOfSize:12]];
-    
-    lineGraphView.drawGridX = NO;
-    lineGraphView.drawGridY = YES;
-    lineGraphView.gridLineColor = [UIColor lightGrayColor];
-    lineGraphView.gridLineWidth = 0.3;
-    
-    lineGraphView.showMarker = YES;
-    lineGraphView.markerColor = [UIColor orangeColor];
-    lineGraphView.markerWidth = 0.4;
-    
-    lineGraphView.showLegend = YES;
-    lineGraphView.legendViewType = LegendTypeHorizontal;
-    
-    lineGraphView.spaceBetweenVisibleXLabels = 60;
-    lineGraphView.segmentsOfYAxis = 5;
-    lineGraphView.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
-    lineGraphView.customMaxValidY = 200;
-    lineGraphView.filterYOutOfRange = YES;
-    
-    [lineGraphView reloadGraph];
-    [self.view addSubview:lineGraphView];
+    for (SingleLineGraphBase *lg in @[lineGraphScrollable, lineGraphNonScrollable]) {
+        lg.lineColor = [UIColor blueColor];
+        lg.lineWidth = 1;
+        lg.lineName = @"A折价率";
+        lg.shouldFill = YES;
+        lg.shouldDrawPoints = YES;
+        lg.maxPointRadius = 1.5;
+        
+        lg.delegate = self;
+        lg.dataSource = self;
+        lg.fractionDigits = 2;
+        
+        [lg setTextColor:[UIColor blackColor]];
+        [lg setTextFont:[UIFont systemFontOfSize:12]];
+        
+        lg.drawGridX = NO;
+        lg.drawGridY = YES;
+        lg.gridLineColor = [UIColor lightGrayColor];
+        lg.gridLineWidth = 0.3;
+        
+        lg.showMarker = YES;
+        lg.markerColor = [UIColor orangeColor];
+        lg.markerWidth = 0.4;
+        
+        lg.showLegend = YES;
+        lg.legendViewType = LegendTypeHorizontal;
+        
+        lg.spaceBetweenVisibleXLabels = 60;
+        lg.segmentsOfYAxis = 5;
+        lg.customMinValidY = -100;//只有估值仓位设定范围，其它都用默认的最大最小值
+        lg.customMaxValidY = 200;
+        lg.filterYOutOfRange = YES;
+        
+        [lg reloadGraph];
+        [self.view addSubview:lg];
+    }
 }
 
-#pragma mark SingleLineGraphDataSource
-- (NSArray *)xAxisDataForLine:(SingleLineGraph *)graph filtered:(NSArray *)filteredIndexArray{
+#pragma mark SingleLineGraphBaseDataSource
+- (NSArray *)xAxisDataForLine:(SingleLineGraphBase *)graph filtered:(NSArray *)filteredIndexArray{
     NSMutableArray *dateStringArray = [NSMutableArray new];
     for (int i = 0; i < ((NSNumber *)filteredIndexArray.lastObject).intValue + 1; ++i) {
         [dateStringArray addObject:[NSString stringWithFormat:@"%d", i]];
@@ -173,7 +181,7 @@
     }
 }
 
-- (NSArray *)yAxisDataForline:(SingleLineGraph *)graph{
+- (NSArray *)yAxisDataForline:(SingleLineGraphBase *)graph{
     switch (button.tag) {
         case 0:
             return @[];
@@ -182,29 +190,29 @@
         case 2:
             return @[@-1212, @131130];
         case 3:
-            return @[@(1000), @(2000), @(3000)];//@[@(lineGraphView.customMinValidY), @(lineGraphView.customMinValidY + 1), @(lineGraphView.customMaxValidY)];
+            return @[@(1000), @(2000), @(3000)];//@[@(lineGraphScrollable.customMinValidY), @(lineGraphScrollable.customMinValidY + 1), @(lineGraphScrollable.customMaxValidY)];
         case 4:
-            return @[@(lineGraphView.customMinValidY), @(lineGraphView.customMinValidY + 1), @(lineGraphView.customMaxValidY - 2), @(lineGraphView.customMaxValidY - 1)];
+            return @[@(lineGraphScrollable.customMinValidY), @(lineGraphScrollable.customMinValidY + 1), @(lineGraphScrollable.customMaxValidY - 2), @(lineGraphScrollable.customMaxValidY - 1)];
         case 5:
-            return @[@(lineGraphView.customMinValidY), @(lineGraphView.customMinValidY + 1), @(lineGraphView.customMaxValidY), @(lineGraphView.customMaxValidY + 1)];
+            return @[@(lineGraphScrollable.customMinValidY), @(lineGraphScrollable.customMinValidY + 1), @(lineGraphScrollable.customMaxValidY), @(lineGraphScrollable.customMaxValidY + 1)];
         case 6:
-            return @[@(lineGraphView.customMinValidY - 1), @(lineGraphView.customMinValidY + 1), @(lineGraphView.customMaxValidY - 1), @(lineGraphView.customMaxValidY), @(lineGraphView.customMaxValidY)];
+            return @[@(lineGraphScrollable.customMinValidY - 1), @(lineGraphScrollable.customMinValidY + 1), @(lineGraphScrollable.customMaxValidY - 1), @(lineGraphScrollable.customMaxValidY), @(lineGraphScrollable.customMaxValidY)];
         case 7:
-            return @[@(lineGraphView.customMinValidY + 1), @(lineGraphView.customMinValidY + 1), @(lineGraphView.customMaxValidY - 1), @(lineGraphView.customMaxValidY), @(lineGraphView.customMaxValidY)];
+            return @[@(lineGraphScrollable.customMinValidY + 1), @(lineGraphScrollable.customMinValidY + 1), @(lineGraphScrollable.customMaxValidY - 1), @(lineGraphScrollable.customMaxValidY), @(lineGraphScrollable.customMaxValidY)];
         case 8:
-            return @[@(lineGraphView.customMinValidY+ 2), @(lineGraphView.customMinValidY + 3), @(lineGraphView.customMaxValidY - 4), @(lineGraphView.customMaxValidY), @(lineGraphView.customMaxValidY - 3), @(lineGraphView.customMaxValidY - 2), @(lineGraphView.customMaxValidY - 1)];
+            return @[@(lineGraphScrollable.customMinValidY+ 2), @(lineGraphScrollable.customMinValidY + 3), @(lineGraphScrollable.customMaxValidY - 4), @(lineGraphScrollable.customMaxValidY), @(lineGraphScrollable.customMaxValidY - 3), @(lineGraphScrollable.customMaxValidY - 2), @(lineGraphScrollable.customMaxValidY - 1)];
         case 9:
-            return @[@(lineGraphView.customMinValidY - 2), @(lineGraphView.customMinValidY-1), @(lineGraphView.customMinValidY), @(lineGraphView.customMinValidY), @(lineGraphView.customMaxValidY - 1), @(lineGraphView.customMaxValidY), @(lineGraphView.customMaxValidY + 1), @(lineGraphView.customMaxValidY + 2), @(lineGraphView.customMaxValidY + 2)];
+            return @[@(lineGraphScrollable.customMinValidY - 2), @(lineGraphScrollable.customMinValidY-1), @(lineGraphScrollable.customMinValidY), @(lineGraphScrollable.customMinValidY), @(lineGraphScrollable.customMaxValidY - 1), @(lineGraphScrollable.customMaxValidY), @(lineGraphScrollable.customMaxValidY + 1), @(lineGraphScrollable.customMaxValidY + 2), @(lineGraphScrollable.customMaxValidY + 2)];
         case 10:
-            return @[@(lineGraphView.customMinValidY - 4), @(lineGraphView.customMinValidY-3), @(lineGraphView.customMinValidY-10)];
+            return @[@(lineGraphScrollable.customMinValidY - 4), @(lineGraphScrollable.customMinValidY-3), @(lineGraphScrollable.customMinValidY-10)];
         case 11:
-            return @[@(lineGraphView.customMaxValidY + 1), @(lineGraphView.customMaxValidY + 2), @(lineGraphView.customMaxValidY + 3)];
+            return @[@(lineGraphScrollable.customMaxValidY + 1), @(lineGraphScrollable.customMaxValidY + 2), @(lineGraphScrollable.customMaxValidY + 3)];
         case 12:
-            return @[@(lineGraphView.customMinValidY - 4), @(lineGraphView.customMinValidY-300), @(lineGraphView.customMinValidY-1000)];
+            return @[@(lineGraphScrollable.customMinValidY - 4), @(lineGraphScrollable.customMinValidY-300), @(lineGraphScrollable.customMinValidY-1000)];
         case 13:
-            return @[@(lineGraphView.customMaxValidY + 1), @(lineGraphView.customMaxValidY + 200), @(lineGraphView.customMaxValidY + 3000)];
+            return @[@(lineGraphScrollable.customMaxValidY + 1), @(lineGraphScrollable.customMaxValidY + 200), @(lineGraphScrollable.customMaxValidY + 3000)];
         case 14:
-            return @[@(lineGraphView.customMaxValidY + 1), @(lineGraphView.customMaxValidY + 100), @(lineGraphView.customMaxValidY + 120), @(lineGraphView.customMaxValidY + 200), @(lineGraphView.customMaxValidY + 3000)];
+            return @[@(lineGraphScrollable.customMaxValidY + 1), @(lineGraphScrollable.customMaxValidY + 100), @(lineGraphScrollable.customMaxValidY + 120), @(lineGraphScrollable.customMaxValidY + 200), @(lineGraphScrollable.customMaxValidY + 3000)];
             
             
         case 15:
@@ -249,7 +257,7 @@
     }
 }
 
-- (UIView *)markerViewForline:(SingleLineGraph *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
+- (UIView *)markerViewForline:(SingleLineGraphBase *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
     UIView *view = [[UIView alloc] init];
     view.backgroundColor = [UIColor orangeColor];
     [view.layer setCornerRadius:4.0F];
@@ -272,8 +280,8 @@
     return view;
 }
 
-#pragma mark SingleLineGraphDelegate
-- (void)didTapLine:(SingleLineGraph *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
+#pragma mark SingleLineGraphBaseDelegate
+- (void)didTapLine:(SingleLineGraphBase *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
 //    NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
 @end

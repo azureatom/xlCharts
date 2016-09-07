@@ -10,10 +10,10 @@
 #import "LineGraphBase.h"
 #import "LegendView.h"
 
-const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
-const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
-const static CGFloat k_graphLeftMargin = 50;//y轴刻度值的宽度，图表左侧的空白
-const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
+const static CGFloat heightXAxisLabel = 15;//x轴刻度值的高度
+const static CGFloat graphMarginV = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
+const static CGFloat graphMarginL = 50;//y轴刻度值的宽度，图表左侧的空白
+const static CGFloat graphMarginR = 20;//图表右侧的空白
 
 @class MultiLineGraph;
 
@@ -100,7 +100,7 @@ typedef enum{
     x轴的首尾刻度线为竖直实线，刻度值显示在线下方内侧；中间的刻度线为竖直虚线，刻度值显示在线正下方。
     LineTypeFixedTimeLine，分时线：x轴刻度分4段，分别为9:30， 10:30， 11:30/13:00, 14:00, 15:00。
     LineTypeFixed5DaysTimeLine，5日分时线：x轴刻度值分为5段，日期显示在刻度段下方，而不是显示在刻度线正下方。
-    LineTypeAuto，日K/周K/月K线：x轴相邻刻度值超过一定长度就显示，其中第一个和最后一个刻度值总是显示，同SingleLineGraph的逻辑。在TimeLineGraph中额外显示蜡烛图。
+    LineTypeAuto，日K/周K/月K线：x轴相邻刻度值超过一定长度就显示，其中第一个和最后一个刻度值总是显示，同SingleLineGraphBase的逻辑。在TimeLineGraph中额外显示蜡烛图。
     注意：LineTypeAuto的部分曲线可以跳过前N个点，比如 5日均线ma5 跳过前4个点。
  根据LineType的类型设置y轴刻度值的逻辑：
     以 所有曲线的正负 max(fabs(最高价), fabs(最低价)) 作为y轴的最高、最低刻度值（刻度线为实线）。

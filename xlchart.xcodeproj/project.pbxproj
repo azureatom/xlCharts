@@ -10,6 +10,8 @@
 		50BE81971D7D1A070001E1AC /* TimeLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81961D7D1A070001E1AC /* TimeLineGraph.m */; };
 		50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81991D7D27870001E1AC /* MultiLineGraph.m */; };
 		50BE81A61D7DA40A0001E1AC /* LineGraphBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81A51D7DA40A0001E1AC /* LineGraphBase.m */; };
+		50BE81A91D7F21550001E1AC /* SingleLineGraphScrollable.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81A81D7F21550001E1AC /* SingleLineGraphScrollable.m */; };
+		50BE81AC1D7F21920001E1AC /* SingleLineGraphNonScrollable.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81AB1D7F21920001E1AC /* SingleLineGraphNonScrollable.m */; };
 		50F371891D541CEC005CB142 /* xlchartTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371881D541CEC005CB142 /* xlchartTests.m */; };
 		50F371941D541CEC005CB142 /* xlchartUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371931D541CEC005CB142 /* xlchartUITests.m */; };
 		50F371AF1D541D1A005CB142 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371A31D541D1A005CB142 /* AppDelegate.m */; };
@@ -22,7 +24,7 @@
 		50F371B61D541D1A005CB142 /* xlchart.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 50F371AD1D541D1A005CB142 /* xlchart.xcdatamodeld */; };
 		50F371C71D5880BC005CB142 /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C01D5880BC005CB142 /* LegendView.m */; };
 		50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C31D5880BC005CB142 /* LineGraphMarker.m */; };
-		50F371C91D5880BC005CB142 /* SingleLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C51D5880BC005CB142 /* SingleLineGraph.m */; };
+		50F371C91D5880BC005CB142 /* SingleLineGraphBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371C51D5880BC005CB142 /* SingleLineGraphBase.m */; };
 		50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */; };
 /* End PBXBuildFile section */
 
@@ -50,6 +52,10 @@
 		50BE81991D7D27870001E1AC /* MultiLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MultiLineGraph.m; sourceTree = "<group>"; };
 		50BE81A41D7DA40A0001E1AC /* LineGraphBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineGraphBase.h; sourceTree = "<group>"; };
 		50BE81A51D7DA40A0001E1AC /* LineGraphBase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineGraphBase.m; sourceTree = "<group>"; };
+		50BE81A71D7F21550001E1AC /* SingleLineGraphScrollable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleLineGraphScrollable.h; sourceTree = "<group>"; };
+		50BE81A81D7F21550001E1AC /* SingleLineGraphScrollable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SingleLineGraphScrollable.m; sourceTree = "<group>"; };
+		50BE81AA1D7F21920001E1AC /* SingleLineGraphNonScrollable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleLineGraphNonScrollable.h; sourceTree = "<group>"; };
+		50BE81AB1D7F21920001E1AC /* SingleLineGraphNonScrollable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SingleLineGraphNonScrollable.m; sourceTree = "<group>"; };
 		50F371681D541CEC005CB142 /* xlchart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xlchart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50F371841D541CEC005CB142 /* xlchartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = xlchartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		50F371881D541CEC005CB142 /* xlchartTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = xlchartTests.m; sourceTree = "<group>"; };
@@ -67,13 +73,12 @@
 		50F371AB1D541D1A005CB142 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		50F371AC1D541D1A005CB142 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		50F371AE1D541D1A005CB142 /* xlchart.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = xlchart.xcdatamodel; sourceTree = "<group>"; };
-		50F371BB1D5880BC005CB142 /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Constants.h; path = xlchart/Constants.h; sourceTree = "<group>"; };
 		50F371BF1D5880BC005CB142 /* LegendView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LegendView.h; sourceTree = "<group>"; };
 		50F371C01D5880BC005CB142 /* LegendView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LegendView.m; sourceTree = "<group>"; };
 		50F371C21D5880BC005CB142 /* LineGraphMarker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineGraphMarker.h; sourceTree = "<group>"; };
 		50F371C31D5880BC005CB142 /* LineGraphMarker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineGraphMarker.m; sourceTree = "<group>"; };
-		50F371C41D5880BC005CB142 /* SingleLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleLineGraph.h; sourceTree = "<group>"; };
-		50F371C51D5880BC005CB142 /* SingleLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SingleLineGraph.m; sourceTree = "<group>"; };
+		50F371C41D5880BC005CB142 /* SingleLineGraphBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleLineGraphBase.h; sourceTree = "<group>"; };
+		50F371C51D5880BC005CB142 /* SingleLineGraphBase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SingleLineGraphBase.m; sourceTree = "<group>"; };
 		50F371CA1D5888BA005CB142 /* LineChartDataRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineChartDataRenderer.h; sourceTree = "<group>"; };
 		50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineChartDataRenderer.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -162,7 +167,6 @@
 		50F371BA1D541D76005CB142 /* xlchart */ = {
 			isa = PBXGroup;
 			children = (
-				50F371BB1D5880BC005CB142 /* Constants.h */,
 				50F371BE1D5880BC005CB142 /* Legend */,
 				50F371C11D5880BC005CB142 /* LineChart */,
 			);
@@ -188,10 +192,14 @@
 				50F371CB1D5888BA005CB142 /* LineChartDataRenderer.m */,
 				50BE81A41D7DA40A0001E1AC /* LineGraphBase.h */,
 				50BE81A51D7DA40A0001E1AC /* LineGraphBase.m */,
+				50F371C41D5880BC005CB142 /* SingleLineGraphBase.h */,
+				50F371C51D5880BC005CB142 /* SingleLineGraphBase.m */,
+				50BE81A71D7F21550001E1AC /* SingleLineGraphScrollable.h */,
+				50BE81A81D7F21550001E1AC /* SingleLineGraphScrollable.m */,
+				50BE81AA1D7F21920001E1AC /* SingleLineGraphNonScrollable.h */,
+				50BE81AB1D7F21920001E1AC /* SingleLineGraphNonScrollable.m */,
 				50BE81951D7D1A070001E1AC /* TimeLineGraph.h */,
 				50BE81961D7D1A070001E1AC /* TimeLineGraph.m */,
-				50F371C41D5880BC005CB142 /* SingleLineGraph.h */,
-				50F371C51D5880BC005CB142 /* SingleLineGraph.m */,
 				50BE81981D7D27870001E1AC /* MultiLineGraph.h */,
 				50BE81991D7D27870001E1AC /* MultiLineGraph.m */,
 			);
@@ -330,7 +338,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				50F371C91D5880BC005CB142 /* SingleLineGraph.m in Sources */,
+				50BE81AC1D7F21920001E1AC /* SingleLineGraphNonScrollable.m in Sources */,
+				50F371C91D5880BC005CB142 /* SingleLineGraphBase.m in Sources */,
 				50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */,
 				50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */,
 				50F371C71D5880BC005CB142 /* LegendView.m in Sources */,
@@ -339,6 +348,7 @@
 				50BE81A61D7DA40A0001E1AC /* LineGraphBase.m in Sources */,
 				50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */,
 				50F371B41D541D1A005CB142 /* main.m in Sources */,
+				50BE81A91D7F21550001E1AC /* SingleLineGraphScrollable.m in Sources */,
 				50F371B61D541D1A005CB142 /* xlchart.xcdatamodeld in Sources */,
 				50F371AF1D541D1A005CB142 /* AppDelegate.m in Sources */,
 			);

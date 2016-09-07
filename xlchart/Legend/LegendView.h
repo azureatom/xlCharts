@@ -15,6 +15,8 @@ typedef enum{
     LegendTypeHorizontal
 }LegendType;
 
+const static CGFloat LegendViewMarginH = 15;
+
 @interface LegendView : UIView
 
 @property (nonatomic, strong) NSMutableArray *legendArray;

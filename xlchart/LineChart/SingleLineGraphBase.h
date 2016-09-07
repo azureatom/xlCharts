@@ -1,5 +1,5 @@
 //
-//  SingleLineGraph.h
+//  SingleLineGraphBase.h
 //  xlchart
 //
 //  Created by lei xue on 16/8/5.
@@ -8,16 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "LineGraphBase.h"
-#import "LegendView.h"
 
-const static CGFloat k_xAxisLabelHeight = 15;//x轴刻度值的高度
-const static CGFloat k_graphVerticalMargin = 8;//x轴和x轴刻度值之间的空白、表格上方的空白(用于显示最上面的y刻度值的上半部分)
-const static CGFloat k_graphLeftMargin = 50;//y轴刻度值的宽度，图表左侧的空白
-const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
+@class SingleLineGraphBase;
 
-@class SingleLineGraph;
-
-@protocol SingleLineGraphDelegate  <NSObject>
+@protocol SingleLineGraphBaseDelegate  <NSObject>
 /**
  *  点击点的index和y值
  *
@@ -25,19 +19,19 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
  *  @param pointIndex 是第几个点，也即x轴的第几个刻度值
  *  @param yValue 点击点对应的y值
  */
-- (void)didTapLine:(SingleLineGraph *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
+- (void)didTapLine:(SingleLineGraphBase *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
 @end
 
-@protocol SingleLineGraphDataSource  <NSObject>
+@protocol SingleLineGraphBaseDataSource  <NSObject>
 /**
  *  x-Axis data for line graph
  *  如果filteredIndexArray非nil，则只选择原始数据中指定index的值
  *
  *  @return array of NSString, only draw x-axis if string is not empty, that is exclude @""
  */
-- (NSArray *)xAxisDataForLine:(SingleLineGraph *)graph filtered:(NSArray *)filteredIndexArray;
+- (NSArray *)xAxisDataForLine:(SingleLineGraphBase *)graph filtered:(NSArray *)filteredIndexArray;
 
-- (NSArray *)yAxisDataForline:(SingleLineGraph *)graph;//y-Axis data for line graph.
+- (NSArray *)yAxisDataForline:(SingleLineGraphBase *)graph;//y-Axis data for line graph.
 
 @optional
 /**
@@ -49,11 +43,11 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
  *
  *  @return 自定义view
  */
-- (UIView *)markerViewForline:(SingleLineGraph *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
+- (UIView *)markerViewForline:(SingleLineGraphBase *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue;
 @end
 
 /*
- SingleLineGraph 一条曲线
+ SingleLineGraphBase 一条曲线
  segmentsOfYAxis设置y轴的刻度段数，y轴的刻度值显示在y轴左方。
  自动处理超范围的y值：
     1. 曲线上的点的y值，如果filterYOutOfRange为YES则排除超过范围的值；
@@ -61,9 +55,9 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
  点击曲线上的点，显示十字线，并且在十字线处弹出提示框。
  x轴的刻度值显示在刻度线的正下方。如果启用曲线的左右滑动功能，当曲线左移动，越过x轴的部分会被挡住，x轴刻度值也会逐渐消失。
  */
-@interface SingleLineGraph : LineGraphBase
-@property (weak, nonatomic) id<SingleLineGraphDelegate> delegate;
-@property (weak, nonatomic) id<SingleLineGraphDataSource> dataSource;
+@interface SingleLineGraphBase : LineGraphBase
+@property (weak, nonatomic) id<SingleLineGraphBaseDelegate> delegate;
+@property (weak, nonatomic) id<SingleLineGraphBaseDataSource> dataSource;
 
 //text font and color
 @property (nonatomic, strong) UIFont *textFont; //Default is [UIFont systemFontOfSize:12];
@@ -79,7 +73,6 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 @property (nonatomic) BOOL drawGridX; //x轴竖直刻度线，Default is YES
 @property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is YES
 
-@property (assign, nonatomic) CGFloat minPositionStepX;//默认25，当enablePanAndLongPress为NO时起作用。用户自定义相邻点的x方向距离，用于设置positionStepX。如果所有点的x方向距离之和不能占满横向区域，则实际距离positionStepX会采用恰好占满的值
 @property (assign, nonatomic) CGFloat spaceBetweenVisibleXLabels;//默认60.相邻的可见的x轴刻度值的距离，之间可能包含多个不可见的x轴刻度值（因为都显示则空间不够）
 @property (assign, nonatomic) NSUInteger segmentsOfYAxis;//即y轴分段数，也等于除x轴外的横线数目，默认为5，必须>=2
 /**
@@ -95,5 +88,4 @@ const static CGFloat k_graphRightMargin = 20;//图表右侧的空白
 
 //To reload data on the graph
 - (void)reloadGraph;
-- (CGFloat)widthGraph;//可显示曲线的区域宽度，排除两边的margin
 @end
