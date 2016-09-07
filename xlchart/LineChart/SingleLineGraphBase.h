@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "LineGraphBase.h"
+#import "LegendView.h"
 
 @class SingleLineGraphBase;
 
@@ -73,6 +74,13 @@
 @property (nonatomic) BOOL drawGridX; //x轴竖直刻度线，Default is YES
 @property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is YES
 
+//legend
+@property (nonatomic) BOOL showLegend; //Default is NO
+@property (nonatomic) LegendType legendViewType; //Default is LegendTypeVertical
+@property (nonatomic, strong) NSMutableArray *legendArray;//array of LegendDataRenderer
+@property (nonatomic, strong) LegendView *legendView;
+@property (strong, nonatomic) UIFont *legendFont;//legendView的字体，默认12号系统字体
+
 @property (assign, nonatomic) CGFloat spaceBetweenVisibleXLabels;//默认60.相邻的可见的x轴刻度值的距离，之间可能包含多个不可见的x轴刻度值（因为都显示则空间不够）
 @property (assign, nonatomic) NSUInteger segmentsOfYAxis;//即y轴分段数，也等于除x轴外的横线数目，默认为5，必须>=2
 /**
@@ -86,6 +94,4 @@
 @property (assign, nonatomic) BOOL filterYOutOfRange;//过滤掉超出 [customMinValidY, customMaxValidY]的y值，默认NO
 @property (strong, nonatomic) NSArray *filteredIndexArray;//过滤之后的元素在原始array里的index，比如@[@0, @3, @10]，默认为nil
 
-//To reload data on the graph
-- (void)reloadGraph;
 @end

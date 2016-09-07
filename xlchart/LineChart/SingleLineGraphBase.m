@@ -33,6 +33,11 @@
 @synthesize shouldFill;
 @synthesize drawGridX;
 @synthesize drawGridY;
+@synthesize showLegend;
+@synthesize legendViewType;
+@synthesize legendArray;
+@synthesize legendView;
+@synthesize legendFont;
 @synthesize spaceBetweenVisibleXLabels;
 @synthesize segmentsOfYAxis;
 @synthesize customMaxValidY;
@@ -60,6 +65,10 @@
         self.drawGridY = YES;
         self.drawGridX = YES;
         
+        showLegend = NO;
+        legendViewType = LegendTypeVertical;
+        legendFont = [UIFont systemFontOfSize:12];
+        
         self.showMarker = YES;
         self.markerColor = [UIColor orangeColor];
         self.markerTextColor = [UIColor whiteColor];
@@ -76,8 +85,43 @@
 }
 
 - (void)reloadGraph{
-    [self setupDataWithDataSource];
-    [self drawGraph];
+    /*
+     ******界面布局******
+     y轴和y轴刻度值在yAxisView上，覆盖在backgroundScrollView上面，这样在backgroundScrollView左右滑动时y轴刻度值仍会显示
+     x轴和x轴刻度值、曲线在backgroundScrollView上，随backgroundScrollView左右滑动。
+     x轴和y轴的刻度值都是label中点对准刻度线。
+     原点的
+     x刻度值xAxisLabel显示在y轴的正下方，也即xAxisLabel中心和y轴对齐。当x轴刻度值label左滑超过y轴，且超过label一半长度后，继续左滑逐渐变透明，也即xAxisLabel.alpha = xAxisLabel在y轴右边的长度/xAxisLabel半长。
+     y刻度值显示在x轴的正左方，也即文字中点和x轴对齐，因此x轴下方余出graphMarginV再显示x刻度值。
+     由于x轴刻度值左滑过y轴才会逐渐透明，因此self、graphBackgroundView、backgroundScrollView宽度一样，但在self左部覆盖一个柱形yAxisView遮住backgroundScrollView左小半部。
+     
+     ******view排列关系******
+     self水平方向：
+     self(yAxisView(宽度graphMarginL，显示y轴和y轴刻度值),
+     backgroundScrollView(左小半部graphMarginL范围被yAxisView覆盖)
+     )
+     self竖直方向：
+     backgroundScrollView
+     LegendView
+     
+     如果y比y轴最大的刻度值还大，则y轴往上延伸一段表示无穷大，超大的数据点用空心而不是实心
+     
+     graphBackgroundView占满backgroundScrollView，曲线点少则x相邻刻度值长度拉长，以保证graphBackgroundView长度==backgroundScrollView长度；曲线点多则超过backgroundScrollView长度，需要左右滑动。backgroundScrollView.contentSize = graphBackgroundView.frame.size
+     水平方向：
+     左边空白 graphMarginL
+     曲线和各刻度线表格
+     右边空白 graphMarginR
+     竖直方向：
+     空白 graphMarginV
+     曲线和各刻度线表格
+     x轴
+     空白 graphMarginV（之所以x轴和刻度值之间留出空白，因为原点的x刻度值显示在正下方，y刻度值显示在正左方，y刻度值下面才显示x刻度值）
+     x轴刻度值 heightXAxisLabel
+     */
+
+    [super reloadGraph];
+    
+    [self createLegend];
 }
 
 #pragma mark Setup all data with dataSource
@@ -120,70 +164,7 @@
     self.xAxisArray = [self.dataSource xAxisDataForLine:self filtered:filteredIndexArray];
 }
 
-- (void)drawGraph{
-    /*
-     ******界面布局******
-     y轴和y轴刻度值在yAxisView上，覆盖在backgroundScrollView上面，这样在backgroundScrollView左右滑动时y轴刻度值仍会显示
-     x轴和x轴刻度值、曲线在backgroundScrollView上，随backgroundScrollView左右滑动。
-     x轴和y轴的刻度值都是label中点对准刻度线。
-     原点的
-     x刻度值xAxisLabel显示在y轴的正下方，也即xAxisLabel中心和y轴对齐。当x轴刻度值label左滑超过y轴，且超过label一半长度后，继续左滑逐渐变透明，也即xAxisLabel.alpha = xAxisLabel在y轴右边的长度/xAxisLabel半长。
-     y刻度值显示在x轴的正左方，也即文字中点和x轴对齐，因此x轴下方余出graphMarginV再显示x刻度值。
-     由于x轴刻度值左滑过y轴才会逐渐透明，因此self、graphBackgroundView、backgroundScrollView宽度一样，但在self左部覆盖一个柱形yAxisView遮住backgroundScrollView左小半部。
-     
-     ******view排列关系******
-     self水平方向：
-     self(yAxisView(宽度graphMarginL，显示y轴和y轴刻度值),
-     backgroundScrollView(左小半部graphMarginL范围被yAxisView覆盖)
-     )
-     self竖直方向：
-     backgroundScrollView
-     LegendView
-     
-     如果y比y轴最大的刻度值还大，则y轴往上延伸一段表示无穷大，超大的数据点用空心而不是实心
-     
-     graphBackgroundView占满backgroundScrollView，曲线点少则x相邻刻度值长度拉长，以保证graphBackgroundView长度==backgroundScrollView长度；曲线点多则超过backgroundScrollView长度，需要左右滑动。backgroundScrollView.contentSize = graphBackgroundView.frame.size
-     水平方向：
-     左边空白 graphMarginL
-     曲线和各刻度线表格
-     右边空白 graphMarginR
-     竖直方向：
-     空白 graphMarginV
-     曲线和各刻度线表格
-     x轴
-     空白 graphMarginV（之所以x轴和刻度值之间留出空白，因为原点的x刻度值显示在正下方，y刻度值显示在正左方，y刻度值下面才显示x刻度值）
-     x轴刻度值 heightXAxisLabel
-     */
-    
-    //注意，如果self是navigationcontroller的第一个view，backgroundScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
-    
-    [self calculatePositionStepX];
-    [self calculatePointRadius];
-    [self calculateYAxis];
-    self.originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue);
-    
-    [self createGraphBackground];
-    [self drawXAxis];
-    [self drawYAxis];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
-    [self drawLines];
-    
-//    NSString *xString = @"X: ";
-//    for (NSString *a in self.xAxisArray) {
-//        xString = [NSString stringWithFormat:@"%@%@, ", xString, a];
-//    }
-//    NSLog(xString);
-//    NSString *yString = @"Y: ";
-//    for (NSString *a in self.lineDataRenderer.yAxisArray) {
-//        yString = [NSString stringWithFormat:@"%@%@, ", yString, a];
-//    }
-//    NSLog(yString);
-    
-    [self createMarker];
-    [self createLegend];
-}
-
-#pragma mark - 计算各种x轴和y轴的各种长度
-
+#pragma mark - 计算x轴和y轴的各种长度
 -(void)calculatePointRadius{
     //如果 self.pointRadius > lineWidth，则当 positionStepX 在(widthThreshold=10倍lineWidth, 20倍lineWidth)之间时，self.pointRadius的大小按照 positionStepX与widthThreshold的距离 成比例缩小，但最小不能小于lineWidth
     self.pointRadius = self.maxPointRadius;
@@ -546,7 +527,6 @@
     [self drawOneLine:lineDataRenderer];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
 }
 
-#pragma mark Create marker and legend
 -(void)createMarker{
     if (self.defaultMarker != nil) {
         [self.defaultMarker removeFromSuperview];
@@ -603,6 +583,18 @@
     [self.legendView setLegendViewType:self.legendViewType];
     [self.legendView createLegend];
     [self addSubview:self.legendView];
+}
+
+/*竖直方向
+ super的控件
+ legendView
+ */
+-(CGFloat)heightLegend{
+    return self.showLegend ? [LegendView getLegendHeightWithLegendArray:self.legendArray legendType:self.legendViewType withFont:legendFont width:self.frame.size.width - 2 * LegendViewMarginH] : 0;
+}
+
+-(CGFloat)heightGraph{
+    return self.frame.size.height - [self heightLegend];
 }
 
 -(CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{

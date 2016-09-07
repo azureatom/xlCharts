@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "LineChartDataRenderer.h"
-#import "LegendView.h"
 #import "LineGraphMarker.h"
 
 @interface LineGraphBase : UIView
@@ -47,13 +46,7 @@
 @property (nonatomic, strong) LineGraphMarker *defaultMarker;//点击显示的提示信息view
 @property (nonatomic, strong) UIView *customMarkerView;//自定义 点击显示的提示信息view
 
-//legend
-@property (nonatomic) BOOL showLegend; //Default is NO
-@property (nonatomic) LegendType legendViewType; //Default is LegendTypeVertical
-@property (nonatomic, strong) NSMutableArray *legendArray;//array of LegendDataRenderer
-@property (nonatomic, strong) LegendView *legendView;
-@property (strong, nonatomic) UIFont *legendFont;//legendView的字体，默认12号系统字体
-
+#pragma mark - 公用方法
 - (NSString *)formattedStringForNumber:(NSNumber *)n;
 /**
  *  将小数按照self.fractionDigits位小数向上或向下取整
@@ -74,8 +67,7 @@
 
 -(CGFloat)widthGraph;
 -(CGFloat)widthXAxis;
--(CGFloat)heightLegend;
--(CGFloat)heightGraph;
+-(CGFloat)heightGraph;//subclass可以override，比如有LegendView时
 -(CGFloat)heightYAxis;
 /**
  *  前面设置计算完各种长度后，才能调用该方法
@@ -85,17 +77,21 @@
 -(CGRect)axisFrame;
 
 #pragma mark - Method must be override by subclass
+- (void)reloadGraph;//reload UI and data
+- (void)setupDataWithDataSource;
+//计算坐标系数据
 -(BOOL)calculatePositionStepX;
-- (void)createGraphBackground;
-- (void)createXAxisLine;
-- (void)createYAxisLine;
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;
 - (void)calculatePointRadius;
-- (void)drawLines;
+- (void)calculateYAxis;
+//画坐标系
+- (void)createGraphBackground;
+- (void)drawXAxis;
+- (void)drawYAxis;
+-(void)drawLines;
 - (void)createMarker;
-- (void) createLegend;
+//操作坐标系上的点
+- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;
 -(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData;
-
 /**
  *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框
  *
