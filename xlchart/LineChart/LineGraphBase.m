@@ -21,6 +21,8 @@
 @synthesize xAxisLabels;
 @synthesize positionStepX;
 @synthesize positionStepY;
+@synthesize axisFont;
+@synthesize textColor;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
 @synthesize shouldDrawPoints;
@@ -46,6 +48,8 @@
         graphMarginR = 20;
         
         self.fractionDigits = 0;
+        self.axisFont = [UIFont systemFontOfSize:12];
+        self.textColor = [UIColor blackColor];
         self.gridLineColor = [UIColor lightGrayColor];
         self.gridLineWidth = 0.3;
         shouldDrawPoints = YES;

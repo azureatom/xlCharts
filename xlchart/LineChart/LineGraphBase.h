@@ -27,6 +27,10 @@
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离。SingleLineGraphScrollable至少为minPositionStepX；SingleLineGraphNonScrollable自动计算使x轴刚好占满区域长度。
 @property (assign, nonatomic) CGFloat positionStepY;
 
+//text font and color
+@property (nonatomic, strong) UIFont *axisFont;//坐标轴刻度值label的字体，也用于默认的defaultMarker的字体，默认[UIFont systemFontOfSize:12]
+@property (nonatomic, strong) UIColor *textColor;//通常的字体颜色，如：坐标轴刻度值、defaultMarker、LegendView，默认[UIColor blackColor]
+
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
 @property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
 

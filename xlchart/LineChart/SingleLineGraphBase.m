@@ -25,8 +25,6 @@
 @implementation SingleLineGraphBase
 @synthesize delegate;
 @synthesize dataSource;
-@synthesize axisFont;
-@synthesize textColor;
 @synthesize lineColor;
 @synthesize lineWidth;
 @synthesize lineName;
@@ -54,9 +52,6 @@
 - (instancetype)initWithFrame:(CGRect)frame{
     self = [super initWithFrame:frame];
     if(self){
-        self.textColor = [UIColor blackColor];
-        self.axisFont = [UIFont systemFontOfSize:12];
-        
         lineColor = [UIColor blackColor];
         lineWidth = 0.5;
         lineName = @"";
@@ -549,7 +544,7 @@
         self.defaultMarker.frame = CGRectZero;
         self.defaultMarker.bgColor = self.markerColor;
         self.defaultMarker.textColor = self.markerTextColor;
-        self.defaultMarker.textFont = axisFont;
+        self.defaultMarker.textFont = self.axisFont;
         [self.graphBackgroundView addSubview:self.defaultMarker];
     }
     

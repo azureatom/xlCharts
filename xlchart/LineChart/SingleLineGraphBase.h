@@ -60,10 +60,6 @@
 @property (weak, nonatomic) id<SingleLineGraphBaseDelegate> delegate;
 @property (weak, nonatomic) id<SingleLineGraphBaseDataSource> dataSource;
 
-//text font and color
-@property (nonatomic, strong) UIFont *axisFont;//坐标轴刻度值label的字体，也用于默认的defaultMarker的字体，默认[UIFont systemFontOfSize:12]
-@property (nonatomic, strong) UIColor *textColor;//坐标轴刻度值、defaultMarker、LegendView的字体颜色，默认[UIColor blackColor]
-
 //line and points
 @property (strong, nonatomic) UIColor *lineColor;//曲线颜色，默认黑色
 @property (assign, nonatomic) CGFloat lineWidth;//曲线线宽，默认0.5
@@ -93,5 +89,4 @@
 @property (assign, nonatomic) CGFloat customMinValidY;//default is -MAXFLOAT / 4
 @property (assign, nonatomic) BOOL filterYOutOfRange;//过滤掉超出 [customMinValidY, customMaxValidY]的y值，默认NO
 @property (strong, nonatomic) NSArray *filteredIndexArray;//过滤之后的元素在原始array里的index，比如@[@0, @3, @10]，默认为nil
-
 @end
