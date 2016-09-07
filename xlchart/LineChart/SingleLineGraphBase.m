@@ -25,7 +25,7 @@
 @implementation SingleLineGraphBase
 @synthesize delegate;
 @synthesize dataSource;
-@synthesize textFont;
+@synthesize axisFont;
 @synthesize textColor;
 @synthesize lineColor;
 @synthesize lineWidth;
@@ -55,7 +55,7 @@
     self = [super initWithFrame:frame];
     if(self){
         self.textColor = [UIColor blackColor];
-        self.textFont = [UIFont systemFontOfSize:12];
+        self.axisFont = [UIFont systemFontOfSize:12];
         
         lineColor = [UIColor blackColor];
         lineWidth = 0.5;
@@ -438,7 +438,7 @@
 - (void)drawXAxis{
     void(^createXAxisLabel)(NSString *, CGFloat, CGFloat, CGFloat) = ^(NSString *s, CGFloat centerX, CGFloat width, CGFloat top){
         UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(centerX - width / 2, top, width, self.heightXAxisLabel)];
-        l.font = self.textFont;
+        l.font = self.axisFont;
         l.textColor = self.textColor;
         l.text = s;
         l.textAlignment = NSTextAlignmentCenter;
@@ -492,7 +492,7 @@
     void(^createYAxisLabel)(NSString *, CGFloat, CGFloat, CGFloat) = ^(NSString *s, CGFloat right, CGFloat centerY, CGFloat height){
         UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(right - self.graphMarginL, centerY - height / 2, self.graphMarginL, height)];
         l.textColor = self.textColor;
-        l.font = self.textFont;
+        l.font = self.axisFont;
         l.text = s;
         l.textAlignment = NSTextAlignmentRight;
         l.adjustsFontSizeToFitWidth = YES;
@@ -549,7 +549,7 @@
         self.defaultMarker.frame = CGRectZero;
         self.defaultMarker.bgColor = self.markerColor;
         self.defaultMarker.textColor = self.markerTextColor;
-        self.defaultMarker.textFont = textFont;
+        self.defaultMarker.textFont = axisFont;
         [self.graphBackgroundView addSubview:self.defaultMarker];
     }
     
@@ -578,7 +578,7 @@
     }
     self.legendView = [[LegendView alloc] initWithFrame:CGRectMake(LegendViewMarginH, CGRectGetMaxY(self.graphBackgroundView.frame), self.frame.size.width - 2*LegendViewMarginH, 0)];
     [self.legendView setLegendArray:self.legendArray];
-    [self.legendView setFont:self.textFont];
+    [self.legendView setFont:self.legendFont];
     [self.legendView setTextColor:self.textColor];
     [self.legendView setLegendViewType:self.legendViewType];
     [self.legendView createLegend];

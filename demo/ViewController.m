@@ -69,7 +69,7 @@
         lg.fractionDigits = 2;
         
         [lg setTextColor:[UIColor blackColor]];
-        [lg setTextFont:[UIFont systemFontOfSize:12]];
+        lg.axisFont = [UIFont systemFontOfSize:12];
         
         lg.drawGridX = NO;
         lg.drawGridY = YES;
