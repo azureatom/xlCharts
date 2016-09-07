@@ -486,8 +486,8 @@
         return;//无x数据，不再显示x轴刻度值
     }
     
-    //显示原点的x轴刻度值
-    createXAxisLabel(self.xAxisArray[0], x, MIN(self.graphMarginL, self.positionStepX), yOfXAxisLabel);
+    //显示原点的x轴刻度值。label长度直接用spaceBetweenVisibleXLabels，因为文字居中显示，即使label长度超出范围只要文字不超出范围即可。
+    createXAxisLabel(self.xAxisArray[0], x, spaceBetweenVisibleXLabels, yOfXAxisLabel);
     
     int numberOfLabelsBetweenVisibleX = ceil(spaceBetweenVisibleXLabels / self.positionStepX);//相邻可见的x轴刻度值之间的总共刻度值数目（包括可见和不可见的）
     //显示原点外的竖直刻度线和x轴刻度值
@@ -502,7 +502,7 @@
                 [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
             }
             //显示x轴刻度值
-            createXAxisLabel(self.xAxisArray[i], x, MIN(self.positionStepX, self.graphMarginR), yOfXAxisLabel);
+            createXAxisLabel(self.xAxisArray[i], x, spaceBetweenVisibleXLabels, yOfXAxisLabel);
         }
     }
 }

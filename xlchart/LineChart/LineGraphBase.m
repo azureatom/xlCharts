@@ -79,6 +79,7 @@
 - (double)fractionFloorOrCeiling:(double)d ceiling:(BOOL)isCeiling{
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
+    formatter.usesGroupingSeparator = NO;
     formatter.roundingMode = isCeiling ? kCFNumberFormatterRoundCeiling : NSNumberFormatterRoundFloor;
     formatter.minimumFractionDigits = self.fractionDigits;
     formatter.maximumFractionDigits = self.fractionDigits;
