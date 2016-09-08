@@ -44,6 +44,7 @@
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
 @property (nonatomic, strong) CAShapeLayer *yMarker;//点击显示十字线的横线
 @property (nonatomic, strong) LineGraphMarker *defaultMarker;//点击默认显示提示信息的view
+@property(strong, nonatomic) UIColor *markerBgColor;//提示框的背景颜色，默认[UIColor grayColor]
 @property (nonatomic, strong) UIColor *markerTextColor; //默认提示框的文字颜色，默认[UIColor whiteColor]
 
 @property (assign, nonatomic) BOOL shouldDrawPoints;//是否画出曲线上的点，默认YES

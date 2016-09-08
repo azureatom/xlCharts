@@ -94,6 +94,7 @@
         
         lg.showMarker = YES;
         lg.markerColor = [UIColor orangeColor];
+        lg.markerBgColor = [UIColor grayColor];
         lg.markerWidth = 0.4;
         
         lg.showLegend = YES;
@@ -274,26 +275,22 @@
 }
 
 - (UIView *)markerViewForline:(SingleLineGraphBase *)graph pointIndex:(NSUInteger)pointIndex andYValue:(NSNumber *)yValue{
-    UIView *view = [[UIView alloc] init];
-    view.backgroundColor = [UIColor orangeColor];
-    [view.layer setCornerRadius:4.0F];
-    [view.layer setBorderWidth:1.0F];
-    [view.layer setBorderColor:[[UIColor lightGrayColor] CGColor]];
-//    [view.layer setShadowColor:[[UIColor blackColor] CGColor]];
-//    [view.layer setShadowRadius:2.0F];
-//    [view.layer setShadowOpacity:0.3F];
-    
-    UILabel *label = [[UILabel alloc] init];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 100, 50)];
+    label.backgroundColor = [UIColor grayColor];
     label.textColor = [UIColor whiteColor];
     [label setFont:[UIFont systemFontOfSize:12]];
     [label setTextAlignment:NSTextAlignmentCenter];
     [label setText:[NSString stringWithFormat:@"日期 %zi日\nLine Data: %@", pointIndex, yValue]];
     label.numberOfLines = 2;
-    [label setFrame:CGRectMake(0, 0, 100, 50)];
-    [view addSubview:label];
     
-    [view setFrame:label.frame];
-    return view;
+    [label.layer setCornerRadius:4.0F];
+    [label.layer setBorderWidth:1.0F];
+    [label.layer setBorderColor:[[UIColor lightGrayColor] CGColor]];
+//    [label.layer setShadowColor:[[UIColor blackColor] CGColor]];
+//    [label.layer setShadowRadius:2.0F];
+//    [label.layer setShadowOpacity:0.3F];
+    
+    return label;
 }
 
 #pragma mark SingleLineGraphBaseDelegate

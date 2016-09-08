@@ -33,6 +33,7 @@
 @synthesize xMarker;
 @synthesize yMarker;
 @synthesize defaultMarker;
+@synthesize markerBgColor;
 @synthesize markerTextColor;
 @synthesize shouldDrawPoints;
 @synthesize maxPointRadius;
@@ -56,6 +57,7 @@
         self.showMarker = YES;
         self.markerColor = [UIColor orangeColor];
         self.markerWidth = 0.4;
+        self.markerBgColor = [UIColor grayColor];
         self.markerTextColor = [UIColor whiteColor];
         
         shouldDrawPoints = YES;

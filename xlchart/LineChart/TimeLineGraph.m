@@ -340,36 +340,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         return;
     }
     
-    markerLeft = [[UILabel alloc] initWithFrame:CGRectMake(self.graphMarginL, 0, kYLabelWidth, kYLabelHeight)];//只需修改y位置
-    markerLeft.font = self.axisFont;
-    markerLeft.textColor = self.markerTextColor;
-    markerLeft.backgroundColor = self.markerColor;
-    markerLeft.textAlignment = NSTextAlignmentCenter;
-    markerLeft.adjustsFontSizeToFitWidth = YES;
-    markerLeft.minimumScaleFactor = 0.7;
-    markerLeft.hidden = YES;
-    [self.graphBackgroundView addSubview:markerLeft];
-    
-    markerRight = [[UILabel alloc] initWithFrame:CGRectMake(self.graphMarginL + [self widthXAxis] - kYLabelWidth, 0, kYLabelWidth, kYLabelHeight)];//只需修改y位置
-    markerRight.font = self.axisFont;
-    markerRight.textColor = self.markerTextColor;
-    markerRight.backgroundColor = self.markerColor;
-    markerRight.textAlignment = NSTextAlignmentCenter;
-    markerRight.adjustsFontSizeToFitWidth = YES;
-    markerRight.minimumScaleFactor = 0.7;
-    markerRight.hidden = YES;
-    [self.graphBackgroundView addSubview:markerRight];
-    
-    markerBottom = [[UILabel alloc] initWithFrame:CGRectMake(0, self.graphMarginV + [self heightYAxis], kXLabelWidth, self.heightXAxisLabel)];//只需修改x位置
-    markerBottom.font = self.axisFont;
-    markerBottom.textColor = self.markerTextColor;
-    markerBottom.backgroundColor = self.markerColor;
-    markerBottom.textAlignment = NSTextAlignmentCenter;
-    markerBottom.adjustsFontSizeToFitWidth = YES;
-    markerBottom.minimumScaleFactor = 0.7;
-    markerBottom.hidden = YES;
-    [self.graphBackgroundView addSubview:markerBottom];
-    
     self.xMarker = [[CAShapeLayer alloc] init];
     [self.xMarker setStrokeColor:self.markerColor.CGColor];
     [self.xMarker setLineWidth:self.markerWidth];
@@ -383,6 +353,36 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     [self.yMarker setName:@"y_marker_layer"];
     [self.yMarker setHidden:YES];
     [self.graphBackgroundView.layer addSublayer:self.yMarker];
+    
+    markerLeft = [[UILabel alloc] initWithFrame:CGRectMake(self.graphMarginL, 0, kYLabelWidth, kYLabelHeight)];//只需修改y位置
+    markerLeft.font = self.axisFont;
+    markerLeft.textColor = self.markerTextColor;
+    markerLeft.backgroundColor = self.markerBgColor;
+    markerLeft.textAlignment = NSTextAlignmentCenter;
+    markerLeft.adjustsFontSizeToFitWidth = YES;
+    markerLeft.minimumScaleFactor = 0.7;
+    markerLeft.hidden = YES;
+    [self.graphBackgroundView addSubview:markerLeft];
+    
+    markerRight = [[UILabel alloc] initWithFrame:CGRectMake(self.graphMarginL + [self widthXAxis] - kYLabelWidth, 0, kYLabelWidth, kYLabelHeight)];//只需修改y位置
+    markerRight.font = self.axisFont;
+    markerRight.textColor = self.markerTextColor;
+    markerRight.backgroundColor = self.markerBgColor;
+    markerRight.textAlignment = NSTextAlignmentCenter;
+    markerRight.adjustsFontSizeToFitWidth = YES;
+    markerRight.minimumScaleFactor = 0.7;
+    markerRight.hidden = YES;
+    [self.graphBackgroundView addSubview:markerRight];
+    
+    markerBottom = [[UILabel alloc] initWithFrame:CGRectMake(0, self.graphMarginV + [self heightYAxis], kXLabelWidth, self.heightXAxisLabel)];//只需修改x位置
+    markerBottom.font = self.axisFont;
+    markerBottom.textColor = self.markerTextColor;
+    markerBottom.backgroundColor = self.markerBgColor;
+    markerBottom.textAlignment = NSTextAlignmentCenter;
+    markerBottom.adjustsFontSizeToFitWidth = YES;
+    markerBottom.minimumScaleFactor = 0.7;
+    markerBottom.hidden = YES;
+    [self.graphBackgroundView addSubview:markerBottom];
 }
 
 - (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{

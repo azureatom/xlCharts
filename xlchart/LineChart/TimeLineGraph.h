@@ -35,5 +35,5 @@
 @property(assign, nonatomic) double minPriceChangePercent;//价格偏离昨日收盘价的最小百分比，默认0.02，也即[-2.00%, 2.00%]
 
 @property(strong, nonatomic) UIColor *textUpColor; //y轴上半部上涨的颜色，默认[UIColor redColor]
-@property(strong, nonatomic) UIColor *textDownColor; //y轴下半部下跌的颜色，默认[UIColor greenColor]
+@property(strong, nonatomic) UIColor *textDownColor;//y轴下半部下跌的颜色，默认[UIColor greenColor]
 @end

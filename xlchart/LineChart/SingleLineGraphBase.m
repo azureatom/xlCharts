@@ -542,7 +542,7 @@
         self.defaultMarker = [[LineGraphMarker alloc] init];
         self.defaultMarker.hidden = YES;
         self.defaultMarker.frame = CGRectZero;
-        self.defaultMarker.bgColor = self.markerColor;
+        self.defaultMarker.bgColor = self.markerBgColor;
         self.defaultMarker.textColor = self.markerTextColor;
         self.defaultMarker.textFont = self.axisFont;
         [self.graphBackgroundView addSubview:self.defaultMarker];

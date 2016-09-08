@@ -61,6 +61,7 @@
     
     tLineGraph.markerColor = [UIColor orangeColor];
     tLineGraph.markerTextColor = [UIColor whiteColor];
+    tLineGraph.markerBgColor = [UIColor grayColor];
     [self.view addSubview:tLineGraph];
     
     [tLineGraph reloadGraph];
