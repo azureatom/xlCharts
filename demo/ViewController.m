@@ -9,29 +9,39 @@
 #import "ViewController.h"
 #import "SingleLineGraphScrollable.h"
 #import "SingleLineGraphNonScrollable.h"
+#import "TimeLineGraphViewController.h"
 
 @interface ViewController ()<SingleLineGraphBaseDataSource, SingleLineGraphBaseDelegate>
-@property(strong, nonatomic) UIButton *button;
+@property(strong, nonatomic) UIButton *tagButton;
+@property(strong, nonatomic) UIButton *showTimeLineButton;
 @property(strong, nonatomic) SingleLineGraphScrollable *lineGraphScrollable;
 @property(strong, nonatomic) SingleLineGraphNonScrollable *lineGraphNonScrollable;
 @end
 
 @implementation ViewController
-@synthesize button;
+@synthesize tagButton;
+@synthesize showTimeLineButton;
 @synthesize lineGraphScrollable;
 @synthesize lineGraphNonScrollable;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    button = [UIButton buttonWithType:UIButtonTypeCustom];
-    button.frame = CGRectMake(0, 50, 100, 20);
-    [button setTitle:@"切换曲线数据" forState:UIControlStateNormal];
-    button.titleLabel.font = [UIFont systemFontOfSize:10];
-    [button setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    button.tag = 30;
-    [button addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:button];
+    tagButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    tagButton.frame = CGRectMake(0, 50, 100, 20);
+    [tagButton setTitle:@"切换曲线数据" forState:UIControlStateNormal];
+    tagButton.titleLabel.font = [UIFont systemFontOfSize:10];
+    [tagButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+    tagButton.tag = 30;
+    [tagButton addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:tagButton];
+    
+    showTimeLineButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    showTimeLineButton.frame = CGRectMake(150, 50, 100, 20);
+    [showTimeLineButton setTitle:@"显示分时图" forState:UIControlStateNormal];
+    [showTimeLineButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+    [showTimeLineButton addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:showTimeLineButton];
     
     [self createLineGraph];
 }
@@ -42,10 +52,16 @@
 }
 
 -(void)onButtonTapped:(UIButton *)b{
-    NSLog(@"button.tag %zi", b.tag);
-    [lineGraphScrollable reloadGraph];
-    [lineGraphNonScrollable reloadGraph];
-    b.tag++;
+    if (b == showTimeLineButton) {
+        TimeLineGraphViewController *vc = [[TimeLineGraphViewController alloc] init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
+    if (b == tagButton) {
+        NSLog(@"button.tag %zi", tagButton.tag);
+        [lineGraphScrollable reloadGraph];
+        [lineGraphNonScrollable reloadGraph];
+        tagButton.tag++;
+    }
 }
 
 - (void)createLineGraph{
@@ -108,7 +124,7 @@
 //        return filteredDateStringArray;
     }
     
-    switch (button.tag) {
+    switch (tagButton.tag) {
         case 0:
             return @[];
         case 1:
@@ -176,13 +192,13 @@
         case 31:
             return @[@"原点x", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"10", @"1", @"2", @"3", @"4", @"5", @"", @"", @"", @"9", @"20"];
         default:
-            button.tag = 0;
+            tagButton.tag = 0;
             return [self xAxisDataForLine:graph filtered:filteredIndexArray];
     }
 }
 
 - (NSArray *)yAxisDataForline:(SingleLineGraphBase *)graph{
-    switch (button.tag) {
+    switch (tagButton.tag) {
         case 0:
             return @[];
         case 1:
@@ -252,7 +268,7 @@
         case 31:
             return @[@22, @21, @2, @3, @4, @5, @6, @7, @8, @9, @10, @11, @12, @13, @14, @15, @16, @17, @3, @2, @1];
         default:
-            button.tag = 0;
+            tagButton.tag = 0;
             return [self yAxisDataForline:graph];
     }
 }

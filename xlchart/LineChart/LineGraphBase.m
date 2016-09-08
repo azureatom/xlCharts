@@ -20,23 +20,23 @@
 @synthesize xAxisArray;
 @synthesize xAxisLabels;
 @synthesize positionStepX;
+@synthesize yAxisValues;
+@synthesize positionYOfYAxisValues;
 @synthesize positionStepY;
 @synthesize axisFont;
 @synthesize textColor;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
-@synthesize shouldDrawPoints;
-@synthesize maxPointRadius;
-@synthesize pointRadius;
-@synthesize positionYOfYAxisValues;
 @synthesize showMarker;
 @synthesize markerColor;
-@synthesize markerTextColor;
 @synthesize markerWidth;
 @synthesize xMarker;
 @synthesize yMarker;
 @synthesize defaultMarker;
-@synthesize customMarkerView;
+@synthesize markerTextColor;
+@synthesize shouldDrawPoints;
+@synthesize maxPointRadius;
+@synthesize pointRadius;
 
 -(id)initWithFrame:(CGRect)frame{
     self = [super initWithFrame:frame];
@@ -52,6 +52,12 @@
         self.textColor = [UIColor blackColor];
         self.gridLineColor = [UIColor lightGrayColor];
         self.gridLineWidth = 0.3;
+        
+        self.showMarker = YES;
+        self.markerColor = [UIColor orangeColor];
+        self.markerWidth = 0.4;
+        self.markerTextColor = [UIColor whiteColor];
+        
         shouldDrawPoints = YES;
         maxPointRadius = 1.5;
     }
@@ -85,6 +91,48 @@
     //当view的位置不是整数或者0.5的倍数时，由于屏幕分辨率和像素匹配问题，view显示会略微模糊
     //但这样会导致在同一直线上的点，之间的各线段略微有折角
     return CGPointMake(round(point.x), round(point.y));
+}
+
+- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
+    //第pointIndex个点在x轴的位置
+    return self.graphMarginL + self.positionStepX * pointIndex;
+}
+
+-(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
+    double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
+    for (NSUInteger i = 0; i < yAxisValues.count; ++i){
+        //double的比较需要比较差值和一个小数，比如-0.5999999995和-0.6000000001
+        if (yValue - ((NSNumber *)yAxisValues[i]).doubleValue < 0.000001) {
+            //刻度值是上面的大，view里点的y坐标是下面的大
+            CGFloat positionYAbove = ((NSNumber *)self.positionYOfYAxisValues[i]).floatValue;//点上方的y轴刻度值的位置
+            if (i == 0) {
+                return CGPointMake([self xPositionOfAxis:pointIndex], positionYAbove);
+            }
+            else{
+                double yValueAbove = ((NSNumber *)yAxisValues[i]).doubleValue;//点上方的y轴刻度值
+                double yValueBellow = ((NSNumber *)yAxisValues[i - 1]).doubleValue;//点下方的y轴刻度值
+                CGFloat positionYBellow = ((NSNumber *)self.positionYOfYAxisValues[i - 1]).floatValue;//点下方的y轴刻度值的位置
+                return CGPointMake([self xPositionOfAxis:pointIndex], positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove));
+            }
+        }
+    }
+    NSAssert2(NO, @"Invalid point at index %zi of lineData.yAxisArray %@", pointIndex, lineData.yAxisArray);
+    return CGPointZero;
+}
+
+-(int)calculateClosestPoint:(CGPoint *)closestPoint near:(CGPoint)targetPoint distance:(CGFloat *)minDistance inLine:(LineChartDataRenderer *)line checkXDistanceOnly:(BOOL)checkXDistanceOnly{
+    *minDistance = MAXFLOAT;
+    int closestPointIndex = -1;
+    for (int i = 0; i < line.yAxisArray.count; ++i){
+        CGPoint point = [self pointAtIndex:i inLine:line];
+        CGFloat distance = checkXDistanceOnly ? fabs(targetPoint.x - point.x) : sqrtf(powf(targetPoint.x - point.x, 2) + powf(targetPoint.y - point.y, 2));
+        if (distance < *minDistance) {
+            *minDistance = distance;
+            *closestPoint = point;
+            closestPointIndex = i;
+        }
+    }
+    return closestPointIndex;
 }
 
 - (void)drawOneLine:(LineChartDataRenderer *)lineData{
@@ -200,13 +248,11 @@
 
 #pragma mark handle gestures
 -(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture{
-    if (self.showMarker) {
-        CGPoint currentPoint = [gesture locationInView:self.graphBackgroundView];
-        if (CGRectContainsPoint(self.graphBackgroundView.frame, currentPoint)) {
-            //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
-            //而PanGesture和LongPressGesture 只取曲线x方向距离最近的点即可，不需检查距离是否过大。这样可以保证在拖拽时，曲线上的点依次显示十字线信息。
-            [self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]];
-        }
+    CGPoint currentPoint = [gesture locationInView:self.graphBackgroundView];
+    if (CGRectContainsPoint(self.graphBackgroundView.frame, currentPoint)) {
+        //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
+        //而PanGesture和LongPressGesture 只取曲线x方向距离最近的点即可，不需检查距离是否过大。这样可以保证在拖拽时，曲线上的点依次显示十字线信息。
+        [self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]];
     }
 }
 
@@ -214,7 +260,7 @@
 /*水平方向
  self 长度同 backgroundScrollView
  graphBackgroundView长度 >= backgroundScrollView
- graphMarginL, 坐标轴, graphMarginR
+ *  graphMarginL, 坐标轴, graphMarginR
  */
 -(CGFloat)widthGraph{
     return self.frame.size.width - self.graphMarginL - self.graphMarginR;
@@ -229,10 +275,10 @@
 /*竖直方向
  self
  backgroundScrollView 高度同 graphBackgroundView
- graphMarginV
- 曲线坐标轴
- graphMarginV
- heightXAxisLabel
+ *  graphMarginV
+ *  曲线坐标轴
+ *  graphMarginV
+ *  heightXAxisLabel
  */
 -(CGFloat)heightGraph{
     return self.frame.size.height;
@@ -255,7 +301,7 @@
     [self calculateYAxis];
     self.originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue);
     
-    [self createGraphBackground];
+    [self createGraphBackground];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
     [self drawXAxis];
     [self drawYAxis];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
     [self drawLines];
@@ -296,7 +342,9 @@
     }
     graphBackgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.graphMarginL + [self widthXAxis] + self.graphMarginR, [self heightGraph])];//根据x轴的宽度设置graphBackgroundView的宽度
     //如果手势被TapGesture、LongPressGesture成功识别，或者增加了PanGesture（无论是否成功识别），不会触发scrollViewDidScroll，即使 shouldRecognizeSimultaneouslyWithGestureRecognizer:返回YES也不行
-    [self.graphBackgroundView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
+    if (showMarker) {
+        [self.graphBackgroundView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
+    }
 }
 
 - (void)drawXAxis{}
@@ -304,17 +352,6 @@
 - (void)drawLines{}
 - (void)createMarker{}
 
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
-    return 0;
-}
-
--(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
-    return CGPointZero;
-}
-
 - (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{}
--(CGPoint)calculateMarker:(CGSize)viewSize originWith:(CGPoint)closestPoint{
-    //makerView优先显示在selectedPoint的左下角，如果显示不开则显示在右方或上方
-    return closestPoint;
-}
+
 @end

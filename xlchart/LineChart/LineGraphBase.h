@@ -25,6 +25,9 @@
 @property (nonatomic, strong) NSArray *xAxisArray;//array of NSString, x轴的刻度，@""表示不显示该刻度值和竖直刻度线
 @property (strong, nonatomic) NSMutableArray *xAxisLabels;//array of UILabel, 显示x轴的刻度值的label
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离。SingleLineGraphScrollable至少为minPositionStepX；SingleLineGraphNonScrollable自动计算使x轴刚好占满区域长度。
+
+@property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值。
+@property (strong, nonatomic) NSMutableArray *positionYOfYAxisValues;//arrray of NSNumber，yAxisValues对应的y轴刻度值的view的y位置，从原点到最高点。刻度值之间的距离等于positionStepY，但SingleLineGraphBase中超范围的y值例外。
 @property (assign, nonatomic) CGFloat positionStepY;
 
 //text font and color
@@ -34,21 +37,18 @@
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
 @property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
 
-@property (assign, nonatomic) BOOL shouldDrawPoints;//是否画出曲线上的点，默认YES
-@property (assign, nonatomic) CGFloat maxPointRadius;//曲线上点的最大半径，默认1.5
-@property (assign, nonatomic) CGFloat pointRadius;//根据maxPointRadius计算的点的半径，画线时最终采用的点半径可能随点数增多而减少至线宽
-
-@property (strong, nonatomic) NSMutableArray *positionYOfYAxisValues;//arrray of NSNumber，yAxisValues对应的y轴刻度值的view的y位置，从原点到最高点。
-
 //marker和十字线
-@property (nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES。如果[dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]则优先显示用户自定义提示框，否则直接显示默认提示框（显示在坐标系的上方）
-@property (nonatomic, strong) UIColor *markerTextColor; //默认提示框的文字颜色，默认[UIColor whiteColor]
+@property (nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES
 @property (nonatomic, strong) UIColor *markerColor; //十字线的颜色，默认[UIColor orangeColor]
 @property (nonatomic) CGFloat markerWidth; //十字线的线宽，默认0.4
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
 @property (nonatomic, strong) CAShapeLayer *yMarker;//点击显示十字线的横线
-@property (nonatomic, strong) LineGraphMarker *defaultMarker;//点击显示的提示信息view
-@property (nonatomic, strong) UIView *customMarkerView;//自定义 点击显示的提示信息view
+@property (nonatomic, strong) LineGraphMarker *defaultMarker;//点击默认显示提示信息的view
+@property (nonatomic, strong) UIColor *markerTextColor; //默认提示框的文字颜色，默认[UIColor whiteColor]
+
+@property (assign, nonatomic) BOOL shouldDrawPoints;//是否画出曲线上的点，默认YES
+@property (assign, nonatomic) CGFloat maxPointRadius;//曲线上点的最大半径，默认1.5
+@property (assign, nonatomic) CGFloat pointRadius;//根据maxPointRadius计算的点的半径，画线时最终采用的点半径可能随点数增多而减少至线宽
 
 #pragma mark - 公用方法
 - (NSString *)formattedStringForNumber:(NSNumber *)n;
@@ -62,6 +62,21 @@
  */
 - (double)fractionFloorOrCeiling:(double)d ceiling:(BOOL)isCeiling;
 - (CGPoint)optimizedPoint:(CGPoint)point;
+- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;
+-(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData;
+
+/**
+ *  计算曲线上距离targetPoint最近的点
+ *
+ *  @param closestPoint       输出参数，找到的最近点的坐标
+ *  @param targetPoint        已知点
+ *  @param minDistance        输出参数，最近点的距离
+ *  @param line               曲线
+ *  @param checkXDistanceOnly 只比较x方向的距离还是比较实际距离
+ *
+ *  @return 最近的点的index，如果没有则返回-1
+ */
+-(int)calculateClosestPoint:(CGPoint *)closestPoint near:(CGPoint)targetPoint distance:(CGFloat *)minDistance inLine:(LineChartDataRenderer *)line checkXDistanceOnly:(BOOL)checkXDistanceOnly;
 - (void)drawOneLine:(LineChartDataRenderer *)lineData;
 - (void)fillGraphBackgroundWithPath:(UIBezierPath *)path color:(UIColor *)color;
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint;
@@ -93,15 +108,12 @@
 - (void)drawYAxis;
 -(void)drawLines;
 - (void)createMarker;
-//操作坐标系上的点
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;
--(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData;
+
 /**
  *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框
  *
  *  @param pointTouched       点击或拖拽到的点
- *  @param checkXDistanceOnly YES 则选取曲线上跟 pointTouched x轴方向距离最近的点即可；NO 则比较 曲线上点跟 pointTouched 的最短距离是否足够小
+ *  @param checkXDistanceOnly YES 则选取曲线上跟 pointTouched x轴方向距离最近的点即可；NO 则还需要比较 曲线上点跟 pointTouched 的最短距离是否足够小
  */
 - (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly;
--(CGPoint)calculateMarker:(CGSize)viewSize originWith:(CGPoint)closestPoint;
 @end

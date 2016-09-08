@@ -89,4 +89,7 @@
 @property (assign, nonatomic) CGFloat customMinValidY;//default is -MAXFLOAT / 4
 @property (assign, nonatomic) BOOL filterYOutOfRange;//过滤掉超出 [customMinValidY, customMaxValidY]的y值，默认NO
 @property (strong, nonatomic) NSArray *filteredIndexArray;//过滤之后的元素在原始array里的index，比如@[@0, @3, @10]，默认为nil
+
+#pragma mark - Method must be override by subclass
+-(CGPoint)calculateMarker:(CGSize)viewSize originWith:(CGPoint)closestPoint;
 @end

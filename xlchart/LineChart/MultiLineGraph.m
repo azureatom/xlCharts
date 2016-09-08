@@ -644,11 +644,6 @@
     }
 }
 
--(CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
-    //第pointIndex个点在x轴的位置
-    return graphMarginL + positionStepX * pointIndex;
-}
-
 -(CGPoint)pointForLine:(LineChartDataRenderer *)lineData at:(NSUInteger)pointIndex{
     double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
     for (int i = 0; i < yAxisValues.count; ++i){

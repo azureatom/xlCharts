@@ -18,8 +18,11 @@
 //self(backgroundScrollView(x-axis, y-axis, graphBackgroundView 曲线图), defaultMarker or customMarkerView, legendView)
 @property (nonatomic, strong) LineChartDataRenderer *lineDataRenderer;//曲线的数据结构
 @property (nonatomic, strong) UIView *yAxisView;//固定的y轴和y刻度值
-
-@property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值，firstObject和lastObject分别是数据点的y最小值和最大值，但是最小值和最大值如果差距太大则不会显示在y轴刻度上，其它元素之间的差值等于positionStepY。
+/**
+ *  如果[dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]则优先显示用户自定义提示框
+ *  否则直接显示defaultMarker，目前显示在坐标系的上方
+ */
+@property (nonatomic, strong) UIView *customMarkerView;
 @end
 
 @implementation SingleLineGraphBase
@@ -47,7 +50,7 @@
 @synthesize shouldShowMinYLabel;
 @synthesize lineDataRenderer;
 @synthesize yAxisView;
-@synthesize yAxisValues;
+@synthesize customMarkerView;
 
 - (instancetype)initWithFrame:(CGRect)frame{
     self = [super initWithFrame:frame];
@@ -63,11 +66,6 @@
         showLegend = NO;
         legendViewType = LegendTypeVertical;
         legendFont = [UIFont systemFontOfSize:12];
-        
-        self.showMarker = YES;
-        self.markerColor = [UIColor orangeColor];
-        self.markerTextColor = [UIColor whiteColor];
-        self.markerWidth = 0.4;
         
         spaceBetweenVisibleXLabels = 60;
         segmentsOfYAxis = 5;
@@ -122,7 +120,7 @@
 #pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
     self.xAxisLabels = [[NSMutableArray alloc] init];
-    yAxisValues = [[NSMutableArray alloc] init];
+    self.yAxisValues = [[NSMutableArray alloc] init];
     self.positionYOfYAxisValues = [[NSMutableArray alloc] init];
     self.legendArray = [[NSMutableArray alloc] init];
     
@@ -189,8 +187,8 @@
     NSSet *allPointsSet = [[NSSet alloc] initWithArray:lineDataRenderer.yAxisArray];//所有曲线中不同的y值。注意[NSNumber numberWithFloat:]和[NSNumber numberWithDouble:]不同
     if (allPointsSet.count == 0) {
         //没有点，positionStepY等于y轴高度，y轴刻度值为0和1
-        [yAxisValues addObject:@0];//原点的y轴刻度值
-        [yAxisValues addObject:@1];//最高横线的y轴刻度值
+        [self.yAxisValues addObject:@0];//原点的y轴刻度值
+        [self.yAxisValues addObject:@1];//最高横线的y轴刻度值
         
         self.positionStepY = (positionYBottom - positionYTop);
         [self.positionYOfYAxisValues addObject:@(positionYBottom)];//x轴的位置
@@ -219,9 +217,9 @@
             valueStepY = 1;
         }
         
-        [yAxisValues addObject:@(yCeil - valueStepY)];//原点的y轴刻度值
-        [yAxisValues addObject:@(yCeil)];//中间横线的y轴刻度值
-        [yAxisValues addObject:@(yCeil + valueStepY)];//最高横线的y轴刻度值
+        [self.yAxisValues addObject:@(yCeil - valueStepY)];//原点的y轴刻度值
+        [self.yAxisValues addObject:@(yCeil)];//中间横线的y轴刻度值
+        [self.yAxisValues addObject:@(yCeil + valueStepY)];//最高横线的y轴刻度值
         
         self.positionStepY = (positionYBottom - positionYTop) / 2;
         [self.positionYOfYAxisValues addObject:@(positionYBottom)];//x轴的位置
@@ -236,7 +234,7 @@
          先将yCeil和yFloor分别设为范围内的最大值maxY和最小值minY
          如果超过范围，选取满足 yCeil-yFloor>=validYRange && 范围内包含80%以上的点、差值最小的yCeil和yFloor，其中yCeil和yFloor必然是2个不同点的y值（因为包含了80%以上的点）
          
-         [yFloor, yCeil]为最终计算决定的y轴合理刻度值范围（yFloor和yCeil已经分别按精度fractionDigits向下、向上取整）。如果范围外有更大值，则在yCeil对应的横线上面再显示一根横线；如果范围外有更小值，则x轴对应的y刻度为最小值，yFloor为x轴上方的横线刻度值。
+         [yFloor, yCeil]为最终计算决定的y轴合理刻度值范围（yFloor和yCeil已经分别按精度fractionDigits向下、向上取整）。如果范围外有更大值，则在yCeil对应的横线上面再显示一根横线（但不显示该刻度值）；如果范围外有更小值，则x轴对应的y刻度为最小值（但不显示该刻度值），yFloor为x轴上方的横线刻度值。
          _________yCeil
          _________ or yCeil（范围外有更大值）
          _________
@@ -279,7 +277,7 @@
             //x轴及全部横线的 位置、y轴刻度值
             self.positionStepY = (positionYBottom - positionYTop) / segmentsOfYAxis;
             for (int i = 0; i <= segmentsOfYAxis; ++i) {
-                [yAxisValues addObject:@(yFloor + valueStepY * i)];
+                [self.yAxisValues addObject:@(yFloor + valueStepY * i)];
                 [self.positionYOfYAxisValues addObject:@(positionYBottom - self.positionStepY * i)];
             }
         }
@@ -317,11 +315,11 @@
                 
                 //除最高横线外的横线位置、y轴刻度值，包括x轴
                 for (int i = 0; i < segmentsOfYAxis; ++i) {
-                    [yAxisValues addObject:@(yFloor + valueStepY * i)];
+                    [self.yAxisValues addObject:@(yFloor + valueStepY * i)];
                     [self.positionYOfYAxisValues addObject:@(positionYBottom - self.positionStepY * i)];
                 }
                 //最高横线的位置、y轴刻度值
-                [yAxisValues addObject:@(valueOfYTop)];
+                [self.yAxisValues addObject:@(valueOfYTop)];
                 [self.positionYOfYAxisValues addObject:@(positionYTop)];
             }
             else if(yCeil == maxY){//最高横线y刻度值为maxY
@@ -355,11 +353,11 @@
                 }
                 
                 //x轴的位置、y轴刻度值
-                [yAxisValues addObject:@(valueOfYBottom)];
+                [self.yAxisValues addObject:@(valueOfYBottom)];
                 [self.positionYOfYAxisValues addObject:@(positionYBottom)];
                 //除x轴外横线的位置、y轴刻度值
                 for (int i = 1; i <= segmentsOfYAxis; ++i) {
-                    [yAxisValues addObject:@(yCeil - valueStepY * (segmentsOfYAxis - i))];
+                    [self.yAxisValues addObject:@(yCeil - valueStepY * (segmentsOfYAxis - i))];
                     [self.positionYOfYAxisValues addObject:@(positionYTop + self.positionStepY * (segmentsOfYAxis - i))];
                 }
             }
@@ -406,18 +404,18 @@
                 self.positionStepY = (positionYBottom - positionYTop) / (segmentsOfYAxis + actualMultipleMoreThan_top + actualMultipleMoreThan_bottom);
                 
                 //x轴的位置、y轴刻度值
-                [yAxisValues addObject:@(valueOfYBottom)];
+                [self.yAxisValues addObject:@(valueOfYBottom)];
                 [self.positionYOfYAxisValues addObject:@(positionYBottom)];
                 
                 CGFloat positionYFloor = positionYBottom - self.positionStepY * (1 + actualMultipleMoreThan_bottom);//x轴上方横线的位置
                 //除x轴外横线的位置、y轴刻度值
                 for (int i = 0; i < segmentsOfYAxis - 1; ++i) {
-                    [yAxisValues addObject:@(yFloor + valueStepY * i)];
+                    [self.yAxisValues addObject:@(yFloor + valueStepY * i)];
                     [self.positionYOfYAxisValues addObject:@(positionYFloor - self.positionStepY * i)];
                 }
                 
                 //最高横线的位置、y轴刻度值
-                [yAxisValues addObject:@(valueOfYTop)];
+                [self.yAxisValues addObject:@(valueOfYTop)];
                 [self.positionYOfYAxisValues addObject:@(positionYTop)];
             }
         }
@@ -503,7 +501,7 @@
     [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionYBottom) end:CGPointMake(lineEndX, positionYBottom)]];
     //显示原点的y刻度值
     if (shouldShowMinYLabel) {
-        createYAxisLabel([self formattedStringForNumber:yAxisValues.firstObject], lineStartX, positionYBottom, self.positionStepY);
+        createYAxisLabel([self formattedStringForNumber:self.yAxisValues.firstObject], lineStartX, positionYBottom, self.positionStepY);
     }
     
     //显示除x轴外的横线、y轴刻度值
@@ -513,13 +511,13 @@
             [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
         }
         if (i < self.positionYOfYAxisValues.count - 1 || shouldShowMaxYLabel) {//非最高横线 或者 should显示最高横线刻度值
-            createYAxisLabel([self formattedStringForNumber:yAxisValues[i]], lineStartX, positionY, self.positionStepY);
+            createYAxisLabel([self formattedStringForNumber:self.yAxisValues[i]], lineStartX, positionY, self.positionStepY);
         }
     }
 }
 
 -(void)drawLines{
-    [self drawOneLine:lineDataRenderer];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
+    [self drawOneLine:lineDataRenderer];
 }
 
 -(void)createMarker{
@@ -535,9 +533,11 @@
         [self.yMarker removeFromSuperlayer];
         self.yMarker = nil;
     }
+    
     if (!self.showMarker) {
         return;
     }
+    
     if (![self.dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]) {
         self.defaultMarker = [[LineGraphMarker alloc] init];
         self.defaultMarker.hidden = YES;
@@ -592,53 +592,15 @@
     return self.frame.size.height - [self heightLegend];
 }
 
--(CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
-    //第pointIndex个点在x轴的位置
-    return self.graphMarginL + self.positionStepX * pointIndex;
-}
-
--(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
-    double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
-    for (int i = 0; i < yAxisValues.count; ++i){
-        if (yValue - ((NSNumber *)yAxisValues[i]).doubleValue < 0.000001) {//double的比较需要比较差值和一个小数，比如-0.5999999995和-0.6000000001
-            //刻度值是上面的大，view里点的y坐标是下面的大
-            double yValueAbove = ((NSNumber *)yAxisValues[i]).doubleValue;//点上方的y轴刻度值
-            CGFloat positionYAbove = ((NSNumber *)self.positionYOfYAxisValues[i]).floatValue;//点上方的y轴刻度值的位置
-            if (i == 0) {
-                return CGPointMake([self xPositionOfAxis:pointIndex], positionYAbove);
-            }
-            else{
-                double yValueBellow = ((NSNumber *)yAxisValues[i - 1]).doubleValue;//点下方的y轴刻度值
-                CGFloat positionYBellow = ((NSNumber *)self.positionYOfYAxisValues[i - 1]).floatValue;//点下方的y轴刻度值的位置
-                return CGPointMake([self xPositionOfAxis:pointIndex], positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove));
-            }
-        }
-    }
-    NSAssert2(NO, @"Invalid point at index %zi of lineData.yAxisArray %@", pointIndex, lineData.yAxisArray);
-    return CGPointZero;
-}
-
 - (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
-    NSString *xString;
-    NSNumber *yNumber;
-    NSString *yString;//string presentation of yNumber
-    CGFloat minDistance = MAXFLOAT;
+    CGFloat minDistance;
     CGPoint closestPoint;//距离最近的点
-    NSUInteger closestPointIndex = 0;
-    
-    for (int i = 0; i < lineDataRenderer.yAxisArray.count; ++i){
-        CGPoint point = [self pointAtIndex:i inLine:lineDataRenderer];
-        CGFloat distance = checkXDistanceOnly ? fabs(pointTouched.x - point.x) : sqrtf(powf(pointTouched.x - point.x, 2) + powf(pointTouched.y - point.y, 2));
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestPoint = point;
-            closestPointIndex = i;
-            xString = [self.xAxisArray objectAtIndex:i];
-            yNumber = [lineDataRenderer.yAxisArray objectAtIndex:i];
-            yString = [self formattedStringForNumber:yNumber];
-        }
+    int closestPointIndex = [self calculateClosestPoint:&closestPoint near:pointTouched distance:&minDistance inLine:lineDataRenderer checkXDistanceOnly:checkXDistanceOnly];
+    if (closestPointIndex == -1) {
+        //曲线没有点
+        return;
     }
-    
+
     //先隐藏十字线和提示框
     self.xMarker.hidden = YES;
     self.yMarker.hidden = YES;
@@ -655,6 +617,10 @@
         //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
         return;
     }
+    
+    NSString *xString = [self.xAxisArray objectAtIndex:closestPointIndex];
+    NSNumber *yNumber = [lineDataRenderer.yAxisArray objectAtIndex:closestPointIndex];
+    NSString *yString = [self formattedStringForNumber:yNumber];//string presentation of yNumber
     
     closestPoint = [self optimizedPoint:closestPoint];
     
@@ -685,6 +651,11 @@
     if ([self.delegate respondsToSelector:@selector(didTapLine:atPoint:valuesAtY:)]) {
         [self.delegate didTapLine:self atPoint:(filterYOutOfRange ? ((NSNumber *)filteredIndexArray[closestPointIndex]).intValue : closestPointIndex) valuesAtY:yNumber];
     }
+}
+
+-(CGPoint)calculateMarker:(CGSize)viewSize originWith:(CGPoint)closestPoint{
+    //子类会重写。makerView优先显示在selectedPoint的左下角，如果显示不开则显示在右方或上方
+    return closestPoint;
 }
 
 @end
