@@ -180,11 +180,13 @@
     shapeLayer.rasterizationScale = [UIScreen mainScreen].scale;
     shapeLayer.contentsScale = [UIScreen mainScreen].scale;
     
-    CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-    [pathAnimation setDuration:animationDuration];
-    [pathAnimation setFromValue:[NSNumber numberWithFloat:0.0f]];
-    [pathAnimation setToValue:[NSNumber numberWithFloat:1.0f]];
-    [shapeLayer addAnimation:pathAnimation forKey:@"strokeEnd"];
+    if (animationDuration > 0) {
+        CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
+        [pathAnimation setDuration:animationDuration];
+        [pathAnimation setFromValue:[NSNumber numberWithFloat:0.0f]];
+        [pathAnimation setToValue:[NSNumber numberWithFloat:1.0f]];
+        [shapeLayer addAnimation:pathAnimation forKey:@"strokeEnd"];
+    }
     
     [self.graphBackgroundView.layer addSublayer:shapeLayer];
     
@@ -205,15 +207,17 @@
     [shapeLayer setFillColor:color.CGColor];
     [shapeLayer setOpacity:0.1];
     
-    CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"fill"];
-    [pathAnimation setDuration:animationDuration];
-    [pathAnimation setFillMode:kCAFillModeForwards];
-    [pathAnimation setFromValue:(id)[[UIColor clearColor] CGColor]];
-    [pathAnimation setToValue:(id)[color CGColor]];
-    [pathAnimation setBeginTime:CACurrentMediaTime()];
-    [pathAnimation setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
-    
-    [shapeLayer addAnimation:pathAnimation forKey:@"fill"];
+    if (animationDuration > 0) {
+        CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"fill"];
+        [pathAnimation setDuration:animationDuration];
+        [pathAnimation setFillMode:kCAFillModeForwards];
+        [pathAnimation setFromValue:(id)[[UIColor clearColor] CGColor]];
+        [pathAnimation setToValue:(id)[color CGColor]];
+        [pathAnimation setBeginTime:CACurrentMediaTime()];
+        [pathAnimation setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
+        
+        [shapeLayer addAnimation:pathAnimation forKey:@"fill"];
+    }
     
     [self.graphBackgroundView.layer addSublayer:shapeLayer];
 }

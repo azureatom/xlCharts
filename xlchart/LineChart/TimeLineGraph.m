@@ -74,7 +74,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         [allMinutes addObject:@"14:00"];
         [allMinutes addObjectsFromArray:emptyBetweenHours];
         [allMinutes addObject:@"15:00"];
-        [allMinutes addObject:@""];//对应13:00的那跟成交量柱线
+        [allMinutes addObject:@""];//对应15:00的那跟成交量柱线
         self.xAxisArray = allMinutes;
     }
     return self;
