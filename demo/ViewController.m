@@ -93,6 +93,7 @@
         lg.gridLineWidth = 0.3;
         
         lg.showMarker = YES;
+        lg.markerDismissAfter = 3;
         lg.markerColor = [UIColor orangeColor];
         lg.markerBgColor = [UIColor grayColor];
         lg.markerWidth = 0.4;

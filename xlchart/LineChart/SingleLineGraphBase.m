@@ -592,30 +592,29 @@
     return self.frame.size.height - [self heightLegend];
 }
 
-- (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
+- (void)dismissMarker{
+    [super dismissMarker];
+    if (self.customMarkerView != nil) {
+        [self.customMarkerView removeFromSuperview];
+        self.customMarkerView = nil;
+    }
+}
+
+- (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
+    [super showMakerNearPoint:pointTouched checkXDistanceOnly:checkXDistanceOnly];
+    
     CGFloat minDistance;
     CGPoint closestPoint;//距离最近的点
     int closestPointIndex = [self calculateClosestPoint:&closestPoint near:pointTouched distance:&minDistance inLine:lineDataRenderer checkXDistanceOnly:checkXDistanceOnly];
     if (closestPointIndex == -1) {
         //曲线没有点
-        return;
-    }
-
-    //先隐藏十字线和提示框
-    self.xMarker.hidden = YES;
-    self.yMarker.hidden = YES;
-    if (self.customMarkerView != nil) {
-        [self.customMarkerView removeFromSuperview];
-        self.customMarkerView = nil;
-    }
-    if (self.defaultMarker != nil) {
-        self.defaultMarker.hidden = YES;
+        return NO;
     }
     
     //距离过远的点不处理
     if (!checkXDistanceOnly && minDistance > (self.positionStepX + self.positionStepY) * 0.8) {
         //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
-        return;
+        return NO;
     }
     
     NSString *xString = [self.xAxisArray objectAtIndex:closestPointIndex];
@@ -651,6 +650,7 @@
     if ([self.delegate respondsToSelector:@selector(didTapLine:atPoint:valuesAtY:)]) {
         [self.delegate didTapLine:self atPoint:(filterYOutOfRange ? ((NSNumber *)filteredIndexArray[closestPointIndex]).intValue : closestPointIndex) valuesAtY:yNumber];
     }
+    return YES;
 }
 
 -(CGPoint)calculateMarker:(CGSize)viewSize originWith:(CGPoint)closestPoint{

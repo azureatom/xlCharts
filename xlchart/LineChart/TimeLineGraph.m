@@ -385,10 +385,19 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     [self.graphBackgroundView addSubview:markerBottom];
 }
 
-- (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
+- (void)dismissMarker{
+    [super dismissMarker];
+    self.markerLeft.hidden = YES;
+    self.markerRight.hidden = YES;
+    self.markerBottom.hidden = YES;
+}
+
+- (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
+    [super showMakerNearPoint:pointTouched checkXDistanceOnly:checkXDistanceOnly];
+    
     if (lines.count == 0) {
         //没有曲线
-        return;
+        return NO;
     }
     
     LineChartDataRenderer *line = lines.firstObject;
@@ -397,19 +406,13 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     int closestPointIndex = [self calculateClosestPoint:&closestPoint near:pointTouched distance:&minDistance inLine:line checkXDistanceOnly:checkXDistanceOnly];
     if (closestPointIndex == -1) {
         //曲线没有点
-        return;
+        return NO;
     }
-    
-    self.xMarker.hidden = YES;
-    self.yMarker.hidden = YES;
-    self.markerLeft.hidden = YES;
-    self.markerRight.hidden = YES;
-    self.markerBottom.hidden = YES;
     
     //距离过远的点不处理
     if (!checkXDistanceOnly && minDistance > (self.positionStepX + self.positionStepY) * 0.8) {
         //不能简单比较 positionStepX / 2，如果x轴刻度很密集则该限制过紧，如果只有一个点则为0，所以需要综合positionStepX + positionStepY考虑
-        return;
+        return NO;
     }
     
     closestPoint = [self optimizedPoint:closestPoint];
@@ -458,6 +461,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     if ([self.delegate respondsToSelector:@selector(timeLine:didTapLine:atPoint:)]) {
         [self.delegate timeLine:self didTapLine:0 atPoint:closestPointIndex];
     }
+    return YES;
 }
 
 @end

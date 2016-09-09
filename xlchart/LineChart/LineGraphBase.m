@@ -28,6 +28,8 @@
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
 @synthesize showMarker;
+@synthesize markerDismissAfter;
+@synthesize markerDismissTimer;
 @synthesize markerColor;
 @synthesize markerWidth;
 @synthesize xMarker;
@@ -55,6 +57,7 @@
         self.gridLineWidth = 0.3;
         
         self.showMarker = YES;
+        self.markerDismissAfter = 0;
         self.markerColor = [UIColor orangeColor];
         self.markerWidth = 0.4;
         self.markerBgColor = [UIColor grayColor];
@@ -254,7 +257,9 @@
     if (CGRectContainsPoint(self.graphBackgroundView.frame, currentPoint)) {
         //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
         //而PanGesture和LongPressGesture 只取曲线x方向距离最近的点即可，不需检查距离是否过大。这样可以保证在拖拽时，曲线上的点依次显示十字线信息。
-        [self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]];
+        if ([self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]] && self.markerDismissAfter > 0) {
+            markerDismissTimer = [NSTimer scheduledTimerWithTimeInterval:markerDismissAfter target:self selector:@selector(dismissMarker) userInfo:nil repeats:NO];
+        }
     }
 }
 
@@ -354,6 +359,24 @@
 - (void)drawLines{}
 - (void)createMarker{}
 
-- (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{}
+- (void)dismissMarker{
+    if (self.markerDismissTimer != nil) {
+        [markerDismissTimer invalidate];
+        markerDismissTimer = nil;
+    }
+    //隐藏十字线和提示框
+    self.xMarker.hidden = YES;
+    self.yMarker.hidden = YES;
+    if (self.defaultMarker != nil) {
+        self.defaultMarker.hidden = YES;
+    }
+}
+
+- (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{
+    [self dismissMarker];//子类可重写
+
+    //子类 先检查曲线是否有点，无点则直接返回；否则然后显示marker
+    return NO;
+}
 
 @end

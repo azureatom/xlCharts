@@ -38,7 +38,9 @@
 @property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
 
 //marker和十字线
-@property (nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES
+@property (assign, nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES
+@property (assign, nonatomic) NSTimeInterval markerDismissAfter;//marker持续几秒后自动消失，<=0不自动消失，默认0
+@property (strong, nonatomic) NSTimer *markerDismissTimer;
 @property (nonatomic, strong) UIColor *markerColor; //十字线的颜色，默认[UIColor orangeColor]
 @property (nonatomic) CGFloat markerWidth; //十字线的线宽，默认0.4
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
@@ -107,14 +109,17 @@
 - (void)createGraphBackground;
 - (void)drawXAxis;
 - (void)drawYAxis;
--(void)drawLines;
+- (void)drawLines;
 - (void)createMarker;
 
+- (void)dismissMarker;//隐藏marker，删除markerDismissTimer
 /**
  *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框
  *
  *  @param pointTouched       点击或拖拽到的点
  *  @param checkXDistanceOnly YES 则选取曲线上跟 pointTouched x轴方向距离最近的点即可；NO 则还需要比较 曲线上点跟 pointTouched 的最短距离是否足够小
+ *
+ *  @return marker显示返回YES，没有点或没显示返回NO
  */
-- (void)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly;
+- (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly;
 @end
