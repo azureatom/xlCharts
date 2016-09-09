@@ -180,8 +180,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     maxPrice = yesterdayClosePrice + maxPriceChange;//价格上限
     minPrice = yesterdayClosePrice - maxPriceChange;//价格下限
     
-    double increaseRate = maxPriceChange / yesterdayClosePrice * 100;//涨幅百分比上限
-    double decreaseRate = -maxPriceChange / yesterdayClosePrice * 100;//跌幅百分比下限
+    double increaseRate = yesterdayClosePrice == 0 ? 0 : maxPriceChange / yesterdayClosePrice * 100;//涨幅百分比上限
+    double decreaseRate = yesterdayClosePrice == 0 ? 0 : -maxPriceChange / yesterdayClosePrice * 100;//跌幅百分比下限
     [rightYAxisValues addObject:[NSNumber numberWithDouble:decreaseRate]];
     [rightYAxisValues addObject:[NSNumber numberWithDouble:0]];
     [rightYAxisValues addObject:[NSNumber numberWithDouble:increaseRate]];
@@ -387,9 +387,15 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
 - (void)dismissMarker{
     [super dismissMarker];
-    self.markerLeft.hidden = YES;
-    self.markerRight.hidden = YES;
-    self.markerBottom.hidden = YES;
+    if (self.markerLeft != nil) {
+        self.markerLeft.hidden = YES;
+    }
+    if (self.markerRight != nil) {
+        self.markerRight.hidden = YES;
+    }
+    if (self.markerBottom != nil) {
+        self.markerBottom.hidden = YES;
+    }
 }
 
 - (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{

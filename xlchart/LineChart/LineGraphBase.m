@@ -301,6 +301,8 @@
 
 #pragma mark - override by subclass
 - (void)reloadGraph{
+    [self dismissMarker];
+    
     [self setupDataWithDataSource];
     
     [self calculatePositionStepX];
@@ -365,8 +367,12 @@
         markerDismissTimer = nil;
     }
     //隐藏十字线和提示框
-    self.xMarker.hidden = YES;
-    self.yMarker.hidden = YES;
+    if (self.xMarker != nil) {
+        self.xMarker.hidden = YES;
+    }
+    if (self.yMarker != nil) {
+        self.yMarker.hidden = YES;
+    }
     if (self.defaultMarker != nil) {
         self.defaultMarker.hidden = YES;
     }
