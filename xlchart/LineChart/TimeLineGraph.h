@@ -39,4 +39,5 @@ static const int kMaxMinutesInTimeLine = 242;//最多显示242个分钟线，但
 
 @property(strong, nonatomic) UIColor *textUpColor; //y轴上半部上涨的颜色，默认[UIColor redColor]
 @property(strong, nonatomic) UIColor *textDownColor;//y轴下半部下跌的颜色，默认[UIColor greenColor]
+@property(strong, nonatomic) UIColor *volumeColor;//柱状图颜色
 @end

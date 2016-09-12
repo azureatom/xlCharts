@@ -56,6 +56,7 @@
     tLineGraph.textColor = [UIColor darkGrayColor];
     tLineGraph.textUpColor = [UIColor redColor];
     tLineGraph.textDownColor = [UIColor greenColor];
+    tLineGraph.volumeColor = [UIColor grayColor];
     
     tLineGraph.markerDismissAfter = 3;
     tLineGraph.markerColor = [UIColor orangeColor];

@@ -39,6 +39,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 @synthesize minPriceChangePercent;
 @synthesize textUpColor;
 @synthesize textDownColor;
+@synthesize volumeColor;
 @synthesize lines;
 @synthesize rightYAxisValues;
 @synthesize volumeArray;
@@ -67,6 +68,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         minPriceChangePercent = 0.02;
         textUpColor = [UIColor redColor];
         textDownColor = [UIColor greenColor];
+        volumeColor = [UIColor grayColor];
         
         NSMutableArray *emptyBetweenHours = [[NSMutableArray alloc] initWithCapacity:kMinutesBetweenHours];
         for (int i = 0; i < kMinutesBetweenHours; ++i) {
@@ -485,7 +487,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         long long volume = ((NSNumber *)volumeArray[i]).longLongValue;
         CGFloat volumeLineHeight = maxVolume == 0 ? 0 : volumeGraphHeight * volume / maxVolume;
         CGFloat x = [self xPositionOfVolume:i];
-        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeLineHeight) width:self.gridLineWidth color:self.gridLineColor];
+        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeLineHeight) width:self.gridLineWidth color:volumeColor];
         [volumeLayers addObject:vLayer];
         [self.volumeGraph.layer addSublayer:vLayer];
     }
