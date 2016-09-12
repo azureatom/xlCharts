@@ -9,6 +9,18 @@
 #import "Tool.h"
 
 @implementation Tool
++ (CAShapeLayer *)layerLineFrom:(CGPoint)from to:(CGPoint)to width:(CGFloat)lineWidth color:(UIColor *)color{
+    CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
+    shapeLayer.strokeColor = color.CGColor;
+    shapeLayer.lineWidth = lineWidth;
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathMoveToPoint(path, NULL, from.x, from.y);
+    CGPathAddLineToPoint(path, NULL, to.x, to.y);
+    shapeLayer.path = path;
+    CGPathRelease(path);
+    return shapeLayer;
+}
+
 + (CAShapeLayer *)layerDashedFrom:(CGPoint)from to:(CGPoint)to dashHeight:(CGFloat)dashHeight dashLength:(int)dashLength spaceLength:(int)spaceLength dashColor:(UIColor *)color{
     CAShapeLayer *shapeLayer = [CAShapeLayer layer];
     shapeLayer.fillColor = [UIColor clearColor].CGColor;

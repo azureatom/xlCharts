@@ -20,6 +20,7 @@
 - (CGFloat)timeLine:(TimeLineGraph *)timeLineGraph lineWidth:(NSUInteger)lineIndex;//线宽
 - (UIColor *)timeLine:(TimeLineGraph *)timeLineGraph lineColor:(NSUInteger)lineIndex;//线颜色
 - (NSArray *)timeLine:(TimeLineGraph *)timeLineGraph yAxisDataForline:(NSUInteger)lineIndex;//线上点的y数据，array of NSNumber *
+- (NSArray *)volumeDataInTimeLine:(TimeLineGraph *)timeLineGraph;//成交量数据，array of NSNumber *
 @end
 
 /*股票分时图

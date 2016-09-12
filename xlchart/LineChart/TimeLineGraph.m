@@ -10,7 +10,7 @@
 #import "LineChartDataRenderer.h"
 #import "Tool.h"
 
-static const NSUInteger kNumberOfMinute = 243;//最多显示243个分钟
+static const int kNumberOfMinute = 243;//最多显示243个分钟
 static const NSUInteger kMinutesBetweenHours = 59;//每相邻小时（如9:30至10:30）之间间隔59个一分钟
 static const NSUInteger kNumberOfXAxisLabels = 5;//x轴总共显示5个刻度值：9:30, 10:30, 11:30, 14:00, 15:00
 
@@ -23,6 +23,11 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 @interface TimeLineGraph()
 @property (strong, nonatomic) NSMutableArray *lines;//array of LineChartDataRenderer *
 @property (strong, nonatomic) NSMutableArray *rightYAxisValues;//array of NSNumber，最右边线从下到上的刻度值，百分数
+@property (strong, nonatomic) NSArray *volumeArray;//成交量
+@property (strong, nonatomic) UIView *volumeGraph;//成交量柱状图📊
+@property (assign, nonatomic) CGFloat volumeGraphHeight;//成交量柱状图高度
+@property (strong, nonatomic) NSMutableArray *volumeLayers;//显示在volumeGraph的所有竖条
+@property (strong, nonatomic) CAShapeLayer *currentVolumeLayer;//当前选中的竖条
 @property (strong, nonatomic) UILabel *markerLeft;//y轴右侧显示价格的提示框
 @property (strong, nonatomic) UILabel *markerRight;//右边线左侧显示涨幅的提示框
 @property (strong, nonatomic) UILabel *markerBottom;//x轴下方显示时间的提示框
@@ -37,6 +42,11 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 @synthesize textDownColor;
 @synthesize lines;
 @synthesize rightYAxisValues;
+@synthesize volumeArray;
+@synthesize volumeGraph;
+@synthesize volumeGraphHeight;
+@synthesize volumeLayers;
+@synthesize currentVolumeLayer;
 @synthesize markerLeft;
 @synthesize markerRight;
 @synthesize markerBottom;
@@ -108,13 +118,34 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
  *  graphMarginV
  *  曲线坐标轴
  *  heightXAxisLabel
+ 成交量柱状图
  */
+-(CGFloat)heightGraph{
+    return [super heightGraph] - volumeGraphHeight;
+}
+
 -(CGFloat)heightYAxis{
     return [self heightGraph] - self.graphMarginV - self.heightXAxisLabel;
 }
 
+//返回成交量柱状图的frame
+-(CGRect)volumeFrame{
+    //volumeGraph 紧贴 graphBackgroundView 下方，左方空白为graphMarginL，长度同坐标系
+    CGRect tempFrame = [self axisFrame];
+    tempFrame.origin.y = CGRectGetMaxY(self.graphBackgroundView.frame);
+    tempFrame.size.height = volumeGraphHeight;
+    return tempFrame;
+}
+
 - (void)reloadGraph{
+    /*原点对应9:30:00，x轴第一个刻度值对应9:31:00，倒数第二个刻度值对应15:00:00，最后一个刻度值对应15:01:00。刻度值只显示9:30, 10:30, 11:30(之后一个刻度值为13:00), 14:00, 15:00
+     曲线上的点都是对应的x轴的刻度值，然后将各个点用线段连接。
+     显示十字线marker时，竖直线和x轴刻度值对齐，而不是两个刻度值中点。显示markerLeft、markerRight、markerBottom三个提示框，但是不会显示成交量的提示框，因为网易分钟线的成交量误差较大。
+     //删除该逻辑，因为实际不会有15:01的分钟线数据（如果选中的closestPointIndex对应的是刻度值15:01，则改为刻度值15:00的点，也即closestPointIndex改为kNumberOfMinute - 2，closestPoint改为前一个点）。
+     成交量柱状图volumeGraph，每条竖线对齐刻度值，线宽同gridLineWidth。十字线对应的当前柱状图，线宽扩大为positionStepX。
+     */
     [super reloadGraph];
+    [self createVolumeGraph];
 }
 
 #pragma mark Setup all data with dataSource
@@ -123,8 +154,18 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.yAxisValues = [[NSMutableArray alloc] init];
     self.positionYOfYAxisValues = [[NSMutableArray alloc] init];
     rightYAxisValues = [[NSMutableArray alloc] init];
+    if ([self.dataSource respondsToSelector:@selector(volumeDataInTimeLine:)]) {
+        volumeArray = [self.dataSource volumeDataInTimeLine:self];
+        volumeGraphHeight = [super heightGraph] * 0.25;
+        volumeLayers = [[NSMutableArray alloc] init];
+    }
+    else{
+        volumeArray = nil;
+        volumeGraphHeight = 0;
+        volumeLayers = nil;
+    }
+    
     lines = [[NSMutableArray alloc] init];
-
     for (NSUInteger i = 0; i < [self.dataSource numberOfLinesInTimeLine:self]; ++i) {
         LineChartDataRenderer *line = [[LineChartDataRenderer alloc] init];
         line.lineColor = [self.dataSource timeLine:self lineColor:i];
@@ -226,7 +267,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     const CGFloat positionYTop = self.graphMarginV;
     const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];
     const CGFloat yOfXAxisLabel = positionYBottom + self.graphMarginV;//x轴刻度值label的y位置
-    CGFloat x = self.graphMarginL;
     
     //显示竖线（包括y轴）和x轴刻度值（包括原点）
     int showingLineIndex = 0;//显示的是第几根竖线
@@ -234,7 +274,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     while (i < self.xAxisArray.count) {
         NSString *xText = self.xAxisArray[i];
         if (xText.length > 0) {
-            x = [self xPositionOfAxis:i];
+            CGFloat x = [self xPositionOfAxis:i];
             /*显示x轴刻度值和竖线
              其中第一个（y轴）和最右边线为实线，其他为虚线。其中最右边线在刻度值往外positionStepX处。
              右边线的刻度值显示在左侧，其他显示在竖线的右侧
@@ -385,6 +425,83 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     [self.graphBackgroundView addSubview:markerBottom];
 }
 
+- (CGFloat)xPositionOfVolume:(NSUInteger)pointIndex{
+    //第pointIndex个成交量线的位置，实际等于坐标系的点x除去左方空白graphMarginL
+    return self.positionStepX * pointIndex;//等于[self xPositionOfAxis:pointIndex] - self.graphMarginL
+}
+
+- (void)createVolumeGraph{
+    for (CAShapeLayer *l in volumeLayers) {
+        [l removeFromSuperlayer];
+    }
+    [volumeLayers removeAllObjects];
+    currentVolumeLayer = nil;//currentVolumeLayer是volumeLayers中的元素
+
+    if (volumeGraph != nil) {
+        [volumeGraph removeFromSuperview];
+        volumeGraph = nil;
+    }
+    if (volumeGraphHeight == 0) {
+        return;
+    }
+    
+    volumeGraph = [[UIView alloc] initWithFrame:[self volumeFrame]];
+    [self addSubview:volumeGraph];
+    
+    //volumeGraph四边为实线
+    volumeGraph.layer.borderColor = self.gridLineColor.CGColor;
+    volumeGraph.layer.borderWidth = self.gridLineWidth;
+    
+    //竖线的最高点和最低点的y
+    const CGFloat volumeGraphYTop = 0;//成交量柱状图的高度范围
+    const CGFloat volumeGraphYBottom = volumeGraphYTop + volumeGraphHeight;
+    
+    //显示竖线，实线和虚线的逻辑同drawXAxis方法
+    int showingLineIndex = 0;//显示的是第几根竖线
+    int i = 0;
+    while (i < self.xAxisArray.count) {
+        NSString *xText = self.xAxisArray[i];
+        if (xText.length > 0) {
+            CGFloat x = [self xPositionOfVolume:i];
+            //中间的线都为虚线
+            if (showingLineIndex != 0 && showingLineIndex != kNumberOfXAxisLabels - 1){
+                [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, volumeGraphYTop) to:CGPointMake(x, volumeGraphYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+            }
+            i += kMinutesBetweenHours;//相邻刻度值至少间隔kMinutesBetweenHours个positionStepX
+            ++showingLineIndex;
+        }
+        else{
+            ++i;
+        }
+    }
+    
+    //最大成交量对应线高为volumeGraphHeight，其他成交量线高按比例
+    long long maxVolume = 0;
+    for (NSNumber * n in volumeArray) {
+        if (n.longLongValue > maxVolume) {
+            maxVolume = n.longLongValue;
+        }
+    }
+    for (int i = 0; i < volumeArray.count; ++i) {
+        long long volume = ((NSNumber *)volumeArray[i]).longLongValue;
+        CGFloat volumeLineHeight = maxVolume == 0 ? 0 : volumeGraphHeight * volume / maxVolume;
+        CGFloat x = [self xPositionOfVolume:i];
+        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeLineHeight) width:self.gridLineWidth color:self.gridLineColor];
+        [volumeLayers addObject:vLayer];
+        [self.volumeGraph.layer addSublayer:vLayer];
+    }
+    
+    //最后将最大成交量作为最大刻度值写到volumeGraph左上部
+    UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(0, volumeGraphYTop, volumeGraph.frame.size.width, kYLabelHeight)];
+    l.textColor = self.textColor;
+    l.font = self.axisFont;
+    l.text = [NSString stringWithFormat:@"%lld", maxVolume];
+    l.textAlignment = NSTextAlignmentLeft;
+    l.adjustsFontSizeToFitWidth = YES;
+    l.minimumScaleFactor = 0.7;
+    [self.volumeGraph addSubview:l];
+}
+
 - (void)dismissMarker{
     [super dismissMarker];
     if (self.markerLeft != nil) {
@@ -395,6 +512,9 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     }
     if (self.markerBottom != nil) {
         self.markerBottom.hidden = YES;
+    }
+    if (currentVolumeLayer != nil) {
+        currentVolumeLayer.lineWidth = self.gridLineWidth;
     }
 }
 
@@ -410,6 +530,9 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     CGFloat minDistance;
     CGPoint closestPoint;//距离最近的点
     int closestPointIndex = [self calculateClosestPoint:&closestPoint near:pointTouched distance:&minDistance inLine:line checkXDistanceOnly:checkXDistanceOnly];
+    //实际不会有15:01的分钟线数据
+    //closestPointIndex = MIN(closestPointIndex, kNumberOfMinute - 2);//15:01的点index改为15:00
+    //closestPoint = 前一个点
     if (closestPointIndex == -1) {
         //曲线没有点
         return NO;
@@ -421,9 +544,15 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         return NO;
     }
     
+    //选中的volumeLayer的线宽扩大为positionStepX
+    if (volumeLayers.count > closestPointIndex) {
+        currentVolumeLayer = volumeLayers[closestPointIndex];
+        currentVolumeLayer.lineWidth = self.positionStepX;
+    }
+    
     closestPoint = [self optimizedPoint:closestPoint];
     
-    self.xMarker.path = [self pathFrom:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue) to:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.lastObject).floatValue)].CGPath;
+    self.xMarker.path = [self pathFrom:CGPointMake(closestPoint.x, CGRectGetMaxY([self volumeFrame])) to:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.lastObject).floatValue)].CGPath;
     self.xMarker.hidden = NO;
     
     self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;

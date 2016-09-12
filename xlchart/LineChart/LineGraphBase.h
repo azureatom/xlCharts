@@ -89,7 +89,7 @@
 
 -(CGFloat)widthGraph;
 -(CGFloat)widthXAxis;
--(CGFloat)heightGraph;//subclass可以override，比如有LegendView时
+-(CGFloat)heightGraph;//subclass可以override。如果只显示坐标系，则为self.frame.size.height；没有包括LegendView或分时成交量图等
 -(CGFloat)heightYAxis;
 /**
  *  前面设置计算完各种长度后，才能调用该方法
