@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import "LineGraphBase.h"
 
+static const int kMaxMinutesInTimeLine = 242;//最多显示242个分钟线，但是分时图的最后一个刻度值对应的是15:01，也即会有243个刻度值，尽管15:01没有分钟线数据
+
 @class TimeLineGraph;
 
 @protocol TimeLineGraphDelegate <NSObject>

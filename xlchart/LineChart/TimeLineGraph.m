@@ -10,7 +10,6 @@
 #import "LineChartDataRenderer.h"
 #import "Tool.h"
 
-static const int kNumberOfMinute = 243;//最多显示243个分钟
 static const NSUInteger kMinutesBetweenHours = 59;//每相邻小时（如9:30至10:30）之间间隔59个一分钟
 static const NSUInteger kNumberOfXAxisLabels = 5;//x轴总共显示5个刻度值：9:30, 10:30, 11:30, 14:00, 15:00
 
@@ -73,7 +72,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         for (int i = 0; i < kMinutesBetweenHours; ++i) {
             [emptyBetweenHours addObject:@""];
         }
-        NSMutableArray *allMinutes = [[NSMutableArray alloc] initWithCapacity:kNumberOfMinute];//每根成交量柱线对应一个positionStepX，一共kNumberOfMinute - 1根柱线
+        NSMutableArray *allMinutes = [[NSMutableArray alloc] initWithCapacity:kMaxMinutesInTimeLine + 1];//每根成交量柱线对应一个positionStepX，一共kMaxMinutesInTimeLine根柱线
         [allMinutes addObject:@"9:30"];
         [allMinutes addObjectsFromArray:emptyBetweenHours];
         [allMinutes addObject:@"10:30"];
@@ -84,7 +83,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         [allMinutes addObject:@"14:00"];
         [allMinutes addObjectsFromArray:emptyBetweenHours];
         [allMinutes addObject:@"15:00"];
-        [allMinutes addObject:@""];//对应15:00的那跟成交量柱线
+        [allMinutes addObject:@""];//对应15:01的刻度值
         self.xAxisArray = allMinutes;
     }
     return self;
@@ -141,7 +140,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     /*原点对应9:30:00，x轴第一个刻度值对应9:31:00，倒数第二个刻度值对应15:00:00，最后一个刻度值对应15:01:00。刻度值只显示9:30, 10:30, 11:30(之后一个刻度值为13:00), 14:00, 15:00
      曲线上的点都是对应的x轴的刻度值，然后将各个点用线段连接。
      显示十字线marker时，竖直线和x轴刻度值对齐，而不是两个刻度值中点。显示markerLeft、markerRight、markerBottom三个提示框，但是不会显示成交量的提示框，因为网易分钟线的成交量误差较大。
-     //删除该逻辑，因为实际不会有15:01的分钟线数据（如果选中的closestPointIndex对应的是刻度值15:01，则改为刻度值15:00的点，也即closestPointIndex改为kNumberOfMinute - 2，closestPoint改为前一个点）。
+     //删除该逻辑，因为实际不会有15:01的分钟线数据（如果选中的closestPointIndex对应的是刻度值15:01，则改为刻度值15:00的点，也即closestPointIndex改为kMaxMinutesInTimeLine - 1，closestPoint改为前一个点）。
      成交量柱状图volumeGraph，每条竖线对齐刻度值，线宽同gridLineWidth。十字线对应的当前柱状图，线宽扩大为positionStepX。
      */
     [super reloadGraph];
@@ -173,9 +172,9 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         line.fillGraph = NO;
         line.drawPoints = self.shouldDrawPoints;
         line.yAxisArray = [self.dataSource timeLine:self yAxisDataForline:i];
-        if (line.yAxisArray.count > kNumberOfMinute) {
-            //最多不能超过kNumberOfMinute个分钟
-            line.yAxisArray = [line.yAxisArray subarrayWithRange:NSMakeRange(0, kNumberOfMinute)];
+        if (line.yAxisArray.count >= kMaxMinutesInTimeLine) {
+            //最多不能超过kMaxMinutesInTimeLine个分钟
+            line.yAxisArray = [line.yAxisArray subarrayWithRange:NSMakeRange(0, kMaxMinutesInTimeLine)];
         }
         [lines addObject:line];
     }
@@ -531,7 +530,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     CGPoint closestPoint;//距离最近的点
     int closestPointIndex = [self calculateClosestPoint:&closestPoint near:pointTouched distance:&minDistance inLine:line checkXDistanceOnly:checkXDistanceOnly];
     //实际不会有15:01的分钟线数据
-    //closestPointIndex = MIN(closestPointIndex, kNumberOfMinute - 2);//15:01的点index改为15:00
+    //closestPointIndex = MIN(closestPointIndex, kMaxMinutesInTimeLine - 1);//15:01的点index改为15:00
     //closestPoint = 前一个点
     if (closestPointIndex == -1) {
         //曲线没有点
