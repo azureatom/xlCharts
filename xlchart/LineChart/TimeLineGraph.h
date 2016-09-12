@@ -15,6 +15,7 @@ static const int kMaxMinutesInTimeLine = 242;//最多显示242个分钟线，但
 
 @protocol TimeLineGraphDelegate <NSObject>
 - (void)timeLine:(TimeLineGraph *)timeLineGraph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex;
+- (void)markerDidDismissInTimeLine:(TimeLineGraph *)timeLineGraph;//marker消失
 @end
 
 @protocol TimeLineGraphDataSource <NSObject>
