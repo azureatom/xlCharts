@@ -7,6 +7,7 @@
 //
 
 #import "LineGraphBase.h"
+#import "Tool.h"
 
 @implementation LineGraphBase
 @synthesize animationDuration;
@@ -223,11 +224,7 @@
 }
 
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint{
-    CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
-    shapeLayer.path = [[self pathFrom:startPoint to:endPoint] CGPath];
-    shapeLayer.strokeColor = self.gridLineColor.CGColor;
-    shapeLayer.lineWidth = self.gridLineWidth;
-    return shapeLayer;
+    return [Tool layerLineFrom:[self optimizedPoint:startPoint] to:[self optimizedPoint:endPoint] width:self.gridLineWidth color:self.gridLineColor];
 }
 
 - (UIBezierPath *)pathFrom:(CGPoint)startPoint to:(CGPoint)endPoint{
