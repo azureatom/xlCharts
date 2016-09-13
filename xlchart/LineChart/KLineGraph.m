@@ -1,12 +1,12 @@
 //
-//  TimeLineGraph.m
+//  KLineGraph.m
 //  xlchart
 //
-//  Created by lei xue on 16/9/5.
+//  Created by lei xue on 16/9/12.
 //  Copyright © 2016年 userstar. All rights reserved.
 //
 
-#import "TimeLineGraph.h"
+#import "KLineGraph.h"
 #import "LineChartDataRenderer.h"
 #import "Tool.h"
 
@@ -19,7 +19,7 @@ static const CGFloat kYLabelHeight = 15;
 //x轴刻度值的label长度，同self.heightXAxisLabel一起，恰好显示完整10:30即可
 static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
-@interface TimeLineGraph()
+@interface KLineGraph()
 @property (strong, nonatomic) NSMutableArray *lines;//array of LineChartDataRenderer *
 @property (strong, nonatomic) NSMutableArray *rightYAxisValues;//array of NSNumber，最右边线从下到上的刻度值，百分数
 @property (strong, nonatomic) NSArray *volumeArray;//成交量
@@ -32,7 +32,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 @property (strong, nonatomic) UILabel *markerBottom;//x轴下方显示时间的提示框
 @end
 
-@implementation TimeLineGraph
+@implementation KLineGraph
 @synthesize delegate;
 @synthesize dataSource;
 @synthesize yesterdayClosePrice;
@@ -155,8 +155,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.yAxisValues = [[NSMutableArray alloc] init];
     self.positionYOfYAxisValues = [[NSMutableArray alloc] init];
     rightYAxisValues = [[NSMutableArray alloc] init];
-    if ([self.dataSource respondsToSelector:@selector(volumeDataInTimeLine:)]) {
-        volumeArray = [self.dataSource volumeDataInTimeLine:self];
+    if ([self.dataSource respondsToSelector:@selector(volumeDataInkLine:)]) {
+        volumeArray = [self.dataSource volumeDataInkLine:self];
         volumeGraphHeight = [super heightGraph] * kVolumeHeightRatio;
         volumeLayers = [[NSMutableArray alloc] init];
     }
@@ -167,13 +167,13 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     }
     
     lines = [[NSMutableArray alloc] init];
-    for (NSUInteger i = 0; i < [self.dataSource numberOfLinesInTimeLine:self]; ++i) {
+    for (NSUInteger i = 0; i < [self.dataSource numberOfLinesInkLine:self]; ++i) {
         LineChartDataRenderer *line = [[LineChartDataRenderer alloc] init];
-        line.lineColor = [self.dataSource timeLine:self lineColor:i];
-        line.lineWidth = [self.dataSource timeLine:self lineWidth:i];
+        line.lineColor = [self.dataSource kLine:self lineColor:i];
+        line.lineWidth = [self.dataSource kLine:self lineWidth:i];
         line.fillGraph = NO;
         line.drawPoints = self.shouldDrawPoints;
-        line.yAxisArray = [self.dataSource timeLine:self yAxisDataForline:i];
+        line.yAxisArray = [self.dataSource kLine:self yAxisDataForline:i];
         if (line.yAxisArray.count >= kMaxMinutesInTimeLine) {
             //最多不能超过kMaxMinutesInTimeLine个分钟
             line.yAxisArray = [line.yAxisArray subarrayWithRange:NSMakeRange(0, kMaxMinutesInTimeLine)];
@@ -317,7 +317,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     
     const CGFloat lineStartX = self.graphMarginL;
     const CGFloat lineEndX = self.graphMarginL + [self widthXAxis];
-
+    
     //显示x轴等横线，y轴刻度值（包括原点）
     for (int i = 0; i < self.positionYOfYAxisValues.count; ++i) {
         CGFloat positionY = ((NSNumber *)self.positionYOfYAxisValues[i]).floatValue;
@@ -437,7 +437,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     }
     [volumeLayers removeAllObjects];
     currentVolumeLayer = nil;//currentVolumeLayer是volumeLayers中的元素
-
+    
     if (volumeGraph != nil) {
         [volumeGraph removeFromSuperview];
         volumeGraph = nil;
@@ -517,8 +517,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     if (currentVolumeLayer != nil) {
         currentVolumeLayer.lineWidth = self.gridLineWidth;
     }
-    if ([self.delegate respondsToSelector:@selector(markerDidDismissInTimeLine:)]) {
-        [self.delegate markerDidDismissInTimeLine:self];
+    if ([self.delegate respondsToSelector:@selector(markerDidDismissInKLine:)]) {
+        [self.delegate markerDidDismissInKLine:self];
     }
 }
 
@@ -596,9 +596,9 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.markerBottom.frame = tempFrame;
     self.markerBottom.text = xTimeString;
     self.markerBottom.hidden = NO;
-
-    if ([self.delegate respondsToSelector:@selector(timeLine:didTapLine:atPoint:)]) {
-        [self.delegate timeLine:self didTapLine:0 atPoint:closestPointIndex];
+    
+    if ([self.delegate respondsToSelector:@selector(kLine:didTapLine:atPoint:)]) {
+        [self.delegate kLine:self didTapLine:0 atPoint:closestPointIndex];
     }
     return YES;
 }
