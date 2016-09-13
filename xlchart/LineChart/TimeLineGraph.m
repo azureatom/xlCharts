@@ -157,7 +157,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     rightYAxisValues = [[NSMutableArray alloc] init];
     if ([self.dataSource respondsToSelector:@selector(volumeDataInTimeLine:)]) {
         volumeArray = [self.dataSource volumeDataInTimeLine:self];
-        volumeGraphHeight = [super heightGraph] * 0.25;
+        volumeGraphHeight = [super heightGraph] * kVolumeHeightRatio;
         volumeLayers = [[NSMutableArray alloc] init];
     }
     else{

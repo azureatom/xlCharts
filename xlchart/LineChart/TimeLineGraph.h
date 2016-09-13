@@ -10,10 +10,12 @@
 #import "LineGraphBase.h"
 
 static const int kMaxMinutesInTimeLine = 242;//最多显示242个分钟线，但是分时图的最后一个刻度值对应的是15:01，也即会有243个刻度值，尽管15:01没有分钟线数据
+static const double kVolumeHeightRatio = 0.25;//如果显示成交量柱状图，则占整个frame的高度比例
 
 @class TimeLineGraph;
 
 @protocol TimeLineGraphDelegate <NSObject>
+@optional
 - (void)timeLine:(TimeLineGraph *)timeLineGraph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex;
 - (void)markerDidDismissInTimeLine:(TimeLineGraph *)timeLineGraph;//marker消失
 @end
@@ -23,6 +25,7 @@ static const int kMaxMinutesInTimeLine = 242;//最多显示242个分钟线，但
 - (CGFloat)timeLine:(TimeLineGraph *)timeLineGraph lineWidth:(NSUInteger)lineIndex;//线宽
 - (UIColor *)timeLine:(TimeLineGraph *)timeLineGraph lineColor:(NSUInteger)lineIndex;//线颜色
 - (NSArray *)timeLine:(TimeLineGraph *)timeLineGraph yAxisDataForline:(NSUInteger)lineIndex;//线上点的y数据，array of NSNumber *
+@optional
 - (NSArray *)volumeDataInTimeLine:(TimeLineGraph *)timeLineGraph;//成交量数据，array of NSNumber *
 @end
 
