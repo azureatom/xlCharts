@@ -99,7 +99,7 @@
     return CGPointMake(round(point.x), round(point.y));
 }
 
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
+- (CGFloat)xPositionAtIndex:(NSUInteger)pointIndex{
     //第pointIndex个点在x轴的位置
     return self.graphMarginL + self.positionStepX * pointIndex;
 }
@@ -117,8 +117,7 @@
     return pointIndex;
 }
 
--(CGFloat)yPositionAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
-    double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
+-(CGFloat)yPositionOfValue:(double)yValue{
     for (NSUInteger i = 0; i < yAxisValues.count; ++i){
         //double的比较需要比较差值和一个小数，比如-0.5999999995和-0.6000000001
         if (yValue - ((NSNumber *)yAxisValues[i]).doubleValue < 0.000001) {
@@ -135,12 +134,17 @@
             }
         }
     }
-    NSAssert2(NO, @"Invalid point at index %zi of lineData.yAxisArray %@", pointIndex, lineData.yAxisArray);
-    return -1;
+    NSAssert(NO, @"Invalid yValue %f, must between (%f, %f)", yValue, ((NSNumber *)yAxisValues.lastObject).doubleValue, ((NSNumber *)yAxisValues.firstObject).doubleValue);
+    return 0;
+}
+
+-(CGFloat)yPositionAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
+    double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
+    return [self yPositionOfValue:yValue];
 }
 
 -(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
-    return CGPointMake([self xPositionOfAxis:pointIndex], [self yPositionAtIndex:pointIndex inLine:lineData]);
+    return CGPointMake([self xPositionAtIndex:pointIndex], [self yPositionAtIndex:pointIndex inLine:lineData]);
 }
 
 -(int)calculateClosestPoint:(CGPoint *)closestPoint near:(CGPoint)targetPoint distance:(CGFloat *)minDistance inLine:(LineChartDataRenderer *)line checkXDistanceOnly:(BOOL)checkXDistanceOnly{
@@ -326,7 +330,7 @@
     [self calculatePositionStepX];
     [self calculatePointRadius];
     [self calculateYAxis];
-    self.originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue);
+    self.originalPoint = CGPointMake([self xPositionAtIndex:0], ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue);
     
     [self createGraphBackground];//必须在originalPoint之后再createGraph，因为需要用它来fill曲线下方的区域
     [self drawXAxis];

@@ -9,7 +9,7 @@
 #import "KLineGraph.h"
 #import "LineChartDataRenderer.h"
 #import "Tool.h"
-#import "FundKLineModel.h"
+#import "KLineElement.h"
 
 //y轴刻度值的label宽高，显示价格、涨幅的提示框。宽高 恰好显示完整2.123, -10.00%即可
 static const CGFloat kYLabelWidth = 46;//y轴刻度值的label长度，显示价格、涨幅的提示框的长度。刚好显示完默认的12号字体-10.00%
@@ -20,7 +20,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 @interface KLineGraph()
 @property (assign, nonatomic) CGFloat shadowLineWidth;//上影线、下影线宽度
 @property (strong, nonatomic) NSMutableArray *lines;//array of LineChartDataRenderer *
-@property (strong, nonatomic) NSArray *kLineData;//array of OneKLineModel
+@property (strong, nonatomic) NSArray *kLineData;//array of KLineElement
 @property (strong, nonatomic) NSArray *volumeArray;//成交量
 @property (strong, nonatomic) UIView *volumeGraph;//成交量柱状图📊
 @property (assign, nonatomic) CGFloat volumeGraphHeight;//成交量柱状图高度
@@ -79,16 +79,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 }
 
 //刻度段的中点
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
+- (CGFloat)xPositionAtIndex:(NSUInteger)pointIndex{
     return self.graphMarginL + self.positionStepX * (pointIndex + 0.5);
-}
-//刻度段的左端
-- (CGFloat)leftXPositionOfAxis:(NSUInteger)pointIndex{
-    return self.graphMarginL + self.positionStepX * pointIndex;
-}
-//刻度段的右端
-- (CGFloat)rightXPositionOfAxis:(NSUInteger)pointIndex{
-    return self.graphMarginL + self.positionStepX * (pointIndex + 1);
 }
 
 -(CGFloat)widthXAxis{
@@ -130,6 +122,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
      */
     [super reloadGraph];
     [self drawVolumeGraphBars];
+    [self drawCandleStick];
 }
 
 #pragma mark Setup all data with dataSource
@@ -187,12 +180,12 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         middlePrice = 0.5;
     }
     else{
-        for (OneKLineModel *m in kLineData) {
-            if (m.lowPrice < minPrice) {
-                minPrice = m.lowPrice;
+        for (KLineElement *e in kLineData) {
+            if (e.lowPrice < minPrice) {
+                minPrice = e.lowPrice;
             }
-            if (m.highPrice > maxPrice) {
-                maxPrice = m.highPrice;
+            if (e.highPrice > maxPrice) {
+                maxPrice = e.highPrice;
             }
         }
         maxPrice += 0.1;
@@ -325,12 +318,26 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     for (LineChartDataRenderer *line in self.lines) {
         if (line.yAxisArray.count == 1) {
             //只有一个点时，画一条长为positionStepX的横线，占满一个positionStepX
+            CGFloat xLeft = [self xPositionAtIndex:0] - self.positionStepX / 2;
+            CGFloat xRight = xLeft + self.positionStepX;
             CGFloat y = [self yPositionAtIndex:0 inLine:line];
-            [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake([self leftXPositionOfAxis:0], y) to:CGPointMake([self rightXPositionOfAxis:0], y) width:self.gridLineWidth color:self.gridLineColor]];
+            [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake(xLeft, y) to:CGPointMake(xRight, y) width:self.gridLineWidth color:self.gridLineColor]];
         }
         else{
             [self drawOneLine:line];
         }
+    }
+}
+
+-(void)drawCandleStick{
+    for (int i = 0; i < kLineData.count; ++i) {
+        KLineElement *e = kLineData[i];
+        UIColor *candleColor = e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor;
+        CGFloat xCenter = [self xPositionAtIndex:i];
+        //上下影线
+        [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake(xCenter, [self yPositionOfValue:e.highPrice]) to:CGPointMake(xCenter, [self yPositionOfValue:e.lowPrice]) width:shadowLineWidth color:candleColor]];
+        //蜡烛图实体
+        [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake(xCenter, [self yPositionOfValue:e.openPrice]) to:CGPointMake(xCenter, [self yPositionOfValue:e.closePrice]) width:self.positionStepX color:candleColor]];
     }
 }
 
@@ -411,17 +418,17 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     
     //最大成交量对应线高为volumeGraphHeight，其他成交量线高按比例
     double maxVolume = 0;//成交量单位为手
-    for (OneKLineModel *m in kLineData) {
-        if (m.volume > maxVolume) {
-            maxVolume = m.volume;
+    for (KLineElement *e in kLineData) {
+        if (e.volume > maxVolume) {
+            maxVolume = e.volume;
         }
     }
     for (int i = 0; i < kLineData.count; ++i) {
-        OneKLineModel *m = kLineData[i];
-        CGFloat volumeBarHeight = maxVolume == 0 ? 0 : volumeGraphHeight * m.volume / maxVolume;
+        KLineElement *e = kLineData[i];
+        CGFloat volumeBarHeight = maxVolume == 0 ? 0 : volumeGraphHeight * e.volume / maxVolume;
         CGFloat x = [self xPositionOfVolumeBarCenter:i];
         //volume bar占满x刻度段，收盘价>=开盘价 为红色，否则为绿色
-        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:self.positionStepX color:(m.closePrice >= m.openPrice ? self.textUpColor : self.textDownColor)];
+        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:self.positionStepX color:(e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor)];
         [volumeLayers addObject:vLayer];
         [self.volumeGraph.layer addSublayer:vLayer];
     }
@@ -480,7 +487,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.xMarker.path = [self pathFrom:CGPointMake(closestPoint.x, CGRectGetMaxY([self volumeFrame])) to:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.lastObject).floatValue)].CGPath;
     self.xMarker.hidden = NO;
     
-    self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
+    self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionAtIndex:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
     self.yMarker.hidden = NO;
     
     CGRect tempFrame = self.markerBottom.frame;

@@ -278,7 +278,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     while (i < self.xAxisArray.count) {
         NSString *xText = self.xAxisArray[i];
         if (xText.length > 0) {
-            CGFloat x = [self xPositionOfAxis:i];
+            CGFloat x = [self xPositionAtIndex:i];
             /*显示x轴刻度值和竖线
              其中第一个（y轴）和最右边线为实线，其他为虚线。其中最右边线在刻度值往外positionStepX处。
              右边线的刻度值显示在左侧，其他显示在竖线的右侧
@@ -289,7 +289,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
             }
             else if (showingLineIndex == kNumberOfXAxisLabels - 1){
                 createXAxisLabel(xText, x - kXLabelWidth, positionYBottom, NSTextAlignmentRight);
-                x = [self xPositionOfAxis:i + 1];
+                x = [self xPositionAtIndex:i + 1];
                 [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
             }
             else{
@@ -434,7 +434,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
 - (CGFloat)xPositionOfVolume:(NSUInteger)pointIndex{
     //第pointIndex个成交量线的位置，实际等于坐标系的点x除去左方空白graphMarginL
-    return self.positionStepX * pointIndex;//等于[self xPositionOfAxis:pointIndex] - self.graphMarginL
+    return self.positionStepX * pointIndex;//等于[self xPositionAtIndex:pointIndex] - self.graphMarginL
 }
 
 - (void)createVolumeGraph{
@@ -547,7 +547,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.xMarker.path = [self pathFrom:CGPointMake(closestPoint.x, CGRectGetMaxY([self volumeFrame])) to:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.lastObject).floatValue)].CGPath;
     self.xMarker.hidden = NO;
     
-    self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
+    self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionAtIndex:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
     self.yMarker.hidden = NO;
     
     NSString *xTimeString = [self xAxisTimeString:closestPointIndex];

@@ -626,7 +626,7 @@
     self.xMarker.path = [self pathFrom:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue) to:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.lastObject).floatValue)].CGPath;
     self.xMarker.hidden = NO;
     
-    self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
+    self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionAtIndex:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
     self.yMarker.hidden = NO;
     
     if ([self.dataSource respondsToSelector:@selector(markerViewForline:pointIndex:andYValue:)]) {

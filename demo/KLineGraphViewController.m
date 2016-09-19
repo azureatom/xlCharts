@@ -129,7 +129,7 @@
 }
 
 - (NSArray *)kLineDataInkLine:(KLineGraph *)graph{
-    return @[];//array of OneKLineModel
+    return @[];//array of KLineElement
 }
 
 - (NSArray *)volumeDataInkLine:(KLineGraph *)graph{

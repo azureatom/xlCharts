@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		501330B31D86FECE0016D4ED /* KLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 501330B21D86FECE0016D4ED /* KLineGraph.m */; };
 		501F4E141D8F919600AE0F67 /* KLineGraphViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 501F4E131D8F919600AE0F67 /* KLineGraphViewController.m */; };
-		501F4E171D8F9E9300AE0F67 /* FundKLineModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 501F4E161D8F9E9300AE0F67 /* FundKLineModel.m */; };
+		501F4E1A1D8FC11200AE0F67 /* KLineElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 501F4E191D8FC11200AE0F67 /* KLineElement.m */; };
 		50BE81971D7D1A070001E1AC /* TimeLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81961D7D1A070001E1AC /* TimeLineGraph.m */; };
 		50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81991D7D27870001E1AC /* MultiLineGraph.m */; };
 		50BE81A61D7DA40A0001E1AC /* LineGraphBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81A51D7DA40A0001E1AC /* LineGraphBase.m */; };
@@ -55,8 +55,8 @@
 		501330B21D86FECE0016D4ED /* KLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KLineGraph.m; sourceTree = "<group>"; };
 		501F4E121D8F919600AE0F67 /* KLineGraphViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KLineGraphViewController.h; sourceTree = "<group>"; };
 		501F4E131D8F919600AE0F67 /* KLineGraphViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KLineGraphViewController.m; sourceTree = "<group>"; };
-		501F4E151D8F9E9300AE0F67 /* FundKLineModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FundKLineModel.h; sourceTree = "<group>"; };
-		501F4E161D8F9E9300AE0F67 /* FundKLineModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FundKLineModel.m; sourceTree = "<group>"; };
+		501F4E181D8FC11200AE0F67 /* KLineElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KLineElement.h; sourceTree = "<group>"; };
+		501F4E191D8FC11200AE0F67 /* KLineElement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KLineElement.m; sourceTree = "<group>"; };
 		50BE81951D7D1A070001E1AC /* TimeLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeLineGraph.h; sourceTree = "<group>"; };
 		50BE81961D7D1A070001E1AC /* TimeLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TimeLineGraph.m; sourceTree = "<group>"; };
 		50BE81981D7D27870001E1AC /* MultiLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiLineGraph.h; sourceTree = "<group>"; };
@@ -179,8 +179,6 @@
 				501F4E121D8F919600AE0F67 /* KLineGraphViewController.h */,
 				501F4E131D8F919600AE0F67 /* KLineGraphViewController.m */,
 				50F371AD1D541D1A005CB142 /* xlchart.xcdatamodeld */,
-				501F4E151D8F9E9300AE0F67 /* FundKLineModel.h */,
-				501F4E161D8F9E9300AE0F67 /* FundKLineModel.m */,
 				50BE81CB1D8110970001E1AC /* Tool.h */,
 				50BE81CC1D8110970001E1AC /* Tool.m */,
 			);
@@ -223,6 +221,8 @@
 				50BE81AB1D7F21920001E1AC /* SingleLineGraphNonScrollable.m */,
 				50BE81951D7D1A070001E1AC /* TimeLineGraph.h */,
 				50BE81961D7D1A070001E1AC /* TimeLineGraph.m */,
+				501F4E181D8FC11200AE0F67 /* KLineElement.h */,
+				501F4E191D8FC11200AE0F67 /* KLineElement.m */,
 				501330B11D86FECD0016D4ED /* KLineGraph.h */,
 				501330B21D86FECE0016D4ED /* KLineGraph.m */,
 				50BE81981D7D27870001E1AC /* MultiLineGraph.h */,
@@ -363,6 +363,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				501F4E1A1D8FC11200AE0F67 /* KLineElement.m in Sources */,
 				50BE81D01D8162A00001E1AC /* TimeLineGraphViewController.m in Sources */,
 				50BE81AC1D7F21920001E1AC /* SingleLineGraphNonScrollable.m in Sources */,
 				50F371C91D5880BC005CB142 /* SingleLineGraphBase.m in Sources */,
@@ -371,7 +372,6 @@
 				50F371C71D5880BC005CB142 /* LegendView.m in Sources */,
 				50F371B51D541D1A005CB142 /* ViewController.m in Sources */,
 				50BE81971D7D1A070001E1AC /* TimeLineGraph.m in Sources */,
-				501F4E171D8F9E9300AE0F67 /* FundKLineModel.m in Sources */,
 				501F4E141D8F919600AE0F67 /* KLineGraphViewController.m in Sources */,
 				50BE81A61D7DA40A0001E1AC /* LineGraphBase.m in Sources */,
 				50F371CC1D5888BA005CB142 /* LineChartDataRenderer.m in Sources */,

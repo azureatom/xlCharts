@@ -72,7 +72,7 @@
  *
  *  @return 点的x位置
  */
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;//subclass可以override
+- (CGFloat)xPositionAtIndex:(NSUInteger)pointIndex;//subclass可以override
 /**
  *  计算某位置x方向最近的点的index
  *
@@ -81,6 +81,14 @@
  *  @return x轴的positionX位置最近的刻度值的index，在坐标系左边或者没有点则返回-1
  */
 - (int)indexOfXForPosition:(CGFloat)positionX;
+/**
+ *  根据值计算其在坐标系的y位置
+ *
+ *  @param yValue 需要计算的坐标系的y值
+ *
+ *  @return 坐标系y方向位置
+ */
+-(CGFloat)yPositionOfValue:(double)yValue;
 /**
  *  计算曲线上的点的y方向位置
  *

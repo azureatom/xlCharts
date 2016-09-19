@@ -274,7 +274,7 @@
     self.graphScrollView.contentSize = self.graphView.frame.size;
     //注意，如果self是navigationcontroller的第一个view，graphScrollView.contentInset.top自动设为64，需要设置viewController.automaticallyAdjustsScrollViewInsets = NO;
     [self createYAxisLine];//设置y坐标和grid横线。在yAxisView上显示y轴刻度值
-    self.originalPoint = CGPointMake([self xPositionOfAxis:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
+    self.originalPoint = CGPointMake([self xPositionAtIndex:0], ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue);
     
     //如果 pointRadius > lineWidth，则当 positionStepX 在(5, 10)之间时，pointRadius的大小按照 positionStepX与5的距离 成比例缩小，但最小不能小于lineWidth
     CGFloat lineWidth = [self.dataSource lineGraph:self lineWidth:0];
@@ -652,12 +652,12 @@
             double yValueAbove = ((NSNumber *)yAxisValues[i]).doubleValue;//点上方的y轴刻度值
             CGFloat positionYAbove = ((NSNumber *)positionYOfYAxisValues[i]).floatValue;//点上方的y轴刻度值的位置
             if (i == 0) {
-                return CGPointMake([self xPositionOfAxis:pointIndex], positionYAbove);
+                return CGPointMake([self xPositionAtIndex:pointIndex], positionYAbove);
             }
             else{
                 double yValueBellow = ((NSNumber *)yAxisValues[i - 1]).doubleValue;//点下方的y轴刻度值
                 CGFloat positionYBellow = ((NSNumber *)positionYOfYAxisValues[i - 1]).floatValue;//点下方的y轴刻度值的位置
-                return CGPointMake([self xPositionOfAxis:pointIndex], positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove));
+                return CGPointMake([self xPositionAtIndex:pointIndex], positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove));
             }
         }
     }
@@ -866,7 +866,7 @@
     [self.xMarker setPath:[[self pathFrom:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.firstObject).floatValue) to:CGPointMake(closestPoint.x, ((NSNumber *)positionYOfYAxisValues.lastObject).floatValue)] CGPath]];
     [self.xMarker setHidden:NO];
     
-    [self.yMarker setPath:[[self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
+    [self.yMarker setPath:[[self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionAtIndex:xAxisArray.count <= 1 ? 1 : xAxisArray.count - 1], closestPoint.y)] CGPath]];
     [self.yMarker setHidden:NO];
     
     if (self.showCustomMarkerView){
