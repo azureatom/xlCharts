@@ -64,7 +64,10 @@
     tLineGraph.markerBgColor = [UIColor grayColor];
     [self.view addSubview:tLineGraph];
     
-    [tLineGraph reloadGraph];
+    //未显示marker时，才能刷新图表
+    if (![tLineGraph isMarkerDismissTimerValid]) {
+        [tLineGraph reloadGraph];
+    }
 }
 
 - (void)didReceiveMemoryWarning {

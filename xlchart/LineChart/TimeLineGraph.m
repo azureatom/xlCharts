@@ -348,7 +348,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 }
 
 -(void)drawLines{
-    for (LineChartDataRenderer *line in self.lines) {
+    //重叠部分优先显示第一条曲线：先画后面的曲线，再画前面的曲线
+    for (LineChartDataRenderer *line in [self.lines reverseObjectEnumerator]) {
         if (line.yAxisArray.count == 1) {
             //只有一个点时，将pointRadius设为positionStepX，这样看起来比较明显
             self.pointRadius = self.positionStepX;

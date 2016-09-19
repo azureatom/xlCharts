@@ -144,6 +144,7 @@
 - (void)drawLines;
 - (void)createMarker;
 
+- (BOOL)isMarkerDismissTimerValid;//若timer合法，可以认为当前正显示marker
 - (void)dismissMarker;//隐藏marker，删除markerDismissTimer
 /**
  *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框

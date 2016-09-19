@@ -315,7 +315,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 }
 
 -(void)drawLines{
-    for (LineChartDataRenderer *line in self.lines) {
+    for (LineChartDataRenderer *line in [self.lines reverseObjectEnumerator]) {
         if (line.yAxisArray.count == 1) {
             //只有一个点时，画一条长为positionStepX的横线，占满一个positionStepX
             CGFloat xLeft = [self xPositionAtIndex:0] - self.positionStepX / 2;

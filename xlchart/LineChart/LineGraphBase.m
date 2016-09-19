@@ -383,6 +383,10 @@
 - (void)drawLines{}
 - (void)createMarker{}
 
+- (BOOL)isMarkerDismissTimerValid{
+    return markerDismissTimer != nil;
+}
+
 - (void)dismissMarker{
     if (self.markerDismissTimer != nil) {
         [markerDismissTimer invalidate];
