@@ -9,9 +9,7 @@
 #import "KLineGraph.h"
 #import "LineChartDataRenderer.h"
 #import "Tool.h"
-
-static const NSUInteger kMinutesBetweenHours = 59;//每相邻小时（如9:30至10:30）之间间隔59个一分钟
-static const NSUInteger kNumberOfXAxisLabels = 5;//x轴总共显示5个刻度值：9:30, 10:30, 11:30, 14:00, 15:00
+#import "FundKLineModel.h"
 
 //y轴刻度值的label宽高，显示价格、涨幅的提示框。宽高 恰好显示完整2.123, -10.00%即可
 static const CGFloat kYLabelWidth = 46;//y轴刻度值的label长度，显示价格、涨幅的提示框的长度。刚好显示完默认的12号字体-10.00%
@@ -20,35 +18,32 @@ static const CGFloat kYLabelHeight = 15;
 static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
 @interface KLineGraph()
+@property (assign, nonatomic) CGFloat shadowLineWidth;//上影线、下影线宽度
 @property (strong, nonatomic) NSMutableArray *lines;//array of LineChartDataRenderer *
-@property (strong, nonatomic) NSMutableArray *rightYAxisValues;//array of NSNumber，最右边线从下到上的刻度值，百分数
+@property (strong, nonatomic) NSArray *kLineData;//array of OneKLineModel
 @property (strong, nonatomic) NSArray *volumeArray;//成交量
 @property (strong, nonatomic) UIView *volumeGraph;//成交量柱状图📊
 @property (assign, nonatomic) CGFloat volumeGraphHeight;//成交量柱状图高度
 @property (strong, nonatomic) NSMutableArray *volumeLayers;//显示在volumeGraph的所有竖条
-@property (strong, nonatomic) CAShapeLayer *currentVolumeLayer;//当前选中的竖条
-@property (strong, nonatomic) UILabel *markerLeft;//y轴右侧显示价格的提示框
-@property (strong, nonatomic) UILabel *markerRight;//右边线左侧显示涨幅的提示框
 @property (strong, nonatomic) UILabel *markerBottom;//x轴下方显示时间的提示框
 @end
 
 @implementation KLineGraph
+@synthesize kLinePeriod;
 @synthesize delegate;
 @synthesize dataSource;
-@synthesize yesterdayClosePrice;
-@synthesize minPriceChangePercent;
 @synthesize textUpColor;
 @synthesize textDownColor;
-@synthesize volumeColor;
+@synthesize maxBarWidth;
+@synthesize volumeHeightRatio;
+
+@synthesize shadowLineWidth;
 @synthesize lines;
-@synthesize rightYAxisValues;
+@synthesize kLineData;
 @synthesize volumeArray;
 @synthesize volumeGraph;
 @synthesize volumeGraphHeight;
 @synthesize volumeLayers;
-@synthesize currentVolumeLayer;
-@synthesize markerLeft;
-@synthesize markerRight;
 @synthesize markerBottom;
 
 - (instancetype)initWithFrame:(CGRect)frame{
@@ -64,54 +59,41 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         self.showMarker = YES;
         self.shouldDrawPoints = NO;
         
-        yesterdayClosePrice = 0;
-        minPriceChangePercent = 0.02;
         textUpColor = [UIColor redColor];
         textDownColor = [UIColor greenColor];
-        volumeColor = [UIColor grayColor];
-        
-        NSMutableArray *emptyBetweenHours = [[NSMutableArray alloc] initWithCapacity:kMinutesBetweenHours];
-        for (int i = 0; i < kMinutesBetweenHours; ++i) {
-            [emptyBetweenHours addObject:@""];
-        }
-        NSMutableArray *allMinutes = [[NSMutableArray alloc] initWithCapacity:kMaxMinutesInTimeLine + 1];//每根成交量柱线对应一个positionStepX，一共kMaxMinutesInTimeLine根柱线
-        [allMinutes addObject:@"9:30"];
-        [allMinutes addObjectsFromArray:emptyBetweenHours];
-        [allMinutes addObject:@"10:30"];
-        [allMinutes addObjectsFromArray:emptyBetweenHours];
-        [allMinutes addObject:@"11:30"];//对应11:30
-        [allMinutes addObject:@""];//对应13:00
-        [allMinutes addObjectsFromArray:emptyBetweenHours];
-        [allMinutes addObject:@"14:00"];
-        [allMinutes addObjectsFromArray:emptyBetweenHours];
-        [allMinutes addObject:@"15:00"];
-        [allMinutes addObject:@""];//对应15:01的刻度值
-        self.xAxisArray = allMinutes;
+        maxBarWidth = 30;
+        volumeHeightRatio = 0.25;
     }
     return self;
 }
 
 //返回x轴的时间点字符串
--(NSString *)xAxisTimeString:(int)xIndex{
-    if (xIndex < 121) {
-        int hour = 9 + xIndex / 60;
-        int minute = 30 + xIndex % 60;
-        if (minute >= 60) {
-            minute -= 60;
-            hour += 1;
-        }
-        return [NSString stringWithFormat:@"%d:%02d", hour, minute];
-    }
-    else{
-        xIndex -= 121;
-        int hour = 13 + xIndex / 60;
-        int minute = xIndex % 60;
-        return [NSString stringWithFormat:@"%d:%02d", hour, minute];
-    }
+-(NSString *)xAxisDateString:(int)xIndex forMarker:(BOOL)isMarker{
+    NSString *dateString = self.xAxisArray[xIndex];
+    //x轴刻度值显示年月2016-10。marker显示日期2010-10-10
+    return isMarker ? dateString : [dateString substringToIndex:7];
 }
 
 - (CGPoint)optimizedPoint:(CGPoint)point{
     return point;//因为分时图的线很密，两个点的坐标差值可能小于1，故不能对点坐标取整处理
+}
+
+//刻度段的中点
+- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex{
+    return self.graphMarginL + self.positionStepX * (pointIndex + 0.5);
+}
+//刻度段的左端
+- (CGFloat)leftXPositionOfAxis:(NSUInteger)pointIndex{
+    return self.graphMarginL + self.positionStepX * pointIndex;
+}
+//刻度段的右端
+- (CGFloat)rightXPositionOfAxis:(NSUInteger)pointIndex{
+    return self.graphMarginL + self.positionStepX * (pointIndex + 1);
+}
+
+-(CGFloat)widthXAxis{
+    //x轴的长度 == graph除两边margin外的区域
+    return [self widthGraph];
 }
 
 /*竖直方向
@@ -139,25 +121,27 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 }
 
 - (void)reloadGraph{
-    /*原点对应9:30:00，x轴第一个刻度值对应9:31:00，倒数第二个刻度值对应15:00:00，最后一个刻度值对应15:01:00。刻度值只显示9:30, 10:30, 11:30(之后一个刻度值为13:00), 14:00, 15:00
-     曲线上的点都是对应的x轴的刻度值，然后将各个点用线段连接。
-     显示十字线marker时，竖直线和x轴刻度值对齐，而不是两个刻度值中点。显示markerLeft、markerRight、markerBottom三个提示框，但是不会显示成交量的提示框，因为网易分钟线的成交量误差较大。
-     //删除该逻辑，因为实际不会有15:01的分钟线数据（如果选中的closestPointIndex对应的是刻度值15:01，则改为刻度值15:00的点，也即closestPointIndex改为kMaxMinutesInTimeLine - 1，closestPoint改为前一个点）。
-     成交量柱状图volumeGraph，每条竖线对齐刻度值，线宽同gridLineWidth。十字线对应的当前柱状图，线宽扩大为positionStepX。
+    /*y轴显示3个刻度值，最高价+0.1、中值、最低价-0.1。如果没有点，则显示为1, 0.5, 0；如果只有一个点值（也即最高价和最低价相同），则为+0.1， 该值，-0.1。
+     x轴分三段，由2个竖直虚线间隔，加上两边的竖直实线，也即4个刻度值。每个刻度值对应竖线的k线日期，刻度值只显示年月，如“2016-09”
+     x轴刻度值对应蜡烛图的中心，也即刻度段和蜡烛图对齐，成交量柱状图也和刻度段对齐。
+     positionStepX 不超过 maxBarWidth
+     成交量柱状图，线宽同positionStepX，分红色和绿色显示。
+     显示十字线marker时，竖直线和x轴刻度值对齐，只显示markerBottom日期。
      */
     [super reloadGraph];
-    [self createVolumeGraph];
+    [self drawVolumeGraphBars];
 }
 
 #pragma mark Setup all data with dataSource
 - (void)setupDataWithDataSource{
+    self.xAxisArray = [self.dataSource xAxisDataInKLine:self];
     self.xAxisLabels = [[NSMutableArray alloc] init];
     self.yAxisValues = [[NSMutableArray alloc] init];
     self.positionYOfYAxisValues = [[NSMutableArray alloc] init];
-    rightYAxisValues = [[NSMutableArray alloc] init];
+    self.kLineData = [self.dataSource kLineDataInkLine:self];
     if ([self.dataSource respondsToSelector:@selector(volumeDataInkLine:)]) {
         volumeArray = [self.dataSource volumeDataInkLine:self];
-        volumeGraphHeight = [super heightGraph] * kVolumeHeightRatio;
+        volumeGraphHeight = [super heightGraph] * volumeHeightRatio;
         volumeLayers = [[NSMutableArray alloc] init];
     }
     else{
@@ -174,66 +158,59 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         line.fillGraph = NO;
         line.drawPoints = self.shouldDrawPoints;
         line.yAxisArray = [self.dataSource kLine:self yAxisDataForline:i];
-        if (line.yAxisArray.count >= kMaxMinutesInTimeLine) {
-            //最多不能超过kMaxMinutesInTimeLine个分钟
-            line.yAxisArray = [line.yAxisArray subarrayWithRange:NSMakeRange(0, kMaxMinutesInTimeLine)];
-        }
         [lines addObject:line];
     }
 }
 
 #pragma mark - 计算x轴和y轴的各种长度
 -(BOOL)calculatePositionStepX{
-    self.positionStepX = [self widthGraph] / (self.xAxisArray.count - 1);
-    return YES;
-}
-
--(void)calculatePointRadius{
-    self.pointRadius = self.maxPointRadius;
-    for (LineChartDataRenderer *line in self.lines) {
-        if (line.lineWidth < self.pointRadius) {
-            self.pointRadius = line.lineWidth;
-        }
+    self.positionStepX = self.xAxisArray.count > 0 ? [self widthGraph] / self.xAxisArray.count : 0;
+    if (self.positionStepX > maxBarWidth) {
+        self.positionStepX = maxBarWidth;
     }
+    //蜡烛图中，上影线的宽度 = MIN(1, 蜡烛图的宽度/2)
+    shadowLineWidth = MIN(1, self.positionStepX / 2);
+    return YES;
 }
 
 /**
  *  计算yAxisValues、positionStepY、positionYOfYAxisValues
  */
 - (void)calculateYAxis{
-    double minPrice = yesterdayClosePrice * (1 - minPriceChangePercent);
-    double maxPrice = yesterdayClosePrice * (1 + minPriceChangePercent);
-    for (LineChartDataRenderer *l in lines) {
-        for (NSNumber *n in l.yAxisArray) {
-            double d = n.doubleValue;
-            if (d < minPrice) {
-                minPrice = d;
+    double minPrice = MAXFLOAT / 2;
+    double maxPrice = -MAXFLOAT / 2;
+    double middlePrice = 0;
+    if (kLineData.count == 0) {
+        //没有点
+        maxPrice = 1;
+        minPrice = 0;
+        middlePrice = 0.5;
+    }
+    else{
+        for (OneKLineModel *m in kLineData) {
+            if (m.lowPrice < minPrice) {
+                minPrice = m.lowPrice;
             }
-            if (d > maxPrice) {
-                maxPrice = d;
+            if (m.highPrice > maxPrice) {
+                maxPrice = m.highPrice;
             }
         }
+        maxPrice += 0.1;
+        minPrice -= 0.1;
+        if (minPrice < 0) {
+            minPrice = 0;
+        }
+        //使中间价向上保留3位小数，同时距离minPrice和maxPrice相同
+        middlePrice = [self fractionFloorOrCeiling:(minPrice + maxPrice) / 2 ceiling:YES];
+        maxPrice = middlePrice + (middlePrice - minPrice);
     }
-    //获取最高价/最低价（取上下变动幅度至少为2%），计算得出和昨日收盘价的最大偏离值maxPriceChange。取上下偏离昨日收盘价maxPriceChange 的价格作为对称的上下价格范围，作为y轴最小值和最大值
-    double maxPriceChange = fabs(maxPrice - yesterdayClosePrice);
-    if (fabs(yesterdayClosePrice - minPrice) > maxPriceChange) {
-        maxPriceChange = fabs(yesterdayClosePrice - minPrice);
-    }
-    maxPrice = yesterdayClosePrice + maxPriceChange;//价格上限
-    minPrice = yesterdayClosePrice - maxPriceChange;//价格下限
-    
-    double increaseRate = yesterdayClosePrice == 0 ? 0 : maxPriceChange / yesterdayClosePrice * 100;//涨幅百分比上限
-    double decreaseRate = yesterdayClosePrice == 0 ? 0 : -maxPriceChange / yesterdayClosePrice * 100;//跌幅百分比下限
-    [rightYAxisValues addObject:[NSNumber numberWithDouble:decreaseRate]];
-    [rightYAxisValues addObject:[NSNumber numberWithDouble:0]];
-    [rightYAxisValues addObject:[NSNumber numberWithDouble:increaseRate]];
     
     //画横线的区域，最高点和最低点的y
     const CGFloat positionYTop = self.graphMarginV;
     const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];
     
     [self.yAxisValues addObject:[NSNumber numberWithDouble:minPrice]];//原点的y轴刻度值，价格下限
-    [self.yAxisValues addObject:[NSNumber numberWithDouble:yesterdayClosePrice]];//昨日收盘价
+    [self.yAxisValues addObject:[NSNumber numberWithDouble:middlePrice]];
     [self.yAxisValues addObject:[NSNumber numberWithDouble:maxPrice]];//最高横线的y轴刻度值，价格上限
     
     self.positionStepY = (positionYBottom - positionYTop) / 2;
@@ -264,42 +241,47 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         [self.xAxisLabels addObject:l];
     };
     
+    //画x轴上的竖线前先创建volumeGraph，因为其和x轴的竖线位置相同，可以同时画竖线
+    [self createVolumeGraph];
+    
     //划线的最高点和最低点的y
     const CGFloat positionYTop = self.graphMarginV;
-    const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];
-    const CGFloat yOfXAxisLabel = positionYBottom + self.graphMarginV;//x轴刻度值label的y位置
+    const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];//y轴竖线的下端点位置，也即x轴刻度值label的y位置
+    const CGFloat lineStartX = self.graphMarginL;
+    const CGFloat spaceBetweenXLabels = [self widthXAxis] / 3;
+    const CGFloat VolumeOffsetOfAxis = self.graphMarginL;//柱状图比坐标图的偏移
     
-    //显示竖线（包括y轴）和x轴刻度值（包括原点）
-    int showingLineIndex = 0;//显示的是第几根竖线
-    int i = 0;
-    while (i < self.xAxisArray.count) {
-        NSString *xText = self.xAxisArray[i];
-        if (xText.length > 0) {
-            CGFloat x = [self xPositionOfAxis:i];
-            /*显示x轴刻度值和竖线
-             其中第一个（y轴）和最右边线为实线，其他为虚线。其中最右边线在刻度值往外positionStepX处。
-             右边线的刻度值显示在左侧，其他显示在竖线的右侧
-             */
-            if (showingLineIndex == 0) {
-                createXAxisLabel(xText, x, yOfXAxisLabel, NSTextAlignmentLeft);
-                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
-            }
-            else if (showingLineIndex == kNumberOfXAxisLabels - 1){
-                createXAxisLabel(xText, x - kXLabelWidth, yOfXAxisLabel, NSTextAlignmentRight);
-                x = [self xPositionOfAxis:i + 1];
-                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
-            }
-            else{
-                createXAxisLabel(xText, x - kXLabelWidth / 2, yOfXAxisLabel, NSTextAlignmentLeft);
-                //虚线
-                [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, positionYTop) to:CGPointMake(x, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
-            }
-            i += kMinutesBetweenHours;//相邻刻度值至少间隔kMinutesBetweenHours个positionStepX
-            ++showingLineIndex;
-        }
-        else{
-            ++i;
-        }
+    //x轴分三段，前后两根竖线为实线，中间2根竖线为虚线
+    CGFloat x = lineStartX;
+    [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
+    int xAxisIndex = [self indexOfXForPosition:x];
+    if (xAxisIndex >= 0) {
+        createXAxisLabel([self xAxisDateString:xAxisIndex forMarker:NO], x, positionYBottom, NSTextAlignmentLeft);
+    }
+    
+    x += spaceBetweenXLabels;
+    [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, positionYTop) to:CGPointMake(x, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+    xAxisIndex = [self indexOfXForPosition:x];
+    if (xAxisIndex >= 0) {
+        createXAxisLabel([self xAxisDateString:xAxisIndex forMarker:NO], x - kXLabelWidth / 2, positionYBottom, NSTextAlignmentCenter);
+    }
+    //成交量柱状图竖直虚线
+    [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - VolumeOffsetOfAxis, 0) to:CGPointMake(x - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+    
+    x += spaceBetweenXLabels;
+    [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, positionYTop) to:CGPointMake(x, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+    xAxisIndex = [self indexOfXForPosition:x];
+    if (xAxisIndex >= 0) {
+        createXAxisLabel([self xAxisDateString:xAxisIndex forMarker:NO], x - kXLabelWidth / 2, positionYBottom, NSTextAlignmentCenter);
+    }
+    //成交量柱状图竖直虚线
+    [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - VolumeOffsetOfAxis, 0) to:CGPointMake(x - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+    
+    x += spaceBetweenXLabels;
+    [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
+    xAxisIndex = [self indexOfXForPosition:x];
+    if (xAxisIndex >= 0) {
+        createXAxisLabel([self xAxisDateString:xAxisIndex forMarker:NO], x - kXLabelWidth, positionYBottom, NSTextAlignmentRight);
     }
 }
 
@@ -335,21 +317,18 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
             [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(lineStartX, positionY) to:CGPointMake(lineEndX, positionY) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
             labelY = positionY - kYLabelHeight / 2;
         }
-        UIColor *yLabelColor = (i == 0 ? self.textDownColor : (i == self.positionYOfYAxisValues.count - 1 ? self.textUpColor : self.textColor));
-        createYAxisLabel([self formattedStringForNumber:self.yAxisValues[i]], CGRectMake(lineStartX, labelY, kYLabelWidth, kYLabelHeight), NSTextAlignmentLeft, yLabelColor);
-        createYAxisLabel([NSString stringWithFormat:@"%.02f%%", ((NSNumber *)rightYAxisValues[i]).doubleValue], CGRectMake(lineEndX - kYLabelWidth, labelY, kYLabelWidth, kYLabelHeight), NSTextAlignmentRight, yLabelColor);
+        createYAxisLabel([self formattedStringForNumber:self.yAxisValues[i]], CGRectMake(lineStartX, labelY, kYLabelWidth, kYLabelHeight), NSTextAlignmentLeft, self.textColor);
     }
 }
 
 -(void)drawLines{
     for (LineChartDataRenderer *line in self.lines) {
         if (line.yAxisArray.count == 1) {
-            //只有一个点时，将pointRadius设为positionStepX，这样看起来比较明显
-            self.pointRadius = self.positionStepX;
-            [self drawPointsOnLine:[self pointAtIndex:0 inLine:line] withColor:line.lineColor];
+            //只有一个点时，画一条长为positionStepX的横线，占满一个positionStepX
+            CGFloat y = [self yPositionAtIndex:0 inLine:line];
+            [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake([self leftXPositionOfAxis:0], y) to:CGPointMake([self rightXPositionOfAxis:0], y) width:self.gridLineWidth color:self.gridLineColor]];
         }
         else{
-            //曲线上不单独画点
             [self drawOneLine:line];
         }
     }
@@ -363,14 +342,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     if (self.yMarker != nil) {
         [self.yMarker removeFromSuperlayer];
         self.yMarker = nil;
-    }
-    if (markerLeft != nil) {
-        [markerLeft removeFromSuperview];
-        markerLeft = nil;
-    }
-    if (markerRight != nil) {
-        [markerRight removeFromSuperview];
-        markerRight = nil;
     }
     if (markerBottom != nil) {
         [markerBottom removeFromSuperview];
@@ -395,26 +366,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     [self.yMarker setHidden:YES];
     [self.graphBackgroundView.layer addSublayer:self.yMarker];
     
-    markerLeft = [[UILabel alloc] initWithFrame:CGRectMake(self.graphMarginL, 0, kYLabelWidth, kYLabelHeight)];//只需修改y位置
-    markerLeft.font = self.axisFont;
-    markerLeft.textColor = self.markerTextColor;
-    markerLeft.backgroundColor = self.markerBgColor;
-    markerLeft.textAlignment = NSTextAlignmentCenter;
-    markerLeft.adjustsFontSizeToFitWidth = YES;
-    markerLeft.minimumScaleFactor = 0.7;
-    markerLeft.hidden = YES;
-    [self.graphBackgroundView addSubview:markerLeft];
-    
-    markerRight = [[UILabel alloc] initWithFrame:CGRectMake(self.graphMarginL + [self widthXAxis] - kYLabelWidth, 0, kYLabelWidth, kYLabelHeight)];//只需修改y位置
-    markerRight.font = self.axisFont;
-    markerRight.textColor = self.markerTextColor;
-    markerRight.backgroundColor = self.markerBgColor;
-    markerRight.textAlignment = NSTextAlignmentCenter;
-    markerRight.adjustsFontSizeToFitWidth = YES;
-    markerRight.minimumScaleFactor = 0.7;
-    markerRight.hidden = YES;
-    [self.graphBackgroundView addSubview:markerRight];
-    
     markerBottom = [[UILabel alloc] initWithFrame:CGRectMake(0, self.graphMarginV + [self heightYAxis], kXLabelWidth, self.heightXAxisLabel)];//只需修改x位置
     markerBottom.font = self.axisFont;
     markerBottom.textColor = self.markerTextColor;
@@ -426,17 +377,17 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     [self.graphBackgroundView addSubview:markerBottom];
 }
 
-- (CGFloat)xPositionOfVolume:(NSUInteger)pointIndex{
-    //第pointIndex个成交量线的位置，实际等于坐标系的点x除去左方空白graphMarginL
-    return self.positionStepX * pointIndex;//等于[self xPositionOfAxis:pointIndex] - self.graphMarginL
+- (CGFloat)xPositionOfVolumeBarCenter:(NSUInteger)pointIndex{
+    //第pointIndex个成交量bar的中间位置，实际等于坐标系的点x除去左方空白graphMarginL
+    return self.positionStepX * (pointIndex + 0.5);
 }
 
 - (void)createVolumeGraph{
+    //创建volumeGraph，但是尚未画每个成交量bar图
     for (CAShapeLayer *l in volumeLayers) {
         [l removeFromSuperlayer];
     }
     [volumeLayers removeAllObjects];
-    currentVolumeLayer = nil;//currentVolumeLayer是volumeLayers中的元素
     
     if (volumeGraph != nil) {
         [volumeGraph removeFromSuperview];
@@ -447,56 +398,44 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     }
     
     volumeGraph = [[UIView alloc] initWithFrame:[self volumeFrame]];
-    [self addSubview:volumeGraph];
-    
     //volumeGraph四边为实线
     volumeGraph.layer.borderColor = self.gridLineColor.CGColor;
     volumeGraph.layer.borderWidth = self.gridLineWidth;
-    
+    [self addSubview:volumeGraph];
+}
+
+- (void)drawVolumeGraphBars{
     //竖线的最高点和最低点的y
     const CGFloat volumeGraphYTop = 0;//成交量柱状图的高度范围
     const CGFloat volumeGraphYBottom = volumeGraphYTop + volumeGraphHeight;
     
-    //显示竖线，实线和虚线的逻辑同drawXAxis方法
-    int showingLineIndex = 0;//显示的是第几根竖线
-    int i = 0;
-    while (i < self.xAxisArray.count) {
-        NSString *xText = self.xAxisArray[i];
-        if (xText.length > 0) {
-            CGFloat x = [self xPositionOfVolume:i];
-            //中间的线都为虚线
-            if (showingLineIndex != 0 && showingLineIndex != kNumberOfXAxisLabels - 1){
-                [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, volumeGraphYTop) to:CGPointMake(x, volumeGraphYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
-            }
-            i += kMinutesBetweenHours;//相邻刻度值至少间隔kMinutesBetweenHours个positionStepX
-            ++showingLineIndex;
-        }
-        else{
-            ++i;
-        }
-    }
-    
     //最大成交量对应线高为volumeGraphHeight，其他成交量线高按比例
-    long long maxVolume = 0;
-    for (NSNumber * n in volumeArray) {
-        if (n.longLongValue > maxVolume) {
-            maxVolume = n.longLongValue;
+    double maxVolume = 0;//成交量单位为手
+    for (OneKLineModel *m in kLineData) {
+        if (m.volume > maxVolume) {
+            maxVolume = m.volume;
         }
     }
-    for (int i = 0; i < volumeArray.count; ++i) {
-        long long volume = ((NSNumber *)volumeArray[i]).longLongValue;
-        CGFloat volumeLineHeight = maxVolume == 0 ? 0 : volumeGraphHeight * volume / maxVolume;
-        CGFloat x = [self xPositionOfVolume:i];
-        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeLineHeight) width:self.gridLineWidth color:volumeColor];
+    for (int i = 0; i < kLineData.count; ++i) {
+        OneKLineModel *m = kLineData[i];
+        CGFloat volumeBarHeight = maxVolume == 0 ? 0 : volumeGraphHeight * m.volume / maxVolume;
+        CGFloat x = [self xPositionOfVolumeBarCenter:i];
+        //volume bar占满x刻度段，收盘价>=开盘价 为红色，否则为绿色
+        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:self.positionStepX color:(m.closePrice >= m.openPrice ? self.textUpColor : self.textDownColor)];
         [volumeLayers addObject:vLayer];
         [self.volumeGraph.layer addSublayer:vLayer];
     }
-    
+
     //最后将最大成交量作为最大刻度值写到volumeGraph左上部
     UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(0, volumeGraphYTop, volumeGraph.frame.size.width, kYLabelHeight)];
     l.textColor = self.textColor;
     l.font = self.axisFont;
-    l.text = [NSString stringWithFormat:@"%lld手", maxVolume / 100];
+    if (maxVolume >= 1000000) {
+        l.text = [NSString stringWithFormat:@"%.00f万手", maxVolume / 10000];
+    }
+    else{
+        l.text = [NSString stringWithFormat:@"%.00f手", maxVolume];
+    }
     l.textAlignment = NSTextAlignmentLeft;
     l.adjustsFontSizeToFitWidth = YES;
     l.minimumScaleFactor = 0.7;
@@ -505,17 +444,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
 - (void)dismissMarker{
     [super dismissMarker];
-    if (self.markerLeft != nil) {
-        self.markerLeft.hidden = YES;
-    }
-    if (self.markerRight != nil) {
-        self.markerRight.hidden = YES;
-    }
     if (self.markerBottom != nil) {
         self.markerBottom.hidden = YES;
-    }
-    if (currentVolumeLayer != nil) {
-        currentVolumeLayer.lineWidth = self.gridLineWidth;
     }
     if ([self.delegate respondsToSelector:@selector(markerDidDismissInKLine:)]) {
         [self.delegate markerDidDismissInKLine:self];
@@ -534,9 +464,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     CGFloat minDistance;
     CGPoint closestPoint;//距离最近的点
     int closestPointIndex = [self calculateClosestPoint:&closestPoint near:pointTouched distance:&minDistance inLine:line checkXDistanceOnly:checkXDistanceOnly];
-    //实际不会有15:01的分钟线数据
-    //closestPointIndex = MIN(closestPointIndex, kMaxMinutesInTimeLine - 1);//15:01的点index改为15:00
-    //closestPoint = 前一个点
     if (closestPointIndex == -1) {
         //曲线没有点
         return NO;
@@ -548,12 +475,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         return NO;
     }
     
-    //选中的volumeLayer的线宽扩大为positionStepX
-    if (volumeLayers.count > closestPointIndex) {
-        currentVolumeLayer = volumeLayers[closestPointIndex];
-        currentVolumeLayer.lineWidth = self.positionStepX;
-    }
-    
     closestPoint = [self optimizedPoint:closestPoint];
     
     self.xMarker.path = [self pathFrom:CGPointMake(closestPoint.x, CGRectGetMaxY([self volumeFrame])) to:CGPointMake(closestPoint.x, ((NSNumber *)self.positionYOfYAxisValues.lastObject).floatValue)].CGPath;
@@ -562,39 +483,14 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.yMarker.path = [self pathFrom:CGPointMake(self.originalPoint.x, closestPoint.y) to:CGPointMake([self xPositionOfAxis:self.xAxisArray.count <= 1 ? 1 : self.xAxisArray.count - 1], closestPoint.y)].CGPath;
     self.yMarker.hidden = NO;
     
-    NSString *xTimeString = [self xAxisTimeString:closestPointIndex];
-    NSNumber *priceNumber = line.yAxisArray[closestPointIndex];
-    double changeRate = (priceNumber.doubleValue / yesterdayClosePrice - 1) * 100;//价格变动百分比
-    NSString *priceString = [self formattedStringForNumber:priceNumber];
-    NSString *changeRateString = [NSString stringWithFormat:@"%.02f%%", changeRate];
-    
-    //markerLeft和markerRight必须在x轴和最高横线之间，不能超出上下两边
-    CGFloat maxValidY = self.graphMarginV + [self heightYAxis] - kYLabelHeight;
-    
-    CGRect tempFrame = self.markerLeft.frame;
-    tempFrame.origin.y = closestPoint.y - tempFrame.size.height / 2;
-    tempFrame.origin.y = MIN(tempFrame.origin.y, maxValidY);
-    tempFrame.origin.y = MAX(tempFrame.origin.y, self.graphMarginV);
-    self.markerLeft.frame = tempFrame;
-    self.markerLeft.text = priceString;
-    self.markerLeft.hidden = NO;
-    
-    tempFrame = self.markerRight.frame;
-    tempFrame.origin.y = closestPoint.y - tempFrame.size.height / 2;
-    tempFrame.origin.y = MIN(tempFrame.origin.y, maxValidY);
-    tempFrame.origin.y = MAX(tempFrame.origin.y, self.graphMarginV);
-    self.markerRight.frame = tempFrame;
-    self.markerRight.text = changeRateString;
-    self.markerRight.hidden = NO;
-    
-    tempFrame = self.markerBottom.frame;
+    CGRect tempFrame = self.markerBottom.frame;
     tempFrame.origin.x = closestPoint.x - tempFrame.size.width / 2;
     //markerBottom必须在y轴和右边线之间，不能超出两边
     CGFloat maxValidX = self.graphMarginL + [self widthXAxis] - kXLabelWidth;
     tempFrame.origin.x = MIN(tempFrame.origin.x, maxValidX);
     tempFrame.origin.x = MAX(tempFrame.origin.x, self.graphMarginL);
     self.markerBottom.frame = tempFrame;
-    self.markerBottom.text = xTimeString;
+    self.markerBottom.text = [self xAxisDateString:closestPointIndex forMarker:YES];
     self.markerBottom.hidden = NO;
     
     if ([self.delegate respondsToSelector:@selector(kLine:didTapLine:atPoint:)]) {

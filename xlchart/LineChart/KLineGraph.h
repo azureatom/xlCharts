@@ -9,24 +9,31 @@
 #import "LineGraphBase.h"
 #import "KLineGraph.h"
 
-static const int kMaxMinutesInTimeLine = 242;//最多显示242个分钟线，但是分时图的最后一个刻度值对应的是15:01，也即会有243个刻度值，尽管15:01没有分钟线数据
-static const double kVolumeHeightRatio = 0.25;//如果显示成交量柱状图，则占整个frame的高度比例
+typedef enum{
+    KLinePeriodDaily,
+    KLinePeriodWeekly,
+    KLinePeriodMonthly
+} KLinePeriod;
 
 @class KLineGraph;
 
 @protocol KLineGraphDelegate <NSObject>
 @optional
-- (void)kLine:(KLineGraph *)KLineGraph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex;
-- (void)markerDidDismissInKLine:(KLineGraph *)KLineGraph;//marker消失
+- (void)kLine:(KLineGraph *)graph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex;
+- (void)markerDidDismissInKLine:(KLineGraph *)graph;//marker消失
 @end
 
 @protocol KLineGraphDataSource <NSObject>
-- (NSUInteger)numberOfLinesInkLine:(KLineGraph *)KLineGraph;//曲线数目
-- (CGFloat)kLine:(KLineGraph *)KLineGraph lineWidth:(NSUInteger)lineIndex;//线宽
-- (UIColor *)kLine:(KLineGraph *)KLineGraph lineColor:(NSUInteger)lineIndex;//线颜色
-- (NSArray *)kLine:(KLineGraph *)KLineGraph yAxisDataForline:(NSUInteger)lineIndex;//线上点的y数据，array of NSNumber *
+- (NSUInteger)numberOfLinesInkLine:(KLineGraph *)graph;//曲线数目
+- (CGFloat)kLine:(KLineGraph *)graph lineWidth:(NSUInteger)lineIndex;//线宽
+- (UIColor *)kLine:(KLineGraph *)graph lineColor:(NSUInteger)lineIndex;//线颜色
+- (NSArray *)xAxisDataInKLine:(KLineGraph *)graph;
+- (NSArray *)kLine:(KLineGraph *)graph yAxisDataForline:(NSUInteger)lineIndex;//线上点的y数据，array of NSNumber *
+- (NSArray *)kLineDataInkLine:(KLineGraph *)graph;//用于初始化kLineData
+//暂时不实现跳过点的功能
+//- (NSUInteger)kLine:(KLineGraph *)graph skipedNumber:(NSUInteger)lineIndex;//该曲线跳过的点数
 @optional
-- (NSArray *)volumeDataInkLine:(KLineGraph *)KLineGraph;//成交量数据，array of NSNumber *
+- (NSArray *)volumeDataInkLine:(KLineGraph *)graph;//成交量数据，array of NSNumber *
 @end
 
 /*股票分时图
@@ -35,13 +42,12 @@ static const double kVolumeHeightRatio = 0.25;//如果显示成交量柱状图�
  x轴刻度分4段，分别为9:30， 10:30， 11:30/13:00, 14:00, 15:00。首尾刻度值显示竖直实线，刻度值显示在图内线旁边；中间3个刻度值显示竖直虚线，刻度值和线中点对齐。
  */
 @interface KLineGraph : LineGraphBase
+@property(assign, nonatomic) KLinePeriod kLinePeriod;
 @property(weak, nonatomic) id<KLineGraphDelegate> delegate;
 @property(weak, nonatomic) id<KLineGraphDataSource> dataSource;
 
-@property(assign, nonatomic) double yesterdayClosePrice;//昨日收盘价，默认0，此时涨跌幅显示为"0.00%"
-@property(assign, nonatomic) double minPriceChangePercent;//价格偏离昨日收盘价的最小百分比，默认0.02，也即[-2.00%, 2.00%]
-
 @property(strong, nonatomic) UIColor *textUpColor; //y轴上半部上涨的颜色，默认[UIColor redColor]
 @property(strong, nonatomic) UIColor *textDownColor;//y轴下半部下跌的颜色，默认[UIColor greenColor]
-@property(strong, nonatomic) UIColor *volumeColor;//柱状图颜色
+@property(assign, nonatomic) CGFloat maxBarWidth;//柱状图的最大宽度，默认30
+@property(assign, nonatomic) double volumeHeightRatio;//成交量柱状图占整个frame的高度比例，默认0.25
 @end

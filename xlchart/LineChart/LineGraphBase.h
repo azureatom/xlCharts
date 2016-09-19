@@ -65,7 +65,31 @@
  */
 - (double)fractionFloorOrCeiling:(double)d ceiling:(BOOL)isCeiling;
 - (CGPoint)optimizedPoint:(CGPoint)point;
-- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;
+/**
+ *  计算点的x方向位置。通常对应x轴刻度值的位置，但subclass可以override，如日K线等对应的是x轴刻度段的中点位置。
+ *
+ *  @param pointIndex 第几个点
+ *
+ *  @return 点的x位置
+ */
+- (CGFloat)xPositionOfAxis:(NSUInteger)pointIndex;//subclass可以override
+/**
+ *  计算某位置x方向最近的点的index
+ *
+ *  @param positionX 在x方向上的位置
+ *
+ *  @return x轴的positionX位置最近的刻度值的index，在坐标系左边或者没有点则返回-1
+ */
+- (int)indexOfXForPosition:(CGFloat)positionX;
+/**
+ *  计算曲线上的点的y方向位置
+ *
+ *  @param pointIndex 第几个点
+ *  @param lineData   曲线数据
+ *
+ *  @return 点的y位置
+ */
+-(CGFloat)yPositionAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData;
 -(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData;
 
 /**

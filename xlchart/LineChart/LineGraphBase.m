@@ -104,7 +104,20 @@
     return self.graphMarginL + self.positionStepX * pointIndex;
 }
 
--(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
+- (int)indexOfXForPosition:(CGFloat)positionX{
+    int pointIndex = (positionX - self.graphMarginL) / self.positionStepX;
+    if (pointIndex < 0) {
+        //在坐标系的左边，返回-1
+        return -1;
+    }
+    if (pointIndex >= self.xAxisArray.count) {
+        //没有这么多点，也即计算出的点位置没有点
+        return -1;
+    }
+    return pointIndex;
+}
+
+-(CGFloat)yPositionAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
     double yValue = [[lineData.yAxisArray objectAtIndex:pointIndex] doubleValue];
     for (NSUInteger i = 0; i < yAxisValues.count; ++i){
         //double的比较需要比较差值和一个小数，比如-0.5999999995和-0.6000000001
@@ -112,18 +125,22 @@
             //刻度值是上面的大，view里点的y坐标是下面的大
             CGFloat positionYAbove = ((NSNumber *)self.positionYOfYAxisValues[i]).floatValue;//点上方的y轴刻度值的位置
             if (i == 0) {
-                return CGPointMake([self xPositionOfAxis:pointIndex], positionYAbove);
+                return positionYAbove;
             }
             else{
                 double yValueAbove = ((NSNumber *)yAxisValues[i]).doubleValue;//点上方的y轴刻度值
                 double yValueBellow = ((NSNumber *)yAxisValues[i - 1]).doubleValue;//点下方的y轴刻度值
                 CGFloat positionYBellow = ((NSNumber *)self.positionYOfYAxisValues[i - 1]).floatValue;//点下方的y轴刻度值的位置
-                return CGPointMake([self xPositionOfAxis:pointIndex], positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove));
+                return positionYBellow - (yValue - yValueBellow) / (yValueAbove - yValueBellow) * (positionYBellow - positionYAbove);
             }
         }
     }
     NSAssert2(NO, @"Invalid point at index %zi of lineData.yAxisArray %@", pointIndex, lineData.yAxisArray);
-    return CGPointZero;
+    return -1;
+}
+
+-(CGPoint)pointAtIndex:(NSUInteger)pointIndex inLine:(LineChartDataRenderer *)lineData{
+    return CGPointMake([self xPositionOfAxis:pointIndex], [self yPositionAtIndex:pointIndex inLine:lineData]);
 }
 
 -(int)calculateClosestPoint:(CGPoint *)closestPoint near:(CGPoint)targetPoint distance:(CGFloat *)minDistance inLine:(LineChartDataRenderer *)line checkXDistanceOnly:(BOOL)checkXDistanceOnly{

@@ -146,7 +146,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
      成交量柱状图volumeGraph，每条竖线对齐刻度值，线宽同gridLineWidth。十字线对应的当前柱状图，线宽扩大为positionStepX。
      */
     [super reloadGraph];
-    [self createVolumeGraph];
+    [self drawVolumeGraphBars];
 }
 
 #pragma mark Setup all data with dataSource
@@ -264,10 +264,13 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         [self.xAxisLabels addObject:l];
     };
     
+    //画x轴上的竖线前先创建volumeGraph，因为其和x轴的竖线位置相同，可以同时画竖线
+    [self createVolumeGraph];
+    
     //划线的最高点和最低点的y
     const CGFloat positionYTop = self.graphMarginV;
-    const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];
-    const CGFloat yOfXAxisLabel = positionYBottom + self.graphMarginV;//x轴刻度值label的y位置
+    const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];//y轴竖线的下端点位置，也即x轴刻度值label的y位置
+    const CGFloat VolumeOffsetOfAxis = self.graphMarginL;//柱状图比坐标图的偏移
     
     //显示竖线（包括y轴）和x轴刻度值（包括原点）
     int showingLineIndex = 0;//显示的是第几根竖线
@@ -281,18 +284,21 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
              右边线的刻度值显示在左侧，其他显示在竖线的右侧
              */
             if (showingLineIndex == 0) {
-                createXAxisLabel(xText, x, yOfXAxisLabel, NSTextAlignmentLeft);
+                createXAxisLabel(xText, x, positionYBottom, NSTextAlignmentLeft);
                 [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
             }
             else if (showingLineIndex == kNumberOfXAxisLabels - 1){
-                createXAxisLabel(xText, x - kXLabelWidth, yOfXAxisLabel, NSTextAlignmentRight);
+                createXAxisLabel(xText, x - kXLabelWidth, positionYBottom, NSTextAlignmentRight);
                 x = [self xPositionOfAxis:i + 1];
                 [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
             }
             else{
-                createXAxisLabel(xText, x - kXLabelWidth / 2, yOfXAxisLabel, NSTextAlignmentLeft);
+                createXAxisLabel(xText, x - kXLabelWidth / 2, positionYBottom, NSTextAlignmentLeft);
                 //虚线
                 [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, positionYTop) to:CGPointMake(x, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+                
+                //成交量柱状图竖直虚线
+                [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - VolumeOffsetOfAxis, 0) to:CGPointMake(x - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
             }
             i += kMinutesBetweenHours;//相邻刻度值至少间隔kMinutesBetweenHours个positionStepX
             ++showingLineIndex;
@@ -447,34 +453,16 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     }
     
     volumeGraph = [[UIView alloc] initWithFrame:[self volumeFrame]];
-    [self addSubview:volumeGraph];
-    
     //volumeGraph四边为实线
     volumeGraph.layer.borderColor = self.gridLineColor.CGColor;
     volumeGraph.layer.borderWidth = self.gridLineWidth;
-    
+    [self addSubview:volumeGraph];
+}
+
+- (void)drawVolumeGraphBars{
     //竖线的最高点和最低点的y
     const CGFloat volumeGraphYTop = 0;//成交量柱状图的高度范围
     const CGFloat volumeGraphYBottom = volumeGraphYTop + volumeGraphHeight;
-    
-    //显示竖线，实线和虚线的逻辑同drawXAxis方法
-    int showingLineIndex = 0;//显示的是第几根竖线
-    int i = 0;
-    while (i < self.xAxisArray.count) {
-        NSString *xText = self.xAxisArray[i];
-        if (xText.length > 0) {
-            CGFloat x = [self xPositionOfVolume:i];
-            //中间的线都为虚线
-            if (showingLineIndex != 0 && showingLineIndex != kNumberOfXAxisLabels - 1){
-                [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, volumeGraphYTop) to:CGPointMake(x, volumeGraphYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
-            }
-            i += kMinutesBetweenHours;//相邻刻度值至少间隔kMinutesBetweenHours个positionStepX
-            ++showingLineIndex;
-        }
-        else{
-            ++i;
-        }
-    }
     
     //最大成交量对应线高为volumeGraphHeight，其他成交量线高按比例
     long long maxVolume = 0;

@@ -10,10 +10,12 @@
 #import "SingleLineGraphScrollable.h"
 #import "SingleLineGraphNonScrollable.h"
 #import "TimeLineGraphViewController.h"
+#import "KLineGraphViewController.h"
 
 @interface ViewController ()<SingleLineGraphBaseDataSource, SingleLineGraphBaseDelegate>
 @property(strong, nonatomic) UIButton *tagButton;
 @property(strong, nonatomic) UIButton *showTimeLineButton;
+@property(strong, nonatomic) UIButton *showKLineButton;
 @property(strong, nonatomic) SingleLineGraphScrollable *lineGraphScrollable;
 @property(strong, nonatomic) SingleLineGraphNonScrollable *lineGraphNonScrollable;
 @end
@@ -21,6 +23,7 @@
 @implementation ViewController
 @synthesize tagButton;
 @synthesize showTimeLineButton;
+@synthesize showKLineButton;
 @synthesize lineGraphScrollable;
 @synthesize lineGraphNonScrollable;
 
@@ -28,7 +31,7 @@
     [super viewDidLoad];
     
     tagButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    tagButton.frame = CGRectMake(0, 50, 100, 20);
+    tagButton.frame = CGRectMake(0, 30, 100, 20);
     [tagButton setTitle:@"切换曲线数据" forState:UIControlStateNormal];
     tagButton.titleLabel.font = [UIFont systemFontOfSize:10];
     [tagButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
@@ -37,11 +40,20 @@
     [self.view addSubview:tagButton];
     
     showTimeLineButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    showTimeLineButton.frame = CGRectMake(150, 50, 100, 20);
+    showTimeLineButton.frame = CGRectMake(150, 30, 100, 20);
     [showTimeLineButton setTitle:@"显示分时图" forState:UIControlStateNormal];
+    showTimeLineButton.titleLabel.font = [UIFont systemFontOfSize:10];
     [showTimeLineButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     [showTimeLineButton addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:showTimeLineButton];
+    
+    showKLineButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    showKLineButton.frame = CGRectMake(150, 50, 100, 20);
+    [showKLineButton setTitle:@"显示日K等" forState:UIControlStateNormal];
+    showKLineButton.titleLabel.font = [UIFont systemFontOfSize:10];
+    [showKLineButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+    [showKLineButton addTarget:self action:@selector(onButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:showKLineButton];
     
     [self createLineGraph];
 }
@@ -54,6 +66,10 @@
 -(void)onButtonTapped:(UIButton *)b{
     if (b == showTimeLineButton) {
         TimeLineGraphViewController *vc = [[TimeLineGraphViewController alloc] init];
+        [self presentViewController:vc animated:YES completion:nil];
+    }
+    if (b == showKLineButton) {
+        KLineGraphViewController *vc = [[KLineGraphViewController alloc] init];
         [self presentViewController:vc animated:YES completion:nil];
     }
     if (b == tagButton) {
