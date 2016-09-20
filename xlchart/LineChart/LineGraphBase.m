@@ -29,6 +29,7 @@
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
 @synthesize showMarker;
+@synthesize isMarkerShowing;
 @synthesize markerColor;
 @synthesize markerWidth;
 @synthesize xMarker;
@@ -56,6 +57,7 @@
         self.gridLineWidth = 0.3;
         
         self.showMarker = YES;
+        self.isMarkerShowing = NO;
         self.markerColor = [UIColor orangeColor];
         self.markerWidth = 0.4;
         self.markerBgColor = [UIColor grayColor];
@@ -362,7 +364,9 @@
     if (showMarker) {
         __weak __typeof(self) wself = self;
         self.graphBackgroundView.touchLocationBlock = ^(CGPoint location){
-            [wself showMakerNearPoint:location checkXDistanceOnly:NO];
+            if ([wself showMakerNearPoint:location checkXDistanceOnly:NO]) {
+                wself.isMarkerShowing = YES;
+            }
         };
         self.graphBackgroundView.touchFinishedBlock = ^(){
             [wself dismissMarker];
@@ -386,6 +390,7 @@
     if (self.defaultMarker != nil) {
         self.defaultMarker.hidden = YES;
     }
+    isMarkerShowing = NO;
 }
 
 - (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{

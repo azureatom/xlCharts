@@ -40,6 +40,7 @@
 
 //marker和十字线
 @property (assign, nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES
+@property (assign, nonatomic) BOOL isMarkerShowing;
 @property (nonatomic, strong) UIColor *markerColor; //十字线的颜色，默认[UIColor orangeColor]
 @property (nonatomic) CGFloat markerWidth; //十字线的线宽，默认0.4
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
