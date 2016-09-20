@@ -56,7 +56,6 @@
     kLineGraph.textUpColor = [UIColor redColor];
     kLineGraph.textDownColor = [UIColor greenColor];
     
-    kLineGraph.markerDismissAfter = 3;
     kLineGraph.markerColor = [UIColor orangeColor];
     kLineGraph.markerTextColor = [UIColor whiteColor];
     kLineGraph.markerBgColor = [UIColor grayColor];

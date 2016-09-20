@@ -243,13 +243,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 }
 
 #pragma mark - 创建曲线背景，画x轴、y轴、曲线
--(void)createGraphBackground{
-    [super createGraphBackground];
-    [self addSubview:self.graphBackgroundView];
-    [self.graphBackgroundView addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
-    [self.graphBackgroundView addGestureRecognizer:[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
-}
-
 //设置x坐标和grid竖线，创建yAxisView并在其上显示y轴。根据x轴的宽度设置graphBackgroundView的宽度和backgroundScrollView.contentSize
 - (void)drawXAxis{
     void(^createXAxisLabel)(NSString *, CGFloat, CGFloat, NSTextAlignment) = ^(NSString *s, CGFloat x, CGFloat top, NSTextAlignment alignment){

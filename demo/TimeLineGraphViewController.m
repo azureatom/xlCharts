@@ -58,16 +58,12 @@
     tLineGraph.textDownColor = [UIColor greenColor];
     tLineGraph.volumeColor = [UIColor grayColor];
     
-    tLineGraph.markerDismissAfter = 3;
     tLineGraph.markerColor = [UIColor orangeColor];
     tLineGraph.markerTextColor = [UIColor whiteColor];
     tLineGraph.markerBgColor = [UIColor grayColor];
     [self.view addSubview:tLineGraph];
     
-    //未显示marker时，才能刷新图表
-    if (![tLineGraph isMarkerDismissTimerValid]) {
-        [tLineGraph reloadGraph];
-    }
+    [tLineGraph reloadGraph];
 }
 
 - (void)didReceiveMemoryWarning {

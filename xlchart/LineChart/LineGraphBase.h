@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "GraphContainerView.h"
 #import "LineChartDataRenderer.h"
 #import "LineGraphMarker.h"
 
@@ -19,7 +20,7 @@
 @property(assign, nonatomic) CGFloat graphMarginR;//图表右侧的空白，默认20
 
 @property (assign, nonatomic) NSUInteger fractionDigits;//显示的y轴刻度值取小数点后几位小数，默认是0也即整数
-@property (nonatomic, strong) UIView *graphBackgroundView;
+@property (nonatomic, strong) GraphContainerView *graphBackgroundView;
 @property (assign, nonatomic) CGPoint originalPoint;//原点的位置
 
 @property (nonatomic, strong) NSArray *xAxisArray;//array of NSString, x轴的刻度，@""表示不显示该刻度值和竖直刻度线
@@ -39,8 +40,6 @@
 
 //marker和十字线
 @property (assign, nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES
-@property (assign, nonatomic) NSTimeInterval markerDismissAfter;//marker持续几秒后自动消失，<=0不自动消失，默认0
-@property (strong, nonatomic) NSTimer *markerDismissTimer;
 @property (nonatomic, strong) UIColor *markerColor; //十字线的颜色，默认[UIColor orangeColor]
 @property (nonatomic) CGFloat markerWidth; //十字线的线宽，默认0.4
 @property (nonatomic, strong) CAShapeLayer *xMarker;//点击显示十字线的竖线
@@ -117,7 +116,6 @@
 - (CAShapeLayer *)gridLineLayerStart:(CGPoint)startPoint end:(CGPoint)endPoint;
 - (UIBezierPath *)pathFrom:(CGPoint)startPoint to:(CGPoint)endPoint;
 - (void)drawPointsOnLine:(CGPoint)point withColor:(UIColor *)color;
--(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture;
 
 -(CGFloat)widthGraph;
 -(CGFloat)widthXAxis;
@@ -144,8 +142,7 @@
 - (void)drawLines;
 - (void)createMarker;
 
-- (BOOL)isMarkerDismissTimerValid;//若timer合法，可以认为当前正显示marker
-- (void)dismissMarker;//隐藏marker，删除markerDismissTimer
+- (void)dismissMarker;//隐藏marker
 /**
  *  在距离 点击或拖拽的点 最近的曲线点显示十字线和弹出框
  *

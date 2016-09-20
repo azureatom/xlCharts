@@ -9,31 +9,12 @@
 #import "SingleLineGraphNonScrollable.h"
 
 @implementation SingleLineGraphNonScrollable
-@synthesize enablePanAndLongPress;
-
--(id)initWithFrame:(CGRect)frame{
-    self = [super initWithFrame:frame];
-    if (self) {
-        self.enablePanAndLongPress = YES;
-    }
-    return self;
-}
 
 -(BOOL)calculatePositionStepX{
     if (![super calculatePositionStepX]) {
         self.positionStepX = [self widthGraph] / (self.xAxisArray.count - 1);
     }
     return YES;
-}
-
--(void)createGraphBackground{
-    [super createGraphBackground];
-    [self addSubview:self.graphBackgroundView];
-    if (enablePanAndLongPress) {
-        [self.graphBackgroundView addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
-        //如果UILongPressGestureRecognizer.minimumPressDuration设置过小，则TapGesture也会被认为是LongPressGesture
-        [self.graphBackgroundView addGestureRecognizer:[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
-    }
 }
 
 -(CGPoint)calculateMarker:(CGSize)viewSize originWith:(CGPoint)closestPoint{

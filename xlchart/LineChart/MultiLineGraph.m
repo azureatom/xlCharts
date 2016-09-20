@@ -49,7 +49,6 @@
 @synthesize drawGridY;
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
-@synthesize enablePanAndLongPress;
 @synthesize showMarker;
 @synthesize showCustomMarkerView;
 @synthesize markerColor;
@@ -103,7 +102,6 @@
         self.showLegend = TRUE;
         self.legendViewType = LegendTypeVertical;
         
-        self.enablePanAndLongPress = YES;
         self.showMarker = YES;
         self.showCustomMarkerView = NO;
         
@@ -251,17 +249,6 @@
     self.graphScrollView.delegate = self;
     [self addSubview:self.graphScrollView];
     
-    //如果手势被TapGesture、LongPressGesture成功识别，或者增加了PanGesture（无论是否成功识别），不会触发scrollViewDidScroll，即使 shouldRecognizeSimultaneouslyWithGestureRecognizer:返回YES也不行
-    [self.graphScrollView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
-    if (enablePanAndLongPress) {
-        [self.graphScrollView addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
-        
-        UILongPressGestureRecognizer *longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)];
-        //如果minimumPressDuration设置过小，则TapGesture也会被认为是LongPressGesture
-        //    longPressGestureRecognizer.minimumPressDuration = 0.3;
-        [self.graphScrollView addGestureRecognizer:longPressGestureRecognizer];
-    }
-    
     self.graphView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, graphScrollHeight)];
     self.graphView.userInteractionEnabled = YES;
     [self.graphScrollView addSubview:self.graphView];
@@ -333,12 +320,7 @@
     }
     else{
         CGFloat everagePStepX = [self visibleWidthExcludeMargin] / (self.xAxisArray.count - 1);
-        if (enablePanAndLongPress) {
-            positionStepX = everagePStepX;
-        }
-        else{
-            positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
-        }
+        positionStepX = MAX(minPositionStepX, everagePStepX);//保持相邻点的x方向距离>=minPositionStepX，同时尽量占满显示区域
         
         int numberOfLabelsBetweenVisibleX = ceil(spaceBetweenVisibleXLabels / positionStepX);//相邻可见的x轴刻度值之间的总共刻度值数目（包括可见和不可见的）
         //显示原点外的竖直刻度线和x轴刻度值。不显示@""的刻度，只显示非空的刻度，因此两个刻度之间可能包含多个曲线点
@@ -779,18 +761,6 @@
                     l.alpha = labelCenterRightYAxis / halfWidth;
                 }
             }
-        }
-    }
-}
-
-#pragma mark handle gestures
--(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture{
-    if (self.showMarker || self.showCustomMarkerView) {
-        CGPoint currentPoint = [gesture locationInView:self.graphView];
-        if (CGRectContainsPoint(self.graphView.frame, currentPoint)) {
-            //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
-            //而PanGesture和LongPressGesture 只取曲线x方向距离最近的点即可，不需检查距离是否过大。这样可以保证在拖拽时，曲线上的点依次显示十字线信息。
-            [self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]];
         }
     }
 }

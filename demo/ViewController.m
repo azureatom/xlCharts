@@ -86,7 +86,6 @@
     lineGraphScrollable.minPositionStepX = 30;
     
     lineGraphNonScrollable = [[SingleLineGraphNonScrollable alloc] initWithFrame:CGRectMake(0, 300, self.view.frame.size.width, 200)];
-    lineGraphNonScrollable.enablePanAndLongPress = YES;
     
     for (SingleLineGraphBase *lg in @[lineGraphScrollable, lineGraphNonScrollable]) {
         lg.lineColor = [UIColor blueColor];
@@ -109,7 +108,6 @@
         lg.gridLineWidth = 0.3;
         
         lg.showMarker = YES;
-        lg.markerDismissAfter = 3;
         lg.markerColor = [UIColor orangeColor];
         lg.markerBgColor = [UIColor grayColor];
         lg.markerWidth = 0.4;

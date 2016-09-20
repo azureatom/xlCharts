@@ -29,8 +29,6 @@
 @synthesize gridLineColor;
 @synthesize gridLineWidth;
 @synthesize showMarker;
-@synthesize markerDismissAfter;
-@synthesize markerDismissTimer;
 @synthesize markerColor;
 @synthesize markerWidth;
 @synthesize xMarker;
@@ -58,7 +56,6 @@
         self.gridLineWidth = 0.3;
         
         self.showMarker = YES;
-        self.markerDismissAfter = 0;
         self.markerColor = [UIColor orangeColor];
         self.markerWidth = 0.4;
         self.markerBgColor = [UIColor grayColor];
@@ -273,18 +270,6 @@
     [self.graphBackgroundView.layer addSublayer:shapeLayer];
 }
 
-#pragma mark handle gestures
--(void)handleTapPanLongPress:(UITapGestureRecognizer *)gesture{
-    CGPoint currentPoint = [gesture locationInView:self.graphBackgroundView];
-    if (CGRectContainsPoint(self.graphBackgroundView.frame, currentPoint)) {
-        //TapGesture 取曲线上直线距离最小的点，并检查距离是否过大，过大则不显示十字线信息；
-        //而PanGesture和LongPressGesture 只取曲线x方向距离最近的点即可，不需检查距离是否过大。这样可以保证在拖拽时，曲线上的点依次显示十字线信息。
-        if ([self showMakerNearPoint:currentPoint checkXDistanceOnly:![gesture isMemberOfClass:[UITapGestureRecognizer class]]] && self.markerDismissAfter > 0) {
-            markerDismissTimer = [NSTimer scheduledTimerWithTimeInterval:markerDismissAfter target:self selector:@selector(dismissMarker) userInfo:nil repeats:NO];
-        }
-    }
-}
-
 #pragma mark - x轴、y轴、曲线图等的长宽
 /*水平方向
  self 长度同 backgroundScrollView
@@ -371,10 +356,17 @@
     if (graphBackgroundView != nil) {
         [graphBackgroundView removeFromSuperview];
     }
-    graphBackgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.graphMarginL + [self widthXAxis] + self.graphMarginR, [self heightGraph])];//根据x轴的宽度设置graphBackgroundView的宽度
-    //如果手势被TapGesture、LongPressGesture成功识别，或者增加了PanGesture（无论是否成功识别），不会触发scrollViewDidScroll，即使 shouldRecognizeSimultaneouslyWithGestureRecognizer:返回YES也不行
+    graphBackgroundView = [[GraphContainerView alloc] initWithFrame:CGRectMake(0, 0, self.graphMarginL + [self widthXAxis] + self.graphMarginR, [self heightGraph])];//根据x轴的宽度设置graphBackgroundView的宽度
+    [self addSubview:graphBackgroundView];
+    
     if (showMarker) {
-        [self.graphBackgroundView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapPanLongPress:)]];
+        __weak __typeof(self) wself = self;
+        self.graphBackgroundView.touchLocationBlock = ^(CGPoint location){
+            [wself showMakerNearPoint:location checkXDistanceOnly:NO];
+        };
+        self.graphBackgroundView.touchFinishedBlock = ^(){
+            [wself dismissMarker];
+        };
     }
 }
 
@@ -383,15 +375,7 @@
 - (void)drawLines{}
 - (void)createMarker{}
 
-- (BOOL)isMarkerDismissTimerValid{
-    return markerDismissTimer != nil;
-}
-
 - (void)dismissMarker{
-    if (self.markerDismissTimer != nil) {
-        [markerDismissTimer invalidate];
-        markerDismissTimer = nil;
-    }
     //隐藏十字线和提示框
     if (self.xMarker != nil) {
         self.xMarker.hidden = YES;

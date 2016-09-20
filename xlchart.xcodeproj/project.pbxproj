@@ -10,6 +10,7 @@
 		501330B31D86FECE0016D4ED /* KLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 501330B21D86FECE0016D4ED /* KLineGraph.m */; };
 		501F4E141D8F919600AE0F67 /* KLineGraphViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 501F4E131D8F919600AE0F67 /* KLineGraphViewController.m */; };
 		501F4E1A1D8FC11200AE0F67 /* KLineElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 501F4E191D8FC11200AE0F67 /* KLineElement.m */; };
+		501F4E201D90DECD00AE0F67 /* GraphContainerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 501F4E1F1D90DECD00AE0F67 /* GraphContainerView.m */; };
 		50BE81971D7D1A070001E1AC /* TimeLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81961D7D1A070001E1AC /* TimeLineGraph.m */; };
 		50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81991D7D27870001E1AC /* MultiLineGraph.m */; };
 		50BE81A61D7DA40A0001E1AC /* LineGraphBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 50BE81A51D7DA40A0001E1AC /* LineGraphBase.m */; };
@@ -57,6 +58,8 @@
 		501F4E131D8F919600AE0F67 /* KLineGraphViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KLineGraphViewController.m; sourceTree = "<group>"; };
 		501F4E181D8FC11200AE0F67 /* KLineElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KLineElement.h; sourceTree = "<group>"; };
 		501F4E191D8FC11200AE0F67 /* KLineElement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KLineElement.m; sourceTree = "<group>"; };
+		501F4E1E1D90DECD00AE0F67 /* GraphContainerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphContainerView.h; sourceTree = "<group>"; };
+		501F4E1F1D90DECD00AE0F67 /* GraphContainerView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GraphContainerView.m; sourceTree = "<group>"; };
 		50BE81951D7D1A070001E1AC /* TimeLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeLineGraph.h; sourceTree = "<group>"; };
 		50BE81961D7D1A070001E1AC /* TimeLineGraph.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TimeLineGraph.m; sourceTree = "<group>"; };
 		50BE81981D7D27870001E1AC /* MultiLineGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultiLineGraph.h; sourceTree = "<group>"; };
@@ -207,6 +210,8 @@
 		50F371C11D5880BC005CB142 /* LineChart */ = {
 			isa = PBXGroup;
 			children = (
+				501F4E1E1D90DECD00AE0F67 /* GraphContainerView.h */,
+				501F4E1F1D90DECD00AE0F67 /* GraphContainerView.m */,
 				50F371C21D5880BC005CB142 /* LineGraphMarker.h */,
 				50F371C31D5880BC005CB142 /* LineGraphMarker.m */,
 				50F371CA1D5888BA005CB142 /* LineChartDataRenderer.h */,
@@ -368,6 +373,7 @@
 				50BE81AC1D7F21920001E1AC /* SingleLineGraphNonScrollable.m in Sources */,
 				50F371C91D5880BC005CB142 /* SingleLineGraphBase.m in Sources */,
 				50F371C81D5880BC005CB142 /* LineGraphMarker.m in Sources */,
+				501F4E201D90DECD00AE0F67 /* GraphContainerView.m in Sources */,
 				50BE819A1D7D27870001E1AC /* MultiLineGraph.m in Sources */,
 				50F371C71D5880BC005CB142 /* LegendView.m in Sources */,
 				50F371B51D541D1A005CB142 /* ViewController.m in Sources */,

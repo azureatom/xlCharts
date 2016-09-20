@@ -30,6 +30,8 @@
 
 -(void)createGraphBackground{
     [super createGraphBackground];
+    
+    //如果手势被TapGesture、LongPressGesture成功识别，或者增加了PanGesture（无论是否成功识别），不会触发scrollViewDidScroll，即使 shouldRecognizeSimultaneouslyWithGestureRecognizer:返回YES也不行
     if (backgroundScrollView != nil) {
         [backgroundScrollView removeFromSuperview];
     }
@@ -40,6 +42,7 @@
     backgroundScrollView.delegate = self;
     [self addSubview:backgroundScrollView];
     
+    [self.graphBackgroundView removeFromSuperview];//之前加在self.view，需要移到backgroundScrollView中
     [backgroundScrollView addSubview:self.graphBackgroundView];
     backgroundScrollView.contentSize = self.graphBackgroundView.frame.size;
 }
