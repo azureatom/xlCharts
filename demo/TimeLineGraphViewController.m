@@ -127,6 +127,6 @@
 }
 
 #pragma mark - TimeLineGraphDelegate
-- (void)timeLine:(TimeLineGraph *)timeLineGraph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex{}
+- (void)timeLine:(TimeLineGraph *)timeLineGraph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex userInfo:(NSDictionary *)userInfo{}
 - (void)markerDidDismissInTimeLine:(TimeLineGraph *)timeLineGraph{}
 @end

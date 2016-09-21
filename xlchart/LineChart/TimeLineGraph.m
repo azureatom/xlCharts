@@ -563,7 +563,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     NSNumber *priceNumber = line.yAxisArray[closestPointIndex];
     double changeRate = (priceNumber.doubleValue / yesterdayClosePrice - 1) * 100;//价格变动百分比
     NSString *priceString = [self formattedStringForNumber:priceNumber];
-    NSString *changeRateString = [NSString stringWithFormat:@"%.02f%%", changeRate];
+    NSString *changeRateString = [NSString stringWithFormat:@"%+.02f%%", changeRate];
     
     //markerLeft和markerRight必须在x轴和最高横线之间，不能超出上下两边
     CGFloat maxValidY = self.graphMarginV + [self heightYAxis] - kYLabelHeight;
@@ -594,8 +594,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.markerBottom.text = xTimeString;
     self.markerBottom.hidden = NO;
 
-    if ([self.delegate respondsToSelector:@selector(timeLine:didTapLine:atPoint:)]) {
-        [self.delegate timeLine:self didTapLine:0 atPoint:closestPointIndex];
+    if ([self.delegate respondsToSelector:@selector(timeLine:didTapLine:atPoint:userInfo:)]) {
+        [self.delegate timeLine:self didTapLine:0 atPoint:closestPointIndex userInfo:@{@"p": priceString, @"pc": changeRateString, @"d":[NSNumber numberWithInt:(changeRate > 0 ? 1 :(changeRate < 0 ? -1 : 0))], @"t": xTimeString}];
     }
     return YES;
 }
