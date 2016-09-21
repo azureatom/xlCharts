@@ -432,12 +432,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(0, volumeGraphYTop, volumeGraph.frame.size.width, kYLabelHeight)];
     l.textColor = self.textColor;
     l.font = self.axisFont;
-    if (maxVolume >= 1000000) {
-        l.text = [NSString stringWithFormat:@"%.00f万手", maxVolume / 10000];
-    }
-    else{
-        l.text = [NSString stringWithFormat:@"%.00f手", maxVolume];
-    }
+    l.text = [[Tool smartNumberRepresentation:maxVolume] stringByAppendingString:@"手"];
     l.textAlignment = NSTextAlignmentLeft;
     l.adjustsFontSizeToFitWidth = YES;
     l.minimumScaleFactor = 0.7;

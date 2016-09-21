@@ -9,6 +9,17 @@
 #import "Tool.h"
 
 @implementation Tool
+
++(NSString *)smartNumberRepresentation:(double)volume{
+    if (volume < 10000) {
+        return [NSString stringWithFormat:@"%.00f", volume];
+    }
+    if (volume < 100000000) {
+        return [NSString stringWithFormat:@"%.02f万", volume / 10000];
+    }
+    return [NSString stringWithFormat:@"%.02f亿", volume / 100000000];
+}
+
 + (CAShapeLayer *)layerLineFrom:(CGPoint)from to:(CGPoint)to width:(CGFloat)lineWidth color:(UIColor *)color{
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     shapeLayer.strokeColor = color.CGColor;
