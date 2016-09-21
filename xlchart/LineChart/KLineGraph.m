@@ -26,7 +26,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 @property (strong, nonatomic) UIView *volumeGraph;//成交量柱状图📊
 @property (assign, nonatomic) CGFloat volumeGraphHeight;//成交量柱状图高度
 @property (assign, nonatomic) CGFloat offsetFromVolumeToAxis;//成交量柱状图比曲线坐标图的x起点偏移
-@property (strong, nonatomic) NSMutableArray *volumeLayers;//显示在volumeGraph的所有竖条
 @property (strong, nonatomic) UILabel *markerBottom;//x轴下方显示时间的提示框
 @end
 
@@ -46,7 +45,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 @synthesize volumeGraph;
 @synthesize volumeGraphHeight;
 @synthesize offsetFromVolumeToAxis;
-@synthesize volumeLayers;
 @synthesize markerBottom;
 
 - (instancetype)initWithFrame:(CGRect)frame{
@@ -119,11 +117,24 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
      成交量柱状图，线宽同positionStepX，分红色和绿色显示。
      显示十字线marker时，竖直线和x轴刻度值对齐，只显示markerBottom日期。
      */
-    [super reloadGraph];
     
-    //DDLogTodo(@"先画marker，再画volume和candleStick，导致marker被它们遮挡。同理，曲线也被遮挡。");
-    [self drawVolumeGraphBars];
+    //在[super reloadGraph]代码基础上修改
+    [self dismissMarker];
+    
+    [self setupDataWithDataSource];
+    
+    [self calculatePositionStepX];
+    [self calculatePointRadius];
+    [self calculateYAxis];
+    self.originalPoint = CGPointMake([self xPositionAtIndex:0], ((NSNumber *)self.positionYOfYAxisValues.firstObject).floatValue);
+    
+    [self createGraphBackground];
+    [self drawXAxis];
+    [self drawYAxis];
     [self drawCandleStick];
+    [self drawLines];
+    [self drawVolumeGraphBars];
+    [self createMarker];
 }
 
 #pragma mark Setup all data with dataSource
@@ -136,12 +147,10 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     if ([self.dataSource respondsToSelector:@selector(volumeDataInkLine:)]) {
         volumeArray = [self.dataSource volumeDataInkLine:self];
         volumeGraphHeight = [super heightGraph] * volumeHeightRatio;
-        volumeLayers = [[NSMutableArray alloc] init];
     }
     else{
         volumeArray = nil;
         volumeGraphHeight = 0;
-        volumeLayers = nil;
     }
     offsetFromVolumeToAxis = self.graphMarginL;
     
@@ -382,12 +391,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 }
 
 - (void)createVolumeGraph{
-    //创建volumeGraph，但是尚未画每个成交量bar图
-    for (CAShapeLayer *l in volumeLayers) {
-        [l removeFromSuperlayer];
-    }
-    [volumeLayers removeAllObjects];
-    
     if (volumeGraph != nil) {
         [volumeGraph removeFromSuperview];
         volumeGraph = nil;
@@ -400,7 +403,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     //volumeGraph四边为实线
     volumeGraph.layer.borderColor = self.gridLineColor.CGColor;
     volumeGraph.layer.borderWidth = self.gridLineWidth;
-    [self addSubview:volumeGraph];
+    [self insertSubview:volumeGraph belowSubview:self.graphBackgroundView];//volumeGraph必须放在graphBackgroundView下方，这样marker十字线才能显示在成交量柱状图上面
 }
 
 - (void)drawVolumeGraphBars{
@@ -422,7 +425,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         CGFloat x = [self xPositionAtIndex:i] - offsetFromVolumeToAxis;
         //volume bar占满x刻度段，收盘价>=开盘价 为红色，否则为绿色
         CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:volumeWidth color:(e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor)];
-        [volumeLayers addObject:vLayer];
         [self.volumeGraph.layer addSublayer:vLayer];
     }
 

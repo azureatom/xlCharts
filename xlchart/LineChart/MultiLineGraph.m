@@ -199,7 +199,6 @@
 #pragma mark Draw Graph: createXAxisLine, createYAxisLine, createGraph
 - (void)drawGraph{
     /*
-     ****** TODO ******
      目前只支持一条曲线，self.lineDataArray中多曲线(LineChartDataRenderer *)的支持未完善。
      */
     
