@@ -228,7 +228,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
             }
         }
     }
-    //获取最高价/最低价（取上下变动幅度至少为2%），计算得出和昨日收盘价的最大偏离值maxPriceChange。取上下偏离昨日收盘价maxPriceChange 的价格作为对称的上下价格范围，作为y轴最小值和最大值
+    //获取最高价/最低价（取上下变动幅度至少为1%），计算得出和昨日收盘价的最大偏离值maxPriceChange。取上下偏离昨日收盘价maxPriceChange 的价格作为对称的上下价格范围，作为y轴最小值和最大值
     double maxPriceChange = fabs(maxPrice - yesterdayClosePrice);
     if (fabs(yesterdayClosePrice - minPrice) > maxPriceChange) {
         maxPriceChange = fabs(yesterdayClosePrice - minPrice);
