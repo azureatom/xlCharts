@@ -25,6 +25,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 @property (strong, nonatomic) NSArray *volumeArray;//成交量
 @property (strong, nonatomic) UIView *volumeGraph;//成交量柱状图📊
 @property (assign, nonatomic) CGFloat volumeGraphHeight;//成交量柱状图高度
+@property (assign, nonatomic) CGFloat offsetFromVolumeToAxis;//成交量柱状图比曲线坐标图的x起点偏移
 @property (strong, nonatomic) NSMutableArray *volumeLayers;//显示在volumeGraph的所有竖条
 @property (strong, nonatomic) UILabel *markerBottom;//x轴下方显示时间的提示框
 @end
@@ -44,6 +45,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 @synthesize volumeArray;
 @synthesize volumeGraph;
 @synthesize volumeGraphHeight;
+@synthesize offsetFromVolumeToAxis;
 @synthesize volumeLayers;
 @synthesize markerBottom;
 
@@ -56,6 +58,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         self.graphMarginV = 0;
         self.heightXAxisLabel = kYLabelHeight;
         self.fractionDigits = 3;
+        self.isXAtCenter = YES;
         
         self.showMarker = YES;
         self.shouldDrawPoints = NO;
@@ -64,6 +67,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         textDownColor = [UIColor greenColor];
         maxBarWidth = 5;
         volumeHeightRatio = 0.25;
+        offsetFromVolumeToAxis = self.graphMarginL;
     }
     return self;
 }
@@ -71,18 +75,12 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 //返回x轴的时间点字符串
 -(NSString *)xAxisDateString:(int)xIndex forMarker:(BOOL)isMarker{
     NSString *dateString = self.xAxisArray[xIndex];
-    return dateString;
     //x轴刻度值显示年月2016-10。marker显示日期2010-10-10
     return isMarker ? dateString : [dateString substringToIndex:7];
 }
 
 - (CGPoint)optimizedPoint:(CGPoint)point{
     return point;//因为分时图的线很密，两个点的坐标差值可能小于1，故不能对点坐标取整处理
-}
-
-//刻度段的中点
-- (CGFloat)xPositionAtIndex:(NSUInteger)pointIndex{
-    return self.graphMarginL + self.positionStepX * (pointIndex + 0.5);
 }
 
 -(CGFloat)widthXAxis{
@@ -239,7 +237,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     const CGFloat positionYBottom = self.graphMarginV + [self heightYAxis];//y轴竖线的下端点位置，也即x轴刻度值label的y位置
     const CGFloat lineStartX = self.graphMarginL;
     const CGFloat spaceBetweenXLabels = [self widthXAxis] / 3;
-    const CGFloat VolumeOffsetOfAxis = self.graphMarginL;//柱状图比坐标图的偏移
     
     //x轴分三段，前后两根竖线为实线，中间2根竖线为虚线
     CGFloat x = lineStartX;
@@ -256,7 +253,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         createXAxisLabel([self xAxisDateString:xAxisIndex forMarker:NO], x - kXLabelWidth / 2, positionYBottom, NSTextAlignmentCenter);
     }
     //成交量柱状图竖直虚线
-    [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - VolumeOffsetOfAxis, 0) to:CGPointMake(x - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+    [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - offsetFromVolumeToAxis, 0) to:CGPointMake(x - offsetFromVolumeToAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
     
     x += spaceBetweenXLabels;
     [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, positionYTop) to:CGPointMake(x, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
@@ -265,7 +262,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         createXAxisLabel([self xAxisDateString:xAxisIndex forMarker:NO], x - kXLabelWidth / 2, positionYBottom, NSTextAlignmentCenter);
     }
     //成交量柱状图竖直虚线
-    [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - VolumeOffsetOfAxis, 0) to:CGPointMake(x - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+    [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - offsetFromVolumeToAxis, 0) to:CGPointMake(x - offsetFromVolumeToAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
     
     x += spaceBetweenXLabels;
     [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
@@ -384,11 +381,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     [self.graphBackgroundView addSubview:markerBottom];
 }
 
-- (CGFloat)xPositionOfVolumeBarCenter:(NSUInteger)pointIndex{
-    //第pointIndex个成交量bar的中间位置，实际等于坐标系的点x除去左方空白graphMarginL
-    return self.positionStepX * (pointIndex + 0.5);
-}
-
 - (void)createVolumeGraph{
     //创建volumeGraph，但是尚未画每个成交量bar图
     for (CAShapeLayer *l in volumeLayers) {
@@ -427,7 +419,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     for (int i = 0; i < kLineData.count; ++i) {
         KLineElement *e = kLineData[i];
         CGFloat volumeBarHeight = maxVolume == 0 ? 0 : volumeGraphHeight * e.volume / maxVolume;
-        CGFloat x = [self xPositionOfVolumeBarCenter:i];
+        CGFloat x = [self xPositionAtIndex:i] - offsetFromVolumeToAxis;
         //volume bar占满x刻度段，收盘价>=开盘价 为红色，否则为绿色
         CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:volumeWidth color:(e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor)];
         [volumeLayers addObject:vLayer];

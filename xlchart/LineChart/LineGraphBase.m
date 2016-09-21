@@ -21,6 +21,7 @@
 @synthesize xAxisArray;
 @synthesize xAxisLabels;
 @synthesize positionStepX;
+@synthesize isXAtCenter;
 @synthesize yAxisValues;
 @synthesize positionYOfYAxisValues;
 @synthesize positionStepY;
@@ -51,6 +52,7 @@
         graphMarginR = 20;
         
         self.fractionDigits = 0;
+        self.isXAtCenter = NO;
         self.axisFont = [UIFont systemFontOfSize:12];
         self.textColor = [UIColor blackColor];
         self.gridLineColor = [UIColor lightGrayColor];
@@ -99,8 +101,8 @@
 }
 
 - (CGFloat)xPositionAtIndex:(NSUInteger)pointIndex{
-    //第pointIndex个点在x轴的位置
-    return self.graphMarginL + self.positionStepX * pointIndex;
+    //第pointIndex个点在x轴的位置。isXAtCenter 则返回x轴刻度段中点，否则返回左端点
+    return self.graphMarginL + self.positionStepX * (pointIndex + (isXAtCenter ? 0.5 : 0));
 }
 
 - (int)indexOfXForPosition:(CGFloat)positionX{

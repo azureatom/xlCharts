@@ -26,6 +26,7 @@
 @property (nonatomic, strong) NSArray *xAxisArray;//array of NSString, x轴的刻度，@""表示不显示该刻度值和竖直刻度线
 @property (strong, nonatomic) NSMutableArray *xAxisLabels;//array of UILabel, 显示x轴的刻度值的label
 @property (assign, nonatomic) CGFloat positionStepX;//相邻点的x方向距离。SingleLineGraphScrollable至少为minPositionStepX；SingleLineGraphNonScrollable自动计算使x轴刚好占满区域长度。
+@property (assign, nonatomic) BOOL isXAtCenter;//点的x位置在x轴刻度段中点还是左端点，默认NO。
 
 @property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值。
 @property (strong, nonatomic) NSMutableArray *positionYOfYAxisValues;//arrray of NSNumber，yAxisValues对应的y轴刻度值的view的y位置，从原点到最高点。刻度值之间的距离等于positionStepY，但SingleLineGraphBase中超范围的y值例外。
