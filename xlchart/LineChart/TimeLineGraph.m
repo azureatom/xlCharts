@@ -72,7 +72,6 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         textUpColor = [UIColor redColor];
         textDownColor = [UIColor greenColor];
         volumeColor = [UIColor grayColor];
-        offsetFromVolumeToAxis = self.graphMarginL;
         
         NSMutableArray *emptyBetweenHours = [[NSMutableArray alloc] initWithCapacity:kMinutesBetweenHours];
         for (int i = 0; i < kMinutesBetweenHours; ++i) {
@@ -179,6 +178,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         volumeGraphHeight = 0;
         volumeLayers = nil;
     }
+    offsetFromVolumeToAxis = self.graphMarginL;
     
     lines = [[NSMutableArray alloc] init];
     for (NSUInteger i = 0; i < [self.dataSource numberOfLinesInTimeLine:self]; ++i) {

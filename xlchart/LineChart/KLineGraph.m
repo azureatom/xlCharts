@@ -67,7 +67,6 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         textDownColor = [UIColor greenColor];
         maxBarWidth = 5;
         volumeHeightRatio = 0.25;
-        offsetFromVolumeToAxis = self.graphMarginL;
     }
     return self;
 }
@@ -144,6 +143,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         volumeGraphHeight = 0;
         volumeLayers = nil;
     }
+    offsetFromVolumeToAxis = self.graphMarginL;
     
     lines = [[NSMutableArray alloc] init];
     for (NSUInteger i = 0; i < [self.dataSource numberOfLinesInkLine:self]; ++i) {
@@ -164,7 +164,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         self.positionStepX = maxBarWidth;
     }
     //蜡烛图中，上影线的宽度 = MIN(1, 蜡烛图的宽度/2)
-    shadowLineWidth = MIN(1, self.positionStepX / 2);
+    shadowLineWidth = MIN(1, self.positionStepX / 4);
     return YES;
 }
 
