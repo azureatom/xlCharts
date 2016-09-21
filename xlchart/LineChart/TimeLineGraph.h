@@ -39,7 +39,7 @@ static const double kVolumeHeightRatio = 0.25;//如果显示成交量柱状图�
 @property(weak, nonatomic) id<TimeLineGraphDataSource> dataSource;
 
 @property(assign, nonatomic) double yesterdayClosePrice;//昨日收盘价，默认0，此时涨跌幅显示为"0.00%"
-@property(assign, nonatomic) double minPriceChangePercent;//价格偏离昨日收盘价的最小百分比，默认0.02，也即[-2.00%, 2.00%]
+@property(assign, nonatomic) double minPriceChangePercent;//价格偏离昨日收盘价的最小百分比，默认0.01，也即[-1.00%, 1.00%]
 
 @property(strong, nonatomic) UIColor *textUpColor; //y轴上半部上涨的颜色，默认[UIColor redColor]
 @property(strong, nonatomic) UIColor *textDownColor;//y轴下半部下跌的颜色，默认[UIColor greenColor]

@@ -89,7 +89,7 @@
         self.drawGridX = TRUE;
         
         self.gridLineColor = [UIColor lightGrayColor];
-        self.gridLineWidth = 0.3;
+        self.gridLineWidth = 0.4;
         
         self.textColor = [UIColor blackColor];
         self.textFont = [UIFont systemFontOfSize:12];

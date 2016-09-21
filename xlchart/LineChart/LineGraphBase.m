@@ -54,7 +54,7 @@
         self.axisFont = [UIFont systemFontOfSize:12];
         self.textColor = [UIColor blackColor];
         self.gridLineColor = [UIColor lightGrayColor];
-        self.gridLineWidth = 0.3;
+        self.gridLineWidth = 0.4;
         
         self.showMarker = YES;
         self.isMarkerShowing = NO;
@@ -104,12 +104,19 @@
 }
 
 - (int)indexOfXForPosition:(CGFloat)positionX{
+    /*合理范围为[0, xAxisArray.count]，也即包括x轴左右两端点位置
+     通常返回的是刻度段左端点位置对应的xAxisArray里点的index，只有最后一个x刻度段两边的点，都返回xAxisArray里最后一个点的index。
+     */
     int pointIndex = (positionX - self.graphMarginL) / self.positionStepX;
     if (pointIndex < 0) {
         //在坐标系的左边，返回-1
         return -1;
     }
-    if (pointIndex >= self.xAxisArray.count) {
+    if (pointIndex == self.xAxisArray.count) {
+        //在x轴右端点处，返回xAxisArray里最后一个点的index
+        return pointIndex - 1;
+    }
+    if (pointIndex > self.xAxisArray.count) {
         //没有这么多点，也即计算出的点位置没有点
         return -1;
     }
@@ -364,7 +371,8 @@
     if (showMarker) {
         __weak __typeof(self) wself = self;
         self.graphBackgroundView.touchLocationBlock = ^(CGPoint location){
-            if ([wself showMakerNearPoint:location checkXDistanceOnly:NO]) {
+            //目前只比较x方向的距离，不比较点之间的直线距离
+            if ([wself showMakerNearPoint:location checkXDistanceOnly:YES]) {
                 wself.isMarkerShowing = YES;
             }
         };

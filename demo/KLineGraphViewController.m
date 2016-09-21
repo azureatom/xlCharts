@@ -60,7 +60,7 @@
     kLineGraph.markerTextColor = [UIColor whiteColor];
     kLineGraph.markerBgColor = [UIColor grayColor];
     
-    kLineGraph.maxBarWidth = 30;
+    kLineGraph.maxBarWidth = 5;
     kLineGraph.volumeHeightRatio = 0.25;
     [self.view addSubview:kLineGraph];
     

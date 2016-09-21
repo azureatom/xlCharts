@@ -14,8 +14,9 @@
 //y轴刻度值的label宽高，显示价格、涨幅的提示框。宽高 恰好显示完整2.123, -10.00%即可
 static const CGFloat kYLabelWidth = 46;//y轴刻度值的label长度，显示价格、涨幅的提示框的长度。刚好显示完默认的12号字体-10.00%
 static const CGFloat kYLabelHeight = 15;
-//x轴刻度值的label长度，同self.heightXAxisLabel一起，恰好显示完整10:30即可
-static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
+//x轴刻度值的label长度，同self.heightXAxisLabel一起，恰好显示完整2016-10即可
+static const CGFloat kXLabelWidth = 67;//50刚好显示完默认的12号字体“2016-10”，67刚好显示完“2016-10-10”。但是marker需要显示“2016-10-10”，故用67
+static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX宽度比例
 
 @interface KLineGraph()
 @property (assign, nonatomic) CGFloat shadowLineWidth;//上影线、下影线宽度
@@ -61,7 +62,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         
         textUpColor = [UIColor redColor];
         textDownColor = [UIColor greenColor];
-        maxBarWidth = 30;
+        maxBarWidth = 5;
         volumeHeightRatio = 0.25;
     }
     return self;
@@ -70,6 +71,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 //返回x轴的时间点字符串
 -(NSString *)xAxisDateString:(int)xIndex forMarker:(BOOL)isMarker{
     NSString *dateString = self.xAxisArray[xIndex];
+    return dateString;
     //x轴刻度值显示年月2016-10。marker显示日期2010-10-10
     return isMarker ? dateString : [dateString substringToIndex:7];
 }
@@ -121,6 +123,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
      显示十字线marker时，竖直线和x轴刻度值对齐，只显示markerBottom日期。
      */
     [super reloadGraph];
+    
+    //DDLogTodo(@"先画marker，再画volume和candleStick，导致marker被它们遮挡。同理，曲线也被遮挡。");
     [self drawVolumeGraphBars];
     [self drawCandleStick];
 }
@@ -323,14 +327,15 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 }
 
 -(void)drawCandleStick{
+    CGFloat candleWidth = self.positionStepX * kCandleWidthRatio;
     for (int i = 0; i < kLineData.count; ++i) {
         KLineElement *e = kLineData[i];
         UIColor *candleColor = e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor;
         CGFloat xCenter = [self xPositionAtIndex:i];
         //上下影线
         [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake(xCenter, [self yPositionOfValue:e.highPrice]) to:CGPointMake(xCenter, [self yPositionOfValue:e.lowPrice]) width:shadowLineWidth color:candleColor]];
-        //蜡烛图实体
-        [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake(xCenter, [self yPositionOfValue:e.openPrice]) to:CGPointMake(xCenter, [self yPositionOfValue:e.closePrice]) width:self.positionStepX color:candleColor]];
+        //蜡烛图实体。红色蜡烛图采用空心？
+        [self.graphBackgroundView.layer addSublayer:[Tool layerLineFrom:CGPointMake(xCenter, [self yPositionOfValue:e.openPrice]) to:CGPointMake(xCenter, [self yPositionOfValue:e.closePrice]) width:candleWidth color:candleColor]];
     }
 }
 
@@ -367,12 +372,14 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     [self.graphBackgroundView.layer addSublayer:self.yMarker];
     
     markerBottom = [[UILabel alloc] initWithFrame:CGRectMake(0, self.graphMarginV + [self heightYAxis], kXLabelWidth, self.heightXAxisLabel)];//只需修改x位置
-    markerBottom.font = self.axisFont;
+    markerBottom.font = [UIFont fontWithName:self.axisFont.fontName size:self.axisFont.pointSize - 2];//使用小点的字体，使文字左右留出空间好看
     markerBottom.textColor = self.markerTextColor;
     markerBottom.backgroundColor = self.markerBgColor;
     markerBottom.textAlignment = NSTextAlignmentCenter;
     markerBottom.adjustsFontSizeToFitWidth = YES;
     markerBottom.minimumScaleFactor = 0.7;
+    markerBottom.layer.masksToBounds = YES;
+    markerBottom.layer.cornerRadius = self.heightXAxisLabel / 4;
     markerBottom.hidden = YES;
     [self.graphBackgroundView addSubview:markerBottom];
 }
@@ -408,6 +415,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     //竖线的最高点和最低点的y
     const CGFloat volumeGraphYTop = 0;//成交量柱状图的高度范围
     const CGFloat volumeGraphYBottom = volumeGraphYTop + volumeGraphHeight;
+    const CGFloat volumeWidth = self.positionStepX * kCandleWidthRatio;
     
     //最大成交量对应线高为volumeGraphHeight，其他成交量线高按比例
     double maxVolume = 0;//成交量单位为手
@@ -421,7 +429,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         CGFloat volumeBarHeight = maxVolume == 0 ? 0 : volumeGraphHeight * e.volume / maxVolume;
         CGFloat x = [self xPositionOfVolumeBarCenter:i];
         //volume bar占满x刻度段，收盘价>=开盘价 为红色，否则为绿色
-        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:self.positionStepX color:(e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor)];
+        CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeBarHeight) width:volumeWidth color:(e.closePrice >= e.openPrice ? self.textUpColor : self.textDownColor)];
         [volumeLayers addObject:vLayer];
         [self.volumeGraph.layer addSublayer:vLayer];
     }

@@ -36,7 +36,7 @@
 @property (nonatomic, strong) UIColor *textColor;//通常的字体颜色，如：坐标轴刻度值、defaultMarker、LegendView，默认[UIColor blackColor]
 
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
-@property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
+@property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.4
 
 //marker和十字线
 @property (assign, nonatomic) BOOL showMarker; //是否显示十字线和提示框，默认YES

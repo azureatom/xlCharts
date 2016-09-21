@@ -65,7 +65,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
         self.shouldDrawPoints = NO;
         
         yesterdayClosePrice = 0;
-        minPriceChangePercent = 0.02;
+        minPriceChangePercent = 0.01;
         textUpColor = [UIColor redColor];
         textDownColor = [UIColor greenColor];
         volumeColor = [UIColor grayColor];
@@ -112,6 +112,16 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
 - (CGPoint)optimizedPoint:(CGPoint)point{
     return point;//因为分时图的线很密，两个点的坐标差值可能小于1，故不能对点坐标取整处理
+}
+
+//刻度段的中点
+- (CGFloat)xPositionAtIndex:(NSUInteger)pointIndex{
+    return self.graphMarginL + self.positionStepX * (pointIndex + 0.5);
+}
+
+//刻度段的左端点，目前只用来确定y轴和竖直刻度线的位置
+- (CGFloat)xLeftPositionAtIndex:(NSUInteger)pointIndex{
+    return self.graphMarginL + self.positionStepX * pointIndex;
 }
 
 /*竖直方向
@@ -271,27 +281,27 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     while (i < self.xAxisArray.count) {
         NSString *xText = self.xAxisArray[i];
         if (xText.length > 0) {
-            CGFloat x = [self xPositionAtIndex:i];
+            CGFloat xLeft = [self xLeftPositionAtIndex:i];
             /*显示x轴刻度值和竖线
              其中第一个（y轴）和最右边线为实线，其他为虚线。其中最右边线在刻度值往外positionStepX处。
              右边线的刻度值显示在左侧，其他显示在竖线的右侧
              */
             if (showingLineIndex == 0) {
-                createXAxisLabel(xText, x, positionYBottom, NSTextAlignmentLeft);
-                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
+                createXAxisLabel(xText, xLeft, positionYBottom, NSTextAlignmentLeft);
+                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(xLeft, positionYTop) end:CGPointMake(xLeft, positionYBottom)]];
             }
             else if (showingLineIndex == kNumberOfXAxisLabels - 1){
-                createXAxisLabel(xText, x - kXLabelWidth, positionYBottom, NSTextAlignmentRight);
-                x = [self xPositionAtIndex:i + 1];
-                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(x, positionYTop) end:CGPointMake(x, positionYBottom)]];
+                createXAxisLabel(xText, xLeft - kXLabelWidth, positionYBottom, NSTextAlignmentRight);
+                xLeft = [self xLeftPositionAtIndex:i + 1];
+                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(xLeft, positionYTop) end:CGPointMake(xLeft, positionYBottom)]];
             }
             else{
-                createXAxisLabel(xText, x - kXLabelWidth / 2, positionYBottom, NSTextAlignmentLeft);
+                createXAxisLabel(xText, xLeft - kXLabelWidth / 2, positionYBottom, NSTextAlignmentLeft);
                 //虚线
-                [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x, positionYTop) to:CGPointMake(x, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+                [self.graphBackgroundView.layer addSublayer:[Tool layerDashedFrom:CGPointMake(xLeft, positionYTop) to:CGPointMake(xLeft, positionYBottom) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
                 
                 //成交量柱状图竖直虚线
-                [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(x - VolumeOffsetOfAxis, 0) to:CGPointMake(x - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
+                [self.volumeGraph.layer addSublayer:[Tool layerDashedFrom:CGPointMake(xLeft - VolumeOffsetOfAxis, 0) to:CGPointMake(xLeft - VolumeOffsetOfAxis, volumeGraphHeight) dashHeight:self.gridLineWidth dashLength:2 spaceLength:1 dashColor:self.gridLineColor]];
             }
             i += kMinutesBetweenHours;//相邻刻度值至少间隔kMinutesBetweenHours个positionStepX
             ++showingLineIndex;
@@ -402,6 +412,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     markerLeft.textAlignment = NSTextAlignmentCenter;
     markerLeft.adjustsFontSizeToFitWidth = YES;
     markerLeft.minimumScaleFactor = 0.7;
+    markerLeft.layer.masksToBounds = YES;
+    markerLeft.layer.cornerRadius = kYLabelHeight / 8;
     markerLeft.hidden = YES;
     [self.graphBackgroundView addSubview:markerLeft];
     
@@ -412,23 +424,27 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     markerRight.textAlignment = NSTextAlignmentCenter;
     markerRight.adjustsFontSizeToFitWidth = YES;
     markerRight.minimumScaleFactor = 0.7;
+    markerRight.layer.masksToBounds = YES;
+    markerRight.layer.cornerRadius = kYLabelHeight / 8;
     markerRight.hidden = YES;
     [self.graphBackgroundView addSubview:markerRight];
     
     markerBottom = [[UILabel alloc] initWithFrame:CGRectMake(0, self.graphMarginV + [self heightYAxis], kXLabelWidth, self.heightXAxisLabel)];//只需修改x位置
-    markerBottom.font = self.axisFont;
+    markerBottom.font = [UIFont fontWithName:self.axisFont.fontName size:self.axisFont.pointSize - 2];//使用小点的字体，使文字左右留出空间好看
     markerBottom.textColor = self.markerTextColor;
     markerBottom.backgroundColor = self.markerBgColor;
     markerBottom.textAlignment = NSTextAlignmentCenter;
     markerBottom.adjustsFontSizeToFitWidth = YES;
     markerBottom.minimumScaleFactor = 0.7;
+    markerBottom.layer.masksToBounds = YES;
+    markerBottom.layer.cornerRadius = self.heightXAxisLabel / 4;
     markerBottom.hidden = YES;
     [self.graphBackgroundView addSubview:markerBottom];
 }
 
-- (CGFloat)xPositionOfVolume:(NSUInteger)pointIndex{
-    //第pointIndex个成交量线的位置，实际等于坐标系的点x除去左方空白graphMarginL
-    return self.positionStepX * pointIndex;//等于[self xPositionAtIndex:pointIndex] - self.graphMarginL
+- (CGFloat)xPositionOfVolumeBarCenter:(NSUInteger)pointIndex{
+    //第pointIndex个成交量线的位置，实际等于坐标系的点x[self xPositionAtIndex:]除去左方空白graphMarginL
+    return self.positionStepX * (pointIndex + 0.5);
 }
 
 - (void)createVolumeGraph{
@@ -468,7 +484,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     for (int i = 0; i < volumeArray.count; ++i) {
         long long volume = ((NSNumber *)volumeArray[i]).longLongValue;
         CGFloat volumeLineHeight = maxVolume == 0 ? 0 : volumeGraphHeight * volume / maxVolume;
-        CGFloat x = [self xPositionOfVolume:i];
+        CGFloat x = [self xPositionOfVolumeBarCenter:i];
         CAShapeLayer *vLayer = [Tool layerLineFrom:CGPointMake(x, volumeGraphYBottom) to:CGPointMake(x, volumeGraphYBottom - volumeLineHeight) width:self.gridLineWidth color:volumeColor];
         [volumeLayers addObject:vLayer];
         [self.volumeGraph.layer addSublayer:vLayer];

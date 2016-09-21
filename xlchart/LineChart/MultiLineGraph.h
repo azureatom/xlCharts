@@ -123,7 +123,7 @@ typedef enum{
 @property (nonatomic) BOOL drawGridY; //y轴水平刻度线，Default is TRUE
 //set property for the grid
 @property (nonatomic, strong) UIColor *gridLineColor; //Default is [UIColor lightGrayColor]
-@property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.3
+@property (assign, nonatomic) CGFloat gridLineWidth; //Default is 0.4
 
 //show MARKER when interacting with graph
 @property (nonatomic) BOOL showMarker; //是否显示十字线和默认的提示框，提示框默认显示在坐标系的上方，Default is YES
