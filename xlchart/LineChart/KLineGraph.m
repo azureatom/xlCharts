@@ -63,7 +63,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         
         textUpColor = [UIColor redColor];
         textDownColor = [UIColor greenColor];
-        maxBarWidth = 5;
+        maxBarWidth = 6;
         volumeHeightRatio = 0.25;
     }
     return self;

@@ -49,6 +49,6 @@ typedef enum{
 
 @property(strong, nonatomic) UIColor *textUpColor; //y轴上半部上涨的颜色，默认[UIColor redColor]
 @property(strong, nonatomic) UIColor *textDownColor;//y轴下半部下跌的颜色，默认[UIColor greenColor]
-@property(assign, nonatomic) CGFloat maxBarWidth;//柱状图的最大宽度，默认5
+@property(assign, nonatomic) CGFloat maxBarWidth;//柱状图的最大宽度，默认6
 @property(assign, nonatomic) double volumeHeightRatio;//成交量柱状图占整个frame的高度比例，默认0.25
 @end
