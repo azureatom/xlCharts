@@ -382,17 +382,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
         ((UILabel *)maLabels[i]).textColor = l.lineColor;
     }
     
-    if (kLineData.count == 0) {
-        ma5Label.text = @"MA5:";
-        ma10Label.text = @"MA10:";
-        ma20Label.text = @"MA20:";
-    }
-    else{
-        KLineElement *e = kLineData[0];
-        ma5Label.text = [NSString stringWithFormat:@"MA5:%.03f", e.ma5];
-        ma10Label.text = [NSString stringWithFormat:@"MA10:%.03f", e.ma10];
-        ma20Label.text = [NSString stringWithFormat:@"MA20:%.03f", e.ma20];
-    }
+    [self restoreMALabels];
 }
 
 -(void)createMarker{
@@ -489,11 +479,27 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     [self.volumeGraph addSubview:l];
 }
 
+-(void)restoreMALabels{
+    if (kLineData.count == 0) {
+        ma5Label.text = @"MA5:";
+        ma10Label.text = @"MA10:";
+        ma20Label.text = @"MA20:";
+    }
+    else{
+        KLineElement *e = kLineData.lastObject;
+        ma5Label.text = [NSString stringWithFormat:@"MA5:%.03f", e.ma5];
+        ma10Label.text = [NSString stringWithFormat:@"MA10:%.03f", e.ma10];
+        ma20Label.text = [NSString stringWithFormat:@"MA20:%.03f", e.ma20];
+    }
+}
+
 - (void)dismissMarker{
     [super dismissMarker];
     if (self.markerBottom != nil) {
         self.markerBottom.hidden = YES;
     }
+    
+    [self restoreMALabels];
     if ([self.delegate respondsToSelector:@selector(markerDidDismissInKLine:)]) {
         [self.delegate markerDidDismissInKLine:self];
     }
