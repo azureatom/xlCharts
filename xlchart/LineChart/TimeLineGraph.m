@@ -19,6 +19,8 @@ static const CGFloat kYLabelHeight = 15;
 //x轴刻度值的label长度，同self.heightXAxisLabel一起，恰好显示完整10:30即可
 static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
 
+static const double kVolumeHeightRatio = 0.25;//如果显示成交量柱状图，则占整个frame的高度比例
+
 @interface TimeLineGraph()
 @property (strong, nonatomic) NSMutableArray *lines;//array of LineChartDataRenderer *
 @property (strong, nonatomic) NSMutableArray *rightYAxisValues;//array of NSNumber，最右边线从下到上的刻度值，百分数
