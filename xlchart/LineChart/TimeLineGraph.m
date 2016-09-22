@@ -595,7 +595,7 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     self.markerBottom.hidden = NO;
 
     if ([self.delegate respondsToSelector:@selector(timeLine:didTapLine:atPoint:userInfo:)]) {
-        [self.delegate timeLine:self didTapLine:0 atPoint:closestPointIndex userInfo:@{@"p": priceString, @"pc": changeRateString, @"d":[NSNumber numberWithInt:(changeRate > 0 ? 1 :(changeRate < 0 ? -1 : 0))], @"t": xTimeString}];
+        [self.delegate timeLine:self didTapLine:0 atPoint:closestPointIndex userInfo:@{@"p": priceString, @"pc": changeRateString, @"t": xTimeString}];
     }
     return YES;
 }

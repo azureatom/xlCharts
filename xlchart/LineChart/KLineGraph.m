@@ -22,7 +22,9 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 @property (assign, nonatomic) CGFloat shadowLineWidth;//上影线、下影线宽度
 @property (strong, nonatomic) NSMutableArray *lines;//array of LineChartDataRenderer *
 @property (strong, nonatomic) NSArray *kLineData;//array of KLineElement
-@property (strong, nonatomic) NSArray *volumeArray;//成交量
+@property (strong, nonatomic) UILabel *ma5Label;
+@property (strong, nonatomic) UILabel *ma10Label;
+@property (strong, nonatomic) UILabel *ma20Label;
 @property (strong, nonatomic) UIView *volumeGraph;//成交量柱状图📊
 @property (assign, nonatomic) CGFloat volumeGraphHeight;//成交量柱状图高度
 @property (assign, nonatomic) CGFloat offsetFromVolumeToAxis;//成交量柱状图比曲线坐标图的x起点偏移
@@ -41,7 +43,9 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
 @synthesize shadowLineWidth;
 @synthesize lines;
 @synthesize kLineData;
-@synthesize volumeArray;
+@synthesize ma5Label;
+@synthesize ma10Label;
+@synthesize ma20Label;
 @synthesize volumeGraph;
 @synthesize volumeGraphHeight;
 @synthesize offsetFromVolumeToAxis;
@@ -113,7 +117,8 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     /*y轴显示3个刻度值，最高价+0.1、中值、最低价-0.1。如果没有点，则显示为1, 0.5, 0；如果只有一个点值（也即最高价和最低价相同），则为+0.1， 该值，-0.1。
      x轴分三段，由2个竖直虚线间隔，加上两边的竖直实线，也即4个刻度值。每个刻度值对应竖线的k线日期，刻度值只显示年月，如“2016-09”
      x轴刻度值对应蜡烛图的中心，也即刻度段和蜡烛图对齐，成交量柱状图也和刻度段对齐。
-     positionStepX 不超过 maxBarWidth
+     positionStepX 不超过 maxBarWidth。
+     右上角显示MA5、MA10、MA20。
      成交量柱状图，线宽同positionStepX，分红色和绿色显示。
      显示十字线marker时，竖直线和x轴刻度值对齐，只显示markerBottom日期。
      */
@@ -133,6 +138,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     [self drawYAxis];
     [self drawCandleStick];
     [self drawLines];
+    [self drawMALabels];
     [self drawVolumeGraphBars];
     [self createMarker];
 }
@@ -144,14 +150,7 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     self.yAxisValues = [[NSMutableArray alloc] init];
     self.positionYOfYAxisValues = [[NSMutableArray alloc] init];
     self.kLineData = [self.dataSource kLineDataInkLine:self];
-    if ([self.dataSource respondsToSelector:@selector(volumeDataInkLine:)]) {
-        volumeArray = [self.dataSource volumeDataInkLine:self];
-        volumeGraphHeight = [super heightGraph] * volumeHeightRatio;
-    }
-    else{
-        volumeArray = nil;
-        volumeGraphHeight = 0;
-    }
+    volumeGraphHeight = [super heightGraph] * volumeHeightRatio;
     offsetFromVolumeToAxis = self.graphMarginL;
     
     lines = [[NSMutableArray alloc] init];
@@ -345,6 +344,57 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     }
 }
 
+-(void)drawMALabels{
+    if (ma5Label != nil) {
+        [ma5Label removeFromSuperview];
+    }
+    if (ma10Label != nil) {
+        [ma10Label removeFromSuperview];
+    }
+    if (ma20Label != nil) {
+        [ma20Label removeFromSuperview];
+    }
+    
+    CGRect axisF = [self axisFrame];
+    CGFloat maLabelWidth = axisF.size.width / 5;//坐标系x轴分5部分，后三部分显示MA5:2.123等
+    
+    CGRect labelFrame = CGRectMake(CGRectGetMaxX(axisF) - maLabelWidth, axisF.origin.y, maLabelWidth, 20);
+    ma20Label = [[UILabel alloc] initWithFrame:labelFrame];
+
+    labelFrame.origin.x -= maLabelWidth;
+    ma10Label = [[UILabel alloc] initWithFrame:labelFrame];
+    
+    labelFrame.origin.x -= maLabelWidth;
+    ma5Label = [[UILabel alloc] initWithFrame:labelFrame];
+    
+    NSArray *maLabels = @[ma5Label, ma10Label, ma20Label];
+    for (UILabel *l in maLabels) {
+        l.textAlignment = NSTextAlignmentLeft;
+        l.font = [UIFont systemFontOfSize:9];
+        l.adjustsFontSizeToFitWidth = YES;
+        l.minimumScaleFactor = 0.7;
+        [self.graphBackgroundView addSubview:l];
+    }
+    //maLabels的数目应该 <= lines的数目
+    for (int i = 0; i < lines.count && i < maLabels.count; ++i) {
+        //设置maLabels的文字颜色
+        LineChartDataRenderer *l = lines[i];
+        ((UILabel *)maLabels[i]).textColor = l.lineColor;
+    }
+    
+    if (kLineData.count == 0) {
+        ma5Label.text = @"MA5:";
+        ma10Label.text = @"MA10:";
+        ma20Label.text = @"MA20:";
+    }
+    else{
+        KLineElement *e = kLineData[0];
+        ma5Label.text = [NSString stringWithFormat:@"MA5:%.03f", e.ma5];
+        ma10Label.text = [NSString stringWithFormat:@"MA10:%.03f", e.ma10];
+        ma20Label.text = [NSString stringWithFormat:@"MA20:%.03f", e.ma20];
+    }
+}
+
 -(void)createMarker{
     if (self.xMarker != nil) {
         [self.xMarker removeFromSuperlayer];
@@ -489,6 +539,11 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     self.markerBottom.frame = tempFrame;
     self.markerBottom.text = [self xAxisDateString:closestPointIndex forMarker:YES];
     self.markerBottom.hidden = NO;
+    
+    KLineElement *e = kLineData[closestPointIndex];
+    ma5Label.text = [NSString stringWithFormat:@"MA5:%.03f", e.ma5];
+    ma10Label.text = [NSString stringWithFormat:@"MA10:%.03f", e.ma10];
+    ma20Label.text = [NSString stringWithFormat:@"MA20:%.03f", e.ma20];
     
     if ([self.delegate respondsToSelector:@selector(kLine:didTapLine:atPoint:)]) {
         [self.delegate kLine:self didTapLine:0 atPoint:closestPointIndex];

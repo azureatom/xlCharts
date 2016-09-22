@@ -33,8 +33,6 @@ typedef enum{
 - (NSArray *)kLineDataInkLine:(KLineGraph *)graph;//用于初始化kLineData
 //暂时不实现跳过点的功能
 //- (NSUInteger)kLine:(KLineGraph *)graph skipedNumber:(NSUInteger)lineIndex;//该曲线跳过的点数
-@optional
-- (NSArray *)volumeDataInkLine:(KLineGraph *)graph;//成交量数据，array of NSNumber *
 @end
 
 /*股票分时图

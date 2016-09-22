@@ -9,14 +9,14 @@
 #import <Foundation/Foundation.h>
 
 @interface KLineElement : NSObject
-@property(strong, nonatomic) NSString *dateString;
+@property(strong, nonatomic) NSString *dateString;//2016-09-12
 @property(assign, nonatomic) double openPrice;
 @property(assign, nonatomic) double highPrice;
 @property(assign, nonatomic) double closePrice;
 @property(assign, nonatomic) double lowPrice;
 @property(assign, nonatomic) double volume;//手
 @property(assign, nonatomic) double priceChange;
-@property(assign, nonatomic) double changeRate;
+@property(assign, nonatomic) double changeRate;//10.12%，百分号前面的数字部分
 @property(assign, nonatomic) double ma5;//5日均价
 @property(assign, nonatomic) double ma10;
 @property(assign, nonatomic) double ma20;
