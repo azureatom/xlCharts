@@ -31,6 +31,7 @@
 @property (strong, nonatomic) NSMutableArray *yAxisValues;//array of NSNumber，y轴从下到上的刻度值。
 @property (strong, nonatomic) NSMutableArray *positionYOfYAxisValues;//arrray of NSNumber，yAxisValues对应的y轴刻度值的view的y位置，从原点到最高点。刻度值之间的距离等于positionStepY，但SingleLineGraphBase中超范围的y值例外。
 @property (assign, nonatomic) CGFloat positionStepY;
+@property (assign, nonatomic) BOOL showTopYLine;//是否显示y轴顶端横线，默认YES
 
 //text font and color
 @property (nonatomic, strong) UIFont *axisFont;//坐标轴刻度值label的字体，也用于默认的defaultMarker的字体，默认[UIFont systemFontOfSize:12]

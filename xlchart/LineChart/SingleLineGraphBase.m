@@ -508,7 +508,10 @@
     for (int i =1; i < self.positionYOfYAxisValues.count; ++i) {
         CGFloat positionY = ((NSNumber *)self.positionYOfYAxisValues[i]).floatValue;
         if (self.drawGridY) {
-            [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
+            //非最高横线 或者 要求显示最高横线
+            if (i < self.positionYOfYAxisValues.count - 1 || self.showTopYLine) {
+                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
+            }
         }
         if (i < self.positionYOfYAxisValues.count - 1 || shouldShowMaxYLabel) {//非最高横线 或者 should显示最高横线刻度值
             createYAxisLabel([self formattedStringForNumber:self.yAxisValues[i]], lineStartX, positionY, self.positionStepY);

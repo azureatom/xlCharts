@@ -25,6 +25,7 @@
 @synthesize yAxisValues;
 @synthesize positionYOfYAxisValues;
 @synthesize positionStepY;
+@synthesize showTopYLine;
 @synthesize axisFont;
 @synthesize textColor;
 @synthesize gridLineColor;
@@ -53,6 +54,7 @@
         
         self.fractionDigits = 0;
         self.isXAtCenter = NO;
+        self.showTopYLine = YES;
         self.axisFont = [UIFont systemFontOfSize:12];
         self.textColor = [UIColor blackColor];
         self.gridLineColor = [UIColor lightGrayColor];

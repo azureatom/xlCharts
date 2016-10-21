@@ -340,7 +340,9 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
             labelY = positionY - kYLabelHeight;
         }
         else if (i == self.positionYOfYAxisValues.count - 1){
-            [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
+            if (self.showTopYLine) {
+                [self.graphBackgroundView.layer addSublayer:[self gridLineLayerStart:CGPointMake(lineStartX, positionY) end:CGPointMake(lineEndX, positionY)]];
+            }
             labelY = positionY;
         }
         else{
