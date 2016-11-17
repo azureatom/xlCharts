@@ -21,7 +21,7 @@ typedef enum{
 @protocol KLineGraphDelegate <NSObject>
 @optional
 - (void)kLine:(KLineGraph *)graph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex;
-- (void)markerDidDismissInKLine:(KLineGraph *)graph;//marker消失
+- (void)didMarkerDismissInKLine:(KLineGraph *)graph;//marker消失
 @end
 
 @protocol KLineGraphDataSource <NSObject>

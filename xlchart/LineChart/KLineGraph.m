@@ -500,10 +500,9 @@ static const CGFloat kCandleWidthRatio = 0.9;//蜡烛图宽度占positionStepX�
     if (self.markerBottom != nil) {
         self.markerBottom.hidden = YES;
     }
-    
     [self restoreMALabels];
-    if ([self.delegate respondsToSelector:@selector(markerDidDismissInKLine:)]) {
-        [self.delegate markerDidDismissInKLine:self];
+    if ([self.delegate respondsToSelector:@selector(didMarkerDismissInKLine:)]) {
+        [self.delegate didMarkerDismissInKLine:self];
     }
 }
 

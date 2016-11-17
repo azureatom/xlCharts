@@ -18,6 +18,7 @@ const static CGFloat graphMarginR = 20;//图表右侧的空白
 @class MultiLineGraph;
 
 @protocol MultiLineGraphDelegate  <NSObject>
+@optional
 /**
  *  点击点的index和y值
  *
@@ -27,6 +28,7 @@ const static CGFloat graphMarginR = 20;//图表右侧的空白
  *  @param yValue 点击点对应的y值
  */
 - (void)lineGraph:(MultiLineGraph *)graph didTapLine:(NSInteger)lineNumber atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
+- (void)didMarkerDismissInMultiLine:(MultiLineGraph *)graph;//marker消失
 @end
 
 @protocol MultiLineGraphDataSource  <NSObject>

@@ -18,7 +18,7 @@ static const double kVolumeHeightRatio = 0.25;//如果显示成交量柱状图�
 @optional
 //userInfo @{@"p": price string like @"1.123", @"pc": price change rate like @"+10.12%", @"t": time string like @"10:10"}
 - (void)timeLine:(TimeLineGraph *)timeLineGraph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex userInfo:(NSDictionary *)userInfo;
-- (void)markerDidDismissInTimeLine:(TimeLineGraph *)timeLineGraph;//marker消失
+- (void)didMarkerDismissInTimeLine:(TimeLineGraph *)graph;//marker消失
 @end
 
 @protocol TimeLineGraphDataSource <NSObject>

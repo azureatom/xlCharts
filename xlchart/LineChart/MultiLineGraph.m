@@ -766,6 +766,9 @@
 
 - (void)dismissMarker{
     [super dismissMarker];
+    if ([self.delegate respondsToSelector:@selector(didMarkerDismissInMultiLine:)]) {
+        [self.delegate didMarkerDismissInMultiLine:self];
+    }
 }
 
 /**

@@ -13,6 +13,7 @@
 @class SingleLineGraphBase;
 
 @protocol SingleLineGraphBaseDelegate  <NSObject>
+@optional
 /**
  *  点击点的index和y值
  *
@@ -21,6 +22,7 @@
  *  @param yValue 点击点对应的y值
  */
 - (void)didTapLine:(SingleLineGraphBase *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue;
+- (void)didMarkerDismissInSingleLine:(SingleLineGraphBase *)graph;//marker消失
 @end
 
 @protocol SingleLineGraphBaseDataSource  <NSObject>

@@ -601,6 +601,9 @@
         [self.customMarkerView removeFromSuperview];
         self.customMarkerView = nil;
     }
+    if ([self.delegate respondsToSelector:@selector(didMarkerDismissInSingleLine:)]) {
+        [self.delegate didMarkerDismissInSingleLine:self];
+    }
 }
 
 - (BOOL)showMakerNearPoint:(CGPoint)pointTouched checkXDistanceOnly:(BOOL)checkXDistanceOnly{

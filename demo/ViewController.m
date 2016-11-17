@@ -312,4 +312,7 @@
 - (void)didTapLine:(SingleLineGraphBase *)graph atPoint:(NSUInteger)pointIndex valuesAtY:(NSNumber *)yValue{
 //    NSLog(@"Tap point at %zi, y %@", pointIndex, yValue);
 }
+
+- (void)didMarkerDismissInSingleLine:(SingleLineGraphBase *)graph{
+}
 @end

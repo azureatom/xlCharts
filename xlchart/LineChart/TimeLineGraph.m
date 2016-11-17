@@ -516,8 +516,8 @@ static const CGFloat kXLabelWidth = 32;//刚好显示完默认的12号字体
     if (currentVolumeLayer != nil) {
         currentVolumeLayer.lineWidth = self.gridLineWidth;
     }
-    if ([self.delegate respondsToSelector:@selector(markerDidDismissInTimeLine:)]) {
-        [self.delegate markerDidDismissInTimeLine:self];
+    if ([self.delegate respondsToSelector:@selector(didMarkerDismissInTimeLine:)]) {
+        [self.delegate didMarkerDismissInTimeLine:self];
     }
 }
 

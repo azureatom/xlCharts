@@ -135,6 +135,7 @@
 - (void)kLine:(KLineGraph *)graph didTapLine:(NSUInteger)lineIndex atPoint:(NSUInteger)pointIndex{
     //显示该日/周/月的价格、成交量、ma5等
 }
-- (void)markerDidDismissInKLine:(KLineGraph *)graph{
+
+- (void)didMarkerDismissInKLine:(KLineGraph *)graph{
 }
 @end
